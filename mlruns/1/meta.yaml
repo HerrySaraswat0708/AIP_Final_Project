@@ -1,0 +1,4 @@
+artifact_location: file:///home/herrys/projects/AIP/AIP_Final_Project/mlruns/1
+experiment_id: '1'
+lifecycle_stage: active
+name: FreeTTA_Hyperparameter_Tuning

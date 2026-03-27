@@ -1,0 +1,15 @@
+artifact_uri: file:///home/herrys/projects/AIP/AIP_Final_Project/mlruns/1/0dfa2204702b49e1b8320a9afd934619/artifacts
+end_time: 1773198755492
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: active
+name: ''
+run_id: 0dfa2204702b49e1b8320a9afd934619
+run_uuid: 0dfa2204702b49e1b8320a9afd934619
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1773198754212
+status: 4
+tags: []
+user_id: herrys

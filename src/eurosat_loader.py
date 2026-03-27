@@ -3,7 +3,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 
 
-def load_eurosat(batch_size=32):
+def load_eurosat():
 
     transform=transforms.Compose([
         transforms.Resize(224),
@@ -21,6 +21,13 @@ def load_eurosat(batch_size=32):
         transform=transform
     )
 
-    loader=DataLoader(dataset,batch_size=batch_size,shuffle=False)
+    # loader=DataLoader(dataset,batch_size=batch_size,shuffle=False)
+    loader = DataLoader(
+    dataset,
+    batch_size=128,       
+    shuffle=True,
+    num_workers=4,         
+    pin_memory=True        
+)
 
     return loader,dataset.classes
