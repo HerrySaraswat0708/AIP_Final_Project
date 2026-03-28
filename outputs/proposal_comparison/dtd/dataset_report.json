@@ -1,0 +1,272 @@
+{
+  "dataset": "dtd",
+  "num_samples": 1880,
+  "config": {
+    "seed": 42,
+    "tda": {
+      "cache_size": 1024,
+      "top_k": 64,
+      "alpha": 0.45,
+      "temperature": 20.0
+    },
+    "freetta": {
+      "alpha": 0.05,
+      "beta": 7.0,
+      "cov_momentum": 0.02
+    }
+  },
+  "feature_files": {
+    "image": "data\\processed\\DTD_image_features.npy",
+    "text": "data\\processed\\DTD_text_features.npy",
+    "labels": "data\\processed\\DTD_labels.npy"
+  },
+  "methods": {
+    "tda": {
+      "final_accuracy": 0.399468085106383,
+      "mean_time_ms": 0.990531755319149,
+      "std_time_ms": 1.0254617693046533,
+      "peak_state_mb": 0.964691162109375,
+      "samples_to_90pct_final_acc": 2,
+      "stability_std_last_quarter": 0.00224527686423654
+    },
+    "freetta": {
+      "final_accuracy": 0.3159574468085106,
+      "mean_time_ms": 1.0575385638297874,
+      "std_time_ms": 0.8259467345706606,
+      "peak_state_mb": 0.18572616577148438,
+      "samples_to_90pct_final_acc": 2,
+      "stability_std_last_quarter": 0.0054359660971125745
+    }
+  },
+  "entropy_analysis": {
+    "correlation_entropy_correct": -0.5179218098111823,
+    "binned_accuracy": [
+      {
+        "bin_index": 0,
+        "entropy_min": 0.006682081613689661,
+        "entropy_max": 0.36574740741157363,
+        "count": 109,
+        "accuracy": 0.9541284403669725
+      },
+      {
+        "bin_index": 1,
+        "entropy_min": 0.36574740741157363,
+        "entropy_max": 0.7248127332094576,
+        "count": 83,
+        "accuracy": 0.7831325301204819
+      },
+      {
+        "bin_index": 2,
+        "entropy_min": 0.7248127332094576,
+        "entropy_max": 1.0838780590073416,
+        "count": 99,
+        "accuracy": 0.6464646464646465
+      },
+      {
+        "bin_index": 3,
+        "entropy_min": 1.0838780590073416,
+        "entropy_max": 1.4429433848052255,
+        "count": 123,
+        "accuracy": 0.5772357723577236
+      },
+      {
+        "bin_index": 4,
+        "entropy_min": 1.4429433848052255,
+        "entropy_max": 1.8020087106031095,
+        "count": 138,
+        "accuracy": 0.35507246376811596
+      },
+      {
+        "bin_index": 5,
+        "entropy_min": 1.8020087106031095,
+        "entropy_max": 2.1610740364009935,
+        "count": 222,
+        "accuracy": 0.3108108108108108
+      },
+      {
+        "bin_index": 6,
+        "entropy_min": 2.1610740364009935,
+        "entropy_max": 2.5201393621988775,
+        "count": 279,
+        "accuracy": 0.24014336917562723
+      },
+      {
+        "bin_index": 7,
+        "entropy_min": 2.5201393621988775,
+        "entropy_max": 2.8792046879967614,
+        "count": 352,
+        "accuracy": 0.1534090909090909
+      },
+      {
+        "bin_index": 8,
+        "entropy_min": 2.8792046879967614,
+        "entropy_max": 3.2382700137946454,
+        "count": 357,
+        "accuracy": 0.11204481792717087
+      },
+      {
+        "bin_index": 9,
+        "entropy_min": 3.2382700137946454,
+        "entropy_max": 3.5973353395925294,
+        "count": 118,
+        "accuracy": 0.09322033898305085
+      }
+    ]
+  },
+  "custom_comparisons": {
+    "tda": {
+      "prediction_churn_rate": 0.5217391304347826,
+      "error_recovery_latency": 2.3957446808510636,
+      "ece": 0.02934522737570582
+    },
+    "freetta": {
+      "prediction_churn_rate": 0.5434782608695652,
+      "error_recovery_latency": 3.2646310432569976,
+      "ece": 0.31296369565769716
+    },
+    "disagreement_advantage": {
+      "disagreement_rate": 0.4340425531914894,
+      "freetta_win_rate_on_disagreement": 0.07107843137254902,
+      "tda_win_rate_on_disagreement": 0.26348039215686275,
+      "net_advantage_freetta_minus_tda": -0.19240196078431374
+    },
+    "entropy_conditioned_gains": [
+      {
+        "bin_index": 0,
+        "entropy_min": 0.006682081613689661,
+        "entropy_max": 1.5891392827033997,
+        "count": 470,
+        "tda_acc": 0.7574468085106383,
+        "freetta_acc": 0.6936170212765957,
+        "freetta_minus_tda": -0.06382978723404253
+      },
+      {
+        "bin_index": 1,
+        "entropy_min": 1.5891392827033997,
+        "entropy_max": 2.350600004196167,
+        "count": 470,
+        "tda_acc": 0.4085106382978723,
+        "freetta_acc": 0.30638297872340425,
+        "freetta_minus_tda": -0.10212765957446807
+      },
+      {
+        "bin_index": 2,
+        "entropy_min": 2.350600004196167,
+        "entropy_max": 2.8858190774917603,
+        "count": 470,
+        "tda_acc": 0.2574468085106383,
+        "freetta_acc": 0.1574468085106383,
+        "freetta_minus_tda": -0.09999999999999998
+      },
+      {
+        "bin_index": 3,
+        "entropy_min": 2.8858190774917603,
+        "entropy_max": 3.5973353385925293,
+        "count": 470,
+        "tda_acc": 0.17446808510638298,
+        "freetta_acc": 0.10638297872340426,
+        "freetta_minus_tda": -0.06808510638297872
+      }
+    ]
+  },
+  "architecture_internal_metrics": [
+    {
+      "method": "tda",
+      "metric": "cache_fill_ratio",
+      "mean": 0.2432887300531915,
+      "std": 0.13844568918912484,
+      "corr_with_correctness": -0.017495465056785498,
+      "mean_when_correct": 0.24031889771970705,
+      "mean_when_incorrect": 0.24526423411204606
+    },
+    {
+      "method": "tda",
+      "metric": "entropy",
+      "mean": 2.238527503623528,
+      "std": 0.891759005100434,
+      "corr_with_correctness": -0.46061672887737704,
+      "mean_when_correct": 1.7348944643951367,
+      "mean_when_incorrect": 2.573539383570846
+    },
+    {
+      "method": "tda",
+      "metric": "jsd_clip_fused",
+      "mean": 0.008847054594793628,
+      "std": 0.008399214492115975,
+      "corr_with_correctness": -0.11991441146012978,
+      "mean_when_correct": 0.007612139626261428,
+      "mean_when_incorrect": 0.009668508218679971
+    },
+    {
+      "method": "tda",
+      "metric": "pred_confidence",
+      "mean": 0.4164447108818654,
+      "std": 0.26004104491579866,
+      "corr_with_correctness": 0.4865365350937682,
+      "mean_when_correct": 0.5715706282842176,
+      "mean_when_incorrect": 0.31325643455842306
+    },
+    {
+      "method": "freetta",
+      "metric": "em_weight",
+      "mean": 0.031041903701811518,
+      "std": 0.13771652705886925,
+      "corr_with_correctness": 0.31669930736813173,
+      "mean_when_correct": 0.09521609986610369,
+      "mean_when_incorrect": 0.0014000121609176236
+    },
+    {
+      "method": "freetta",
+      "metric": "entropy",
+      "mean": 2.156019983625168,
+      "std": 0.9104279799610292,
+      "corr_with_correctness": -0.5179218098111823,
+      "mean_when_correct": 1.4622155707964504,
+      "mean_when_incorrect": 2.4764864075911546
+    },
+    {
+      "method": "freetta",
+      "metric": "mu_drift_from_init",
+      "mean": 0.10680958311477298,
+      "std": 0.03604323622562444,
+      "corr_with_correctness": -0.10974956424295267,
+      "mean_when_correct": 0.1009891695449623,
+      "mean_when_incorrect": 0.10949801675432783
+    },
+    {
+      "method": "freetta",
+      "metric": "mu_update_norm",
+      "mean": 0.00010633347971089309,
+      "std": 0.0006068318243236811,
+      "corr_with_correctness": 0.23008420634308782,
+      "mean_when_correct": 0.000311772255690161,
+      "mean_when_incorrect": 1.1441852236798914e-05
+    },
+    {
+      "method": "freetta",
+      "metric": "pred_confidence",
+      "mean": 0.6275520788148997,
+      "std": 0.2718442120369452,
+      "corr_with_correctness": 0.3047090236915375,
+      "mean_when_correct": 0.7494321412811376,
+      "mean_when_incorrect": 0.5712560001951911
+    },
+    {
+      "method": "freetta",
+      "metric": "weight",
+      "mean": 0.031041903701811518,
+      "std": 0.13771652705886925,
+      "corr_with_correctness": 0.31669930736813173,
+      "mean_when_correct": 0.09521609986610369,
+      "mean_when_incorrect": 0.0014000121609176236
+    }
+  ],
+  "artifacts": {
+    "adaptation_dynamics": "outputs\\proposal_comparison\\dtd\\adaptation_dynamics.png",
+    "efficiency_summary": "outputs\\proposal_comparison\\dtd\\efficiency_summary.png",
+    "entropy_analysis": "outputs\\proposal_comparison\\dtd\\entropy_analysis.png",
+    "custom_comparisons": "outputs\\proposal_comparison\\dtd\\custom_comparisons.png",
+    "architecture_internal_analysis": "outputs\\proposal_comparison\\dtd\\architecture_internal_analysis.md",
+    "distribution_modeling": "outputs\\proposal_comparison\\dtd\\distribution_modeling_pca.png"
+  }
+}

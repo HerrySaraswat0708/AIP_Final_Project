@@ -6,6 +6,7 @@ numpy
 pandas
 tqdm
 scikit-learn
+matplotlib
 Pillow
 ftfy
 regex

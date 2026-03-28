@@ -1,11 +1,11 @@
 import numpy as np
 import torch
-from models.online_em import FreeTTA_OnlineEM
+from models.FreeTTA import FreeTTA
 
 
-def evaluate(dataset, alpha, beta):
+def evaluate(dataset, alpha, beta, device):
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
 
     image_features = np.load(f"data/processed/{dataset}_image_features.npy")
     text_features = np.load(f"data/processed/{dataset}_text_features.npy")
@@ -14,7 +14,7 @@ def evaluate(dataset, alpha, beta):
     image_features = torch.tensor(image_features).float().to(device)
     text_features = torch.tensor(text_features).float().to(device)
 
-    model = FreeTTA_OnlineEM(text_features, alpha=alpha, beta=beta)
+    model = FreeTTA(text_features, alpha=alpha, beta=beta, device=device)
 
     correct = 0
 
@@ -26,7 +26,7 @@ def evaluate(dataset, alpha, beta):
 
         clip_probs = torch.softmax(clip_logits, dim=-1)
 
-        pred = model.process_sample(x, clip_probs, clip_logits)
+        pred = model.predict(x, clip_probs, clip_logits)
 
         if pred.item() == labels[i]:
             correct += 1

@@ -1,0 +1,18 @@
+{
+  "requested_datasets": [
+    "dtd",
+    "caltech",
+    "eurosat",
+    "pets"
+  ],
+  "available_datasets": [
+    "caltech",
+    "dtd",
+    "eurosat",
+    "pets"
+  ],
+  "skipped_datasets": [],
+  "device": "cuda",
+  "output_dir": "outputs\\_smoke_obj2_tda_fix",
+  "rows_written": 16
+}
