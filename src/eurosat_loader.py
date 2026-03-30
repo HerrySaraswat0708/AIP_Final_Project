@@ -25,6 +25,7 @@
 
 #     return loader,dataset.classes
 
+from pathlib import Path
 from torchvision.datasets import EuroSAT
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -42,19 +43,20 @@ def load_eurosat():
         )
     ])
 
+    root_dir = "data/raw/EUROSAT_fresh" if Path("data/raw/EUROSAT_fresh").exists() else "data/raw/EUROSAT"
     dataset=EuroSAT(
-        root="data/raw/EUROSAT",
+        root=root_dir,
         download=True,
         transform=transform
     )
 
     # loader=DataLoader(dataset,batch_size=batch_size,shuffle=False)
     loader = DataLoader(
-    dataset,
-    batch_size=128,       
-    shuffle=True,
-    num_workers=0,         
-    pin_memory=True        
-)
+        dataset,
+        batch_size=128,
+        shuffle=False,
+        num_workers=0,
+        pin_memory=True,
+    )
 
     return loader,dataset.classes

@@ -1,127 +1,126 @@
-# import os
-# import torch
-# import clip
-# import numpy as np
-# from tqdm import tqdm
+import json
+from pathlib import Path
 
-# from src.pet_loader import load_pets
-
-
-# def extract_pets():
-
-#     device = "cuda" if torch.cuda.is_available() else "cpu"
-
-#     print("Device:", device)
-
-#     model, _ = clip.load("ViT-B/16", device=device)
-
-#     loader, class_names = load_pets()
-
-#     print("Number of classes:", len(class_names))
-
-#     image_features = []
-#     labels = []
-
-#     with torch.no_grad():
-
-#         for images, targets in tqdm(loader):
-
-#             images = images.to(device)
-
-#             features = model.encode_image(images)
-
-#             features = features / features.norm(dim=-1, keepdim=True)
-
-#             image_features.append(features.cpu().numpy())
-#             labels.append(targets.numpy())
-
-#     image_features = np.concatenate(image_features)
-#     labels = np.concatenate(labels)
-
-#     prompts = [f"a photo of a {c}" for c in class_names]
-
-#     tokens = clip.tokenize(prompts).to(device)
-
-#     with torch.no_grad():
-
-#         text_features = model.encode_text(tokens)
-
-#         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-
-#     os.makedirs("data/processed", exist_ok=True)
-
-#     np.save("data/processed/pets_image_features.npy", image_features)
-#     np.save("data/processed/pets_text_features.npy", text_features.cpu().numpy())
-#     np.save("data/processed/pets_labels.npy", labels)
-
-#     print("Pets features saved successfully.")
-
-
-# if __name__ == "__main__":
-
-#     extract_pets()
-
-import torch
 import clip
 import numpy as np
+import torch
+from PIL import Image
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+
 from src.pet_loader import load_pets
 
 
+class SplitImageDataset(Dataset):
+    def __init__(self, samples, transform):
+        self.samples = samples
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        image_path, label = self.samples[idx]
+        image = Image.open(image_path).convert("RGB")
+        return self.transform(image), label
+
+
+def _load_pets_split(preprocess):
+    split_path = Path("data/splits/split_zhou_OxfordPets.json")
+    root_candidates = [
+        Path("data/raw/PET_fresh/oxford-iiit-pet/images"),
+        Path("data/raw/PET/oxford-iiit-pet/images"),
+    ]
+
+    if not split_path.exists():
+        return None
+
+    root_dir = None
+    for candidate in root_candidates:
+        if candidate.exists():
+            root_dir = candidate
+            break
+
+    if root_dir is None:
+        return None
+
+    payload = json.loads(split_path.read_text(encoding="utf-8"))
+    test_entries = payload["test"]
+
+    samples = []
+    max_label = max(entry[1] for entry in test_entries)
+    class_names = [""] * (max_label + 1)
+
+    missing = 0
+    for rel_name, label, class_name in test_entries:
+        image_path = root_dir / rel_name
+        if not image_path.exists():
+            missing += 1
+            continue
+        samples.append((image_path, int(label)))
+        class_names[int(label)] = str(class_name).strip().lower()
+
+    if not samples:
+        return None
+    if missing > 0:
+        print(f"[Warning] OxfordPets split: skipped {missing} missing files from split_zhou test set.")
+
+    dataset = SplitImageDataset(samples=samples, transform=preprocess)
+    loader = DataLoader(dataset, batch_size=128, shuffle=False, num_workers=0, pin_memory=True)
+    return loader, class_names
+
+
 def extract_pets():
-
-    # ------------------ DEVICE SETUP ------------------
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     print("CUDA available:", torch.cuda.is_available())
     print("Using device:", device)
     if device.type == "cuda":
         print("GPU:", torch.cuda.get_device_name(0))
 
-    # ------------------ LOAD MODEL ------------------
-    model, _ = clip.load("ViT-B/16", device=device)
+    model, preprocess = clip.load("ViT-B/16", device=device)
     model.eval()
 
-    # ------------------ LOAD DATA ------------------
-    loader, class_names = load_pets()
+    split_loaded = _load_pets_split(preprocess=preprocess)
+    if split_loaded is None:
+        print("split_zhou_OxfordPets.json not available/readable, falling back to torchvision loader.")
+        loader, class_names = load_pets()
+        class_names = [c.replace("_", " ").lower() for c in class_names]
+    else:
+        loader, class_names = split_loaded
+        print(f"Using split_zhou test split for OxfordPets: {len(loader.dataset)} samples")
 
     image_features = []
     labels = []
-
-    # ------------------ FEATURE EXTRACTION ------------------
     with torch.no_grad():
         for images, targets in tqdm(loader):
-
-            # FAST transfer to GPU
             images = images.to(device, non_blocking=True)
-
-            # Forward pass
             features = model.encode_image(images)
-
-            # Normalize
             features = features / features.norm(dim=-1, keepdim=True)
-
-            # KEEP ON GPU (avoid CPU transfer every iteration)
             image_features.append(features.detach())
             labels.append(targets)
 
-    # SINGLE transfer (FAST)
     image_features = torch.cat(image_features).cpu().numpy()
     labels = torch.cat(labels).numpy()
 
-    # ------------------ TEXT FEATURES ------------------
-    prompts = [f"a satellite photo of {c}" for c in class_names]
-    tokens = clip.tokenize(prompts).to(device)
-
+    templates = [
+        "a photo of a {}, a type of pet.",
+        "a photo of the pet {}.",
+        "a cute photo of a {}.",
+    ]
     with torch.no_grad():
-        text_features = model.encode_text(tokens)
+        text_feature_list = []
+        for template in templates:
+            prompts = [template.format(c) for c in class_names]
+            tokens = clip.tokenize(prompts).to(device)
+            text_features = model.encode_text(tokens)
+            text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+            text_feature_list.append(text_features)
+        text_features = torch.stack(text_feature_list, dim=0).mean(dim=0)
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
 
-    # ------------------ SAVE ------------------
     np.save("data/processed/pets_image_features.npy", image_features)
     np.save("data/processed/pets_text_features.npy", text_features.cpu().numpy())
     np.save("data/processed/pets_labels.npy", labels)
-
     print("Feature extraction completed!")
 
 

@@ -40,6 +40,7 @@
 
 #         return loader, class_names
 
+from pathlib import Path
 import torch
 from torchvision.datasets import DTD
 from torchvision import transforms
@@ -57,8 +58,9 @@ def load_dtd():
             std=[0.26862954,0.26130258,0.27577711]
         )
     ])
+    root_dir = "data/raw/DTD_fresh" if Path("data/raw/DTD_fresh").exists() else "data/raw/DTD"
     dataset = DTD(
-        root="data/raw/DTD",
+        root=root_dir,
         split="test",
         download=True,
         transform=transform
@@ -66,11 +68,11 @@ def load_dtd():
 
     loader = DataLoader(
         dataset,
-        batch_size=128,       
-        shuffle=True,
-        num_workers=0,         
-        pin_memory=True        
-        )
+        batch_size=128,
+        shuffle=False,
+        num_workers=0,
+        pin_memory=True,
+    )
 
     class_names = dataset.classes
 

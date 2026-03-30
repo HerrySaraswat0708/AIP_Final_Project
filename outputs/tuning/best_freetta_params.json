@@ -1,0 +1,912 @@
+{
+  "method": "FreeTTA",
+  "generated_at_utc": "2026-03-28T11:23:57.244725+00:00",
+  "device": "cuda",
+  "max_samples": 5000,
+  "features_dir": "data/processed",
+  "mlflow_mode": "best-only",
+  "search_space": {
+    "datasets": [
+      "dtd"
+    ],
+    "alpha_list": [
+      0.03,
+      0.05,
+      0.08,
+      0.1
+    ],
+    "beta_list": [
+      0.5,
+      1.0,
+      1.5,
+      2.0
+    ]
+  },
+  "best_overall": {
+    "dataset": "dtd",
+    "alpha": 0.08,
+    "beta": 0.5,
+    "cov-momentum": 0.01,
+    "use_soft_cov": true,
+    "accuracy": 0.4053191489361702,
+    "elapsed_s": 7.62806359998649
+  },
+  "best_per_dataset": {
+    "dtd": {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 0.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.4053191489361702,
+      "elapsed_s": 7.62806359998649
+    }
+  },
+  "total_elapsed_s": 731.794873100007,
+  "all_results": [
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 0.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.399468085106383,
+      "elapsed_s": 7.475468099990394
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 0.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.400531914893617,
+      "elapsed_s": 6.746823699970264
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 0.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.3920212765957447,
+      "elapsed_s": 6.687761699955445
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 0.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.399468085106383,
+      "elapsed_s": 6.788688800006639
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 0.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.400531914893617,
+      "elapsed_s": 6.635217899980489
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 0.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.3920212765957447,
+      "elapsed_s": 6.693205900024623
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.3984042553191489,
+      "elapsed_s": 6.725620099983644
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.39893617021276595,
+      "elapsed_s": 7.136015600000974
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.39893617021276595,
+      "elapsed_s": 6.899812099989504
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.3984042553191489,
+      "elapsed_s": 6.799885399988852
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.39893617021276595,
+      "elapsed_s": 6.830575100029819
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.39893617021276595,
+      "elapsed_s": 9.446362200018484
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.39680851063829786,
+      "elapsed_s": 11.399622400000226
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.39893617021276595,
+      "elapsed_s": 11.321386400028132
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.4,
+      "elapsed_s": 11.281636400031857
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.39680851063829786,
+      "elapsed_s": 7.649065699952189
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.39893617021276595,
+      "elapsed_s": 7.0723324999562465
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 1.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.4,
+      "elapsed_s": 6.8993103000102565
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 2.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.3952127659574468,
+      "elapsed_s": 6.935283699946012
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 2.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.39680851063829786,
+      "elapsed_s": 6.901910100015812
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 2.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.3962765957446808,
+      "elapsed_s": 6.714953000016976
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 2.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.3952127659574468,
+      "elapsed_s": 7.009289700014051
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 2.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.39680851063829786,
+      "elapsed_s": 6.8851671000011265
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.03,
+      "beta": 2.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.3962765957446808,
+      "elapsed_s": 6.897286899969913
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 0.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.400531914893617,
+      "elapsed_s": 7.254836899985094
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 0.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.40106382978723404,
+      "elapsed_s": 7.577873400005046
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 0.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.3861702127659574,
+      "elapsed_s": 7.5335469000274315
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 0.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.400531914893617,
+      "elapsed_s": 6.9494804999558255
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 0.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.40106382978723404,
+      "elapsed_s": 7.882237799989525
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 0.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.3861702127659574,
+      "elapsed_s": 9.145518400007859
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.3962765957446808,
+      "elapsed_s": 6.824669699999504
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.3973404255319149,
+      "elapsed_s": 6.952458199986722
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.3925531914893617,
+      "elapsed_s": 8.048162399965804
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.3962765957446808,
+      "elapsed_s": 7.593338300008327
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.3973404255319149,
+      "elapsed_s": 7.074588799965568
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.3925531914893617,
+      "elapsed_s": 6.895504400017671
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.39361702127659576,
+      "elapsed_s": 6.803786900010891
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.3941489361702128,
+      "elapsed_s": 6.9309163999860175
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.3930851063829787,
+      "elapsed_s": 7.596308699983638
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.39361702127659576,
+      "elapsed_s": 7.064215400023386
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.3941489361702128,
+      "elapsed_s": 7.060356200032402
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 1.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.3930851063829787,
+      "elapsed_s": 7.155466900032479
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 2.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.3941489361702128,
+      "elapsed_s": 8.187005300016608
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 2.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.3952127659574468,
+      "elapsed_s": 11.182253299979493
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 2.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.3952127659574468,
+      "elapsed_s": 11.203982000006363
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 2.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.3941489361702128,
+      "elapsed_s": 11.23280940001132
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 2.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.3952127659574468,
+      "elapsed_s": 11.012949399999343
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.05,
+      "beta": 2.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.3952127659574468,
+      "elapsed_s": 11.066310799971689
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 0.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.4031914893617021,
+      "elapsed_s": 11.36698210000759
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 0.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.4053191489361702,
+      "elapsed_s": 7.62806359998649
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 0.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.38351063829787235,
+      "elapsed_s": 7.1757948999875225
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 0.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.4031914893617021,
+      "elapsed_s": 7.380909300001804
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 0.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.4053191489361702,
+      "elapsed_s": 7.490630000014789
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 0.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.38351063829787235,
+      "elapsed_s": 7.481499999994412
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.39148936170212767,
+      "elapsed_s": 7.417712200025562
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.39574468085106385,
+      "elapsed_s": 7.112982099992223
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.38563829787234044,
+      "elapsed_s": 7.187041099998169
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.39148936170212767,
+      "elapsed_s": 7.182058500009589
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.39574468085106385,
+      "elapsed_s": 7.227638700045645
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.38563829787234044,
+      "elapsed_s": 7.293819799961057
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.3898936170212766,
+      "elapsed_s": 7.1020563000347465
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.3920212765957447,
+      "elapsed_s": 7.242033000045922
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.3941489361702128,
+      "elapsed_s": 7.323850599990692
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.3898936170212766,
+      "elapsed_s": 7.130018700030632
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.3920212765957447,
+      "elapsed_s": 7.035498499986716
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 1.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.3941489361702128,
+      "elapsed_s": 7.178007700014859
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 2.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.39095744680851063,
+      "elapsed_s": 7.045610899978783
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 2.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.3925531914893617,
+      "elapsed_s": 7.011845299974084
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 2.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.3930851063829787,
+      "elapsed_s": 7.008163099992089
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 2.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.39095744680851063,
+      "elapsed_s": 7.133073900011368
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 2.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.3925531914893617,
+      "elapsed_s": 7.090785400010645
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.08,
+      "beta": 2.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.3930851063829787,
+      "elapsed_s": 7.088388200034387
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 0.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.4021276595744681,
+      "elapsed_s": 7.263626999978442
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 0.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.40425531914893614,
+      "elapsed_s": 7.175264099962078
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 0.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.37872340425531914,
+      "elapsed_s": 7.078523100004531
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 0.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.4021276595744681,
+      "elapsed_s": 7.11167699994985
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 0.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.40425531914893614,
+      "elapsed_s": 7.069933199963998
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 0.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.37872340425531914,
+      "elapsed_s": 7.063038900028914
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.38882978723404255,
+      "elapsed_s": 7.092302200035192
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.3941489361702128,
+      "elapsed_s": 7.116207400045823
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.38351063829787235,
+      "elapsed_s": 7.045918799994979
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.38882978723404255,
+      "elapsed_s": 7.10784589999821
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.3941489361702128,
+      "elapsed_s": 7.228832599997986
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.38351063829787235,
+      "elapsed_s": 7.416385899996385
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.3882978723404255,
+      "elapsed_s": 7.5086721000261605
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.3898936170212766,
+      "elapsed_s": 7.2547623999998905
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.3898936170212766,
+      "elapsed_s": 7.666013100009877
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.5,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.3882978723404255,
+      "elapsed_s": 7.883742599980906
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.5,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.3898936170212766,
+      "elapsed_s": 7.474902800051495
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 1.5,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.3898936170212766,
+      "elapsed_s": 7.791629400046077
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 2.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": true,
+      "accuracy": 0.39148936170212767,
+      "elapsed_s": 7.449118899996392
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 2.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": true,
+      "accuracy": 0.3904255319148936,
+      "elapsed_s": 7.5995280999923125
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 2.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": true,
+      "accuracy": 0.38882978723404255,
+      "elapsed_s": 7.474785599973984
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 2.0,
+      "cov-momentum": 0.005,
+      "use_soft_cov": false,
+      "accuracy": 0.39148936170212767,
+      "elapsed_s": 7.363480800006073
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 2.0,
+      "cov-momentum": 0.01,
+      "use_soft_cov": false,
+      "accuracy": 0.3904255319148936,
+      "elapsed_s": 7.626000899996143
+    },
+    {
+      "dataset": "dtd",
+      "alpha": 0.1,
+      "beta": 2.0,
+      "cov-momentum": 0.02,
+      "use_soft_cov": false,
+      "accuracy": 0.38882978723404255,
+      "elapsed_s": 7.420396600035019
+    }
+  ]
+}
