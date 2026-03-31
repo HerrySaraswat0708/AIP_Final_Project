@@ -1,13 +1,11 @@
-from __future__ import annotations
-
 import math
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import torch
 import torch.nn.functional as F
 
 
-CacheItem = Tuple[torch.Tensor, float, torch.Tensor | None]
+CacheItem = Tuple[torch.Tensor, float, Optional[torch.Tensor]]
 
 
 class TDA:
@@ -78,7 +76,7 @@ class TDA:
         pred: int,
         feature: torch.Tensor,
         entropy_loss: float,
-        prob_map: torch.Tensor | None = None,
+        prob_map: Optional[torch.Tensor] = None,
     ) -> None:
         item: CacheItem = (feature, entropy_loss, prob_map)
         bucket = cache.get(pred, [])
@@ -91,7 +89,7 @@ class TDA:
 
     def _build_cache_tensors(
         self, cache: Dict[int, List[CacheItem]], negative: bool
-    ) -> Tuple[torch.Tensor | None, torch.Tensor | None]:
+    ):
         if not cache:
             return None, None
 

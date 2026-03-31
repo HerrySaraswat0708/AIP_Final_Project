@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pathlib import Path
 from typing import Dict
 
@@ -10,12 +8,15 @@ from models.FreeTTA import FreeTTA
 from src.feature_store import load_dataset_features
 
 
+INFERENCE_MODE = getattr(torch, "inference_mode", torch.no_grad)
+
+
 def load_freetta_dataset(
-    dataset: str,
-    device: torch.device,
-    max_samples: int | None = None,
-    features_dir: str | Path = "data/processed",
-) -> Dict[str, torch.Tensor | int]:
+    dataset,
+    device,
+    max_samples=None,
+    features_dir="data/processed",
+):
     payload = load_dataset_features(Path(features_dir), dataset)
 
     image_features = torch.from_numpy(payload["image_features"]).float().to(device)
@@ -38,13 +39,13 @@ def load_freetta_dataset(
 
 
 def evaluate_loaded(
-    payload: Dict[str, torch.Tensor | int],
-    alpha: float = 0.008,
-    beta: float = 1.0,
-    device: torch.device | str = "cuda",
-    shuffle_stream: bool = True,
-    stream_seed: int = 1,
-) -> float:
+    payload,
+    alpha=0.008,
+    beta=1.0,
+    device="cuda",
+    shuffle_stream=True,
+    stream_seed=1,
+):
     if isinstance(device, str):
         device = torch.device(device)
 
@@ -65,7 +66,7 @@ def evaluate_loaded(
     else:
         order = torch.arange(total, device=labels.device)
 
-    with torch.inference_mode():
+    with INFERENCE_MODE():
         for i in order.tolist():
             x = image_features[i]
             y = labels[i]
@@ -86,15 +87,15 @@ def evaluate_loaded(
 
 
 def evaluate(
-    dataset: str,
-    alpha: float = 0.008,
-    beta: float = 1.0,
-    device: torch.device | str = "cuda",
-    max_samples: int | None = None,
-    features_dir: str | Path = "data/processed",
-    shuffle_stream: bool = True,
-    stream_seed: int = 1,
-) -> float:
+    dataset,
+    alpha=0.008,
+    beta=1.0,
+    device="cuda",
+    max_samples=None,
+    features_dir="data/processed",
+    shuffle_stream=True,
+    stream_seed=1,
+):
     if isinstance(device, str):
         device = torch.device(device)
     payload = load_freetta_dataset(

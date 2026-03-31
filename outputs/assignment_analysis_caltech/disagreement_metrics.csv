@@ -1,0 +1,2 @@
+dataset,disagreement_samples,disagreement_rate,tda_acc_on_disagreement,freetta_acc_on_disagreement,freetta_wins_on_disagreement,tda_wins_on_disagreement
+caltech,33,0.013387423935091278,0.3939393939393939,0.45454545454545453,15,13

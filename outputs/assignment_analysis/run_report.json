@@ -1,0 +1,16 @@
+{
+  "device": "cuda",
+  "datasets": [
+    "dtd",
+    "caltech",
+    "eurosat",
+    "pets"
+  ],
+  "summary_metrics_csv": "outputs/assignment_analysis/summary_metrics.csv",
+  "geometry_probe_csv": "outputs/assignment_analysis/geometry_probe.csv",
+  "entropy_conditioned_csv": "outputs/assignment_analysis/entropy_conditioned_metrics.csv",
+  "stream_phase_csv": "outputs/assignment_analysis/stream_phase_metrics.csv",
+  "disagreement_csv": "outputs/assignment_analysis/disagreement_metrics.csv",
+  "internal_metrics_csv": "outputs/assignment_analysis/internal_metrics.csv",
+  "order_sensitivity_csv": "outputs/assignment_analysis/order_sensitivity_summary.csv"
+}

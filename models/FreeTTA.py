@@ -1,4 +1,4 @@
-from __future__ import annotations
+from typing import Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -9,11 +9,11 @@ class FreeTTA:
 
     def __init__(
         self,
-        text_features: torch.Tensor,
-        alpha: float = 0.2,
-        beta: float = 4.5,
-        device: str | torch.device = "cuda",
-    ) -> None:
+        text_features,
+        alpha=0.2,
+        beta=4.5,
+        device="cuda",
+    ):
         self.device = torch.device(device)
         self.mu = F.normalize(text_features.detach().float().to(self.device), dim=-1)
         self.num_classes, self.dim = self.mu.shape
@@ -28,7 +28,7 @@ class FreeTTA:
         self.eye = torch.eye(self.dim, device=self.device)
 
     @torch.no_grad()
-    def predict(self, x: torch.Tensor, clip_logits: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def predict(self, x, clip_logits):
         if x.dim() == 1:
             x = x.unsqueeze(0)
         if clip_logits.dim() == 1:
@@ -42,7 +42,10 @@ class FreeTTA:
         weight = torch.exp(-self.beta * entropy).item()
 
         sigma = self.sigma + 1e-4 * self.eye
-        inv_sigma_mu = torch.linalg.solve(sigma, self.mu.t())
+        if hasattr(torch, "linalg") and hasattr(torch.linalg, "solve"):
+            inv_sigma_mu = torch.linalg.solve(sigma, self.mu.t())
+        else:
+            inv_sigma_mu = torch.solve(self.mu.t(), sigma)[0]
 
         term1 = x @ inv_sigma_mu
         term2 = 0.5 * torch.sum(self.mu.t() * inv_sigma_mu, dim=0)

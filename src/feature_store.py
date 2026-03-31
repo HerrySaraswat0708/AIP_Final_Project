@@ -1,18 +1,15 @@
-from __future__ import annotations
-
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
 
 
-@dataclass
-class DatasetFeaturePaths:
-    dataset_key: str
-    image_features: Path
-    text_features: Path
-    labels: Path
+class DatasetFeaturePaths(object):
+    def __init__(self, dataset_key, image_features, text_features, labels):
+        self.dataset_key = dataset_key
+        self.image_features = image_features
+        self.text_features = text_features
+        self.labels = labels
 
 
 DATASET_ALIASES: Dict[str, str] = {

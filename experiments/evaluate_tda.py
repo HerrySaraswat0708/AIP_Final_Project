@@ -1,13 +1,12 @@
-from __future__ import annotations
-
 from pathlib import Path
-from typing import Dict
-
 import torch
 import torch.nn.functional as F
 
 from models.TDA import TDA
 from src.feature_store import load_dataset_features
+
+
+INFERENCE_MODE = getattr(torch, "inference_mode", torch.no_grad)
 
 
 def load_tda_dataset(dataset, device, max_samples=None, features_dir="data/processed"):
@@ -75,7 +74,7 @@ def evaluate_loaded(
 
     correct_count = torch.tensor(0, device=device)
 
-    with torch.inference_mode():
+    with INFERENCE_MODE():
         for i in range(total):
             pred, _, _ = model.predict(image_features[i])
             correct_count += int(pred.item() == labels[i].item())

@@ -1,4 +1,4 @@
-from __future__ import annotations
+from typing import Optional
 
 from .TDA_original import TDA as _OriginalTDA
 
@@ -9,24 +9,24 @@ class TDA(_OriginalTDA):
     def __init__(
         self,
         text_features,
-        cache_size: int = 1000,
-        k: int = 0,
-        alpha: float = 2.0,
-        beta: float = 5.0,
-        confidence_threshold: float | None = None,
-        low_entropy_thresh: float = 0.2,
-        high_entropy_thresh: float = 0.5,
-        neg_alpha: float = 0.117,
-        neg_beta: float = 1.0,
-        neg_mask_lower: float = 0.03,
-        neg_mask_upper: float = 1.0,
-        shot_capacity: int = 3,
-        clip_scale: float = 100.0,
-        fallback_to_clip: bool = True,
-        fallback_margin: float = 0.0,
-        device: str = "cuda",
+        cache_size=1000,
+        k=0,
+        alpha=2.0,
+        beta=5.0,
+        confidence_threshold=None,
+        low_entropy_thresh=0.2,
+        high_entropy_thresh=0.5,
+        neg_alpha=0.117,
+        neg_beta=1.0,
+        neg_mask_lower=0.03,
+        neg_mask_upper=1.0,
+        shot_capacity=3,
+        clip_scale=100.0,
+        fallback_to_clip=True,
+        fallback_margin=0.0,
+        device="cuda",
         **kwargs,
-    ) -> None:
+    ):
         if confidence_threshold is not None:
             # Legacy mapping: higher confidence target -> lower normalized entropy threshold.
             low_entropy_thresh = max(0.0, min(1.0, 1.0 - float(confidence_threshold)))
