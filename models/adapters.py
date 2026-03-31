@@ -1,16 +1,13 @@
-from __future__ import annotations
-
-from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
 import torch
 import torch.nn.functional as F
 
 
-@dataclass
-class AdapterOutput:
-    pred: int
-    extra: Dict[str, float]
+class AdapterOutput(object):
+    def __init__(self, pred, extra):
+        self.pred = pred
+        self.extra = extra
 
 
 def _entropy(probs: torch.Tensor) -> torch.Tensor:

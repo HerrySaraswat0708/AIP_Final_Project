@@ -1,0 +1,2 @@
+dataset,samples,clip_acc,tda_acc,freetta_acc,tda_gain_vs_clip,freetta_gain_vs_clip,freetta_minus_tda,tda_final_positive_cache_size,tda_final_negative_cache_size,freetta_final_mu_drift,freetta_final_prior_entropy
+pets,3669,0.8994276369582993,0.8863450531479967,0.890160806759335,-0.013082583810302535,-0.009266830198964295,0.003815753611338235,111,100,1.2248831987380981,3.6100120544433594

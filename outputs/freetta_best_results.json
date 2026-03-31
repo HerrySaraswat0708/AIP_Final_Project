@@ -2,12 +2,12 @@
   "dtd": {
     "alpha": 0.2,
     "beta": 2.0,
-    "freetta_accuracy": 0.4675531914893617
+    "freetta_accuracy": 0.4803191489361702
   },
   "caltech": {
     "alpha": 0.1,
     "beta": 1.0,
-    "freetta_accuracy": 0.9399594320486815
+    "freetta_accuracy": 0.944421906693712
   },
   "eurosat": {
     "alpha": 0.3,

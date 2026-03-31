@@ -1,0 +1,2 @@
+dataset,samples,clip_acc,tda_acc,freetta_acc,tda_gain_vs_clip,freetta_gain_vs_clip,freetta_minus_tda,tda_final_positive_cache_size,tda_final_negative_cache_size,freetta_final_mu_drift,freetta_final_prior_entropy
+caltech,2465,0.9407707910750507,0.9423935091277891,0.9432048681541582,0.0016227180527383367,0.002434077079107505,0.0008113590263690851,300,61,1.1318230628967285,4.604431629180908

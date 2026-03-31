@@ -1,0 +1,2 @@
+dataset,samples,clip_acc,tda_acc,freetta_acc,tda_gain_vs_clip,freetta_gain_vs_clip,freetta_minus_tda,tda_final_positive_cache_size,tda_final_negative_cache_size,freetta_final_mu_drift,freetta_final_prior_entropy
+eurosat,8100,0.5954320987654321,0.5803703703703704,0.6218518518518519,-0.015061728395061728,0.026419753086419754,0.04148148148148145,30,30,0.1868242770433426,2.302798271179199
