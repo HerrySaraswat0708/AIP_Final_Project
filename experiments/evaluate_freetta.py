@@ -79,6 +79,8 @@ def evaluate_loaded(
             pred, _ = model.predict(x, clip_logits)
             freetta_correct += (pred.squeeze(0) == y)
 
+
+            
     clip_acc = float(clip_correct.item() / max(total, 1))
     freetta_acc = float(freetta_correct.item() / max(total, 1))
     print(f"[CLIP] {clip_acc:.6f}")
