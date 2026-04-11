@@ -252,4 +252,209 @@ TDA is a retrieval-style cache method; FreeTTA is an online EM distribution-mode
 - Main report: `ASSIGNMENT_REPORT.md`
 - Controlled summary tables: `outputs/assignment_submission/`
 - New analysis pipeline: `experiments/run_assignment_analysis.py`
+- Core superiority-analysis outputs across all datasets: `outputs/workshop_core_all/`
+- Targeted DTD ablations: `outputs/workshop_dtd_ablation/`
+- Targeted DTD order-stress results: `outputs/workshop_dtd_order/`
+- Second-round analysis pipeline: `experiments/run_superiority_analysis.py`
 
+## 11. New Superiority Analyses Added After the First Draft
+
+The earlier draft already covered difficulty bins, stream phase, disagreements, and oracle geometry. I then added a second round of **new analyses that are not present in either paper** and ran fresh experiments with:
+
+- `experiments/run_superiority_analysis.py`
+- core outputs across all four datasets in `outputs/workshop_core_all/`
+- targeted ablations on DTD in `outputs/workshop_dtd_ablation/`
+- targeted order-stress experiments on DTD in `outputs/workshop_dtd_order/`
+
+These new analyses are useful because they explain **how** FreeTTA wins, **when** TDA can still be better, and **which mechanism is actually responsible** for the difference.
+
+### 11.1 Calibration Analysis: FreeTTA Wins Accuracy Without Producing Calibrated Probabilities
+
+I measured expected calibration error (ECE) using each method's final prediction confidence.
+
+| Dataset | TDA ECE | FreeTTA ECE |
+|---|---:|---:|
+| Caltech | 0.82% | 93.18% |
+| DTD | 12.67% | 45.94% |
+| EuroSAT | 4.15% | 51.86% |
+| Pets | 3.53% | 85.97% |
+
+This is a very interesting and genuinely new result. In this reproduction, **FreeTTA is often more accurate but much less calibrated as a probability estimator**. Its top-1 confidence remains very low because the final fused logits are only gently perturbed around the zero-shot branch. So its gain does **not** come from becoming more certain. It comes from **reordering class scores correctly**.
+
+That means:
+
+- **TDA behaves like a sharper, more decisive classifier.**
+- **FreeTTA behaves like a cautious reranker whose probabilities should not be over-interpreted.**
+
+This distinction is not explicitly discussed in either paper.
+
+### 11.2 Entropy-Reduction Quality: TDA Sharpens More, FreeTTA Corrects More Gently
+
+I measured how much each method reduces its own predictive entropy on correct versus wrong predictions.
+
+| Dataset | TDA Selective Entropy Gap | FreeTTA Selective Entropy Gap |
+|---|---:|---:|
+| Caltech | +0.0050 | +0.000011 |
+| DTD | +0.0154 | +0.000011 |
+| EuroSAT | +0.0091 | +0.000003 |
+| Pets | -0.1712 | -0.000050 |
+
+Where:
+
+- **Selective Entropy Gap = mean entropy drop on correct predictions - mean entropy drop on wrong predictions**
+
+Interpretation:
+
+- TDA usually **sharpens predictions much more strongly** than FreeTTA.
+- FreeTTA's entropy change is tiny, which supports the idea that it improves by **small posterior corrections** rather than aggressive confidence collapse.
+- The most important negative case is **Pets**, where TDA reduces entropy **more on wrong samples than on correct ones**, which is a sign of overconfident failure.
+
+This analysis directly supports the intuition that FreeTTA's posterior modeling gives it a different kind of reliability than TDA's cache retrieval rule.
+
+### 11.3 Safe-vs-Harmful Prediction Changes: FreeTTA Is Safer on Global-Shift Datasets
+
+I measured two things whenever a method changed the original CLIP prediction:
+
+1. **Beneficial flip precision:** among changed predictions, how often did the change actually fix CLIP?
+2. **Harmful flip rate:** how often did the method damage a previously correct CLIP prediction?
+
+| Dataset | TDA Beneficial Precision | FreeTTA Beneficial Precision | TDA Harmful Rate | FreeTTA Harmful Rate |
+|---|---:|---:|---:|---:|
+| Caltech | 63.64% | 52.94% | 0.13% | 0.52% |
+| DTD | 23.37% | 23.00% | 4.18% | 2.82% |
+| EuroSAT | 27.77% | 47.71% | 9.85% | 2.90% |
+| Pets | 33.48% | 16.25% | 3.79% | 1.42% |
+
+This reveals a much sharper story than plain accuracy:
+
+- On **EuroSAT**, FreeTTA is clearly the better correction mechanism: it changes predictions with **much higher precision** and **far less damage**.
+- On **DTD**, the beneficial precision is similar, but FreeTTA is still safer because it harms fewer already-correct predictions.
+- On **Pets**, FreeTTA is extremely conservative: fewer beneficial changes, but also much less damage.
+
+So FreeTTA's main advantage is often not that it changes more predictions. It is that on the right datasets it changes them **more selectively**.
+
+### 11.4 Adaptation-Onset Analysis: How Many Initial Samples Are Needed Before Gains Appear?
+
+I measured a rolling break-even point: the earliest stream position where the method's rolling accuracy becomes positive relative to a baseline.
+
+For **FreeTTA versus TDA**, the break-even fractions are:
+
+| Dataset | FreeTTA vs TDA Break-Even |
+|---|---:|
+| Caltech | 25.40% of the stream |
+| DTD | 5.00% of the stream |
+| EuroSAT | 5.31% of the stream |
+| Pets | 4.99% of the stream |
+
+This is a strong result because it answers the "how many initial samples are needed?" question directly:
+
+- On **DTD, EuroSAT, and Pets**, FreeTTA starts helping after only about **5%** of the stream.
+- On **Caltech**, it needs much more time because there is very little headroom and CLIP is already near saturation.
+
+So the practical conclusion is:
+
+- **FreeTTA benefits appear quickly when there is real distribution shift to learn.**
+- **If the dataset is already easy, the online EM statistics need much longer before they produce measurable gains.**
+
+### 11.5 Order-Stress Analysis on DTD: TDA Can Be Better When the Stream Is Easy-to-Hard
+
+I ran a new stress test on DTD with several stream orders:
+
+| Order | TDA | FreeTTA | FreeTTA - TDA |
+|---|---:|---:|---:|
+| natural | 47.39 | 48.19 | +0.80 |
+| random | 47.13 | 48.03 | +0.90 |
+| round_robin | 47.02 | 47.71 | +0.69 |
+| hard_to_easy | 47.55 | 47.93 | +0.37 |
+| easy_to_hard | 47.39 | 47.18 | -0.21 |
+| class_blocked | 47.39 | 48.19 | +0.80 |
+
+This is one of the most useful findings in the whole project because it finally gives a clean case where **TDA beats FreeTTA**:
+
+- If the stream is ordered **easy-to-hard**, TDA becomes slightly better on DTD.
+
+Why?
+
+- In FreeTTA, the online EM update is a **global sufficient-statistics update**. Early easy samples can anchor the class means and priors toward already-easy modes, which may leave the model less responsive when harder boundary cases appear later.
+- In TDA, the correction is a **local kernel-style retrieval term**
+  `sum_j exp(-beta(1 - <x, k_j>)) v_j`
+  over stored exemplars. That local memory can still help later hard samples even if the global class statistics are imperfect.
+
+A second new observation is that **difficulty order matters more than class balance alone**:
+
+- `random` and `round_robin` expose many classes early and still favor FreeTTA.
+- The one order that hurts FreeTTA most is not the least balanced one. It is the **easy-to-hard** one.
+
+So the critical issue is not only early class imbalance. It is also **which difficulty regime the online EM sees first**.
+
+## 12. Targeted Ablation Results on DTD
+
+I used DTD as the targeted ablation dataset because it is neither saturated like Caltech nor as trivially dominated as EuroSAT, so it is the best place to study mechanism changes.
+
+### 12.1 TDA Dual-Cache Ablation
+
+| Variant | Accuracy |
+|---|---:|
+| Positive cache + negative cache | 47.39 |
+| Positive cache only | 47.55 |
+| Negative cache only | 46.91 |
+
+This means that on DTD:
+
+- the **positive cache carries most of the benefit**,
+- the **negative cache alone is not sufficient**,
+- and the negative cache is not always helpful on texture-heavy data.
+
+So the "two-cache" design is not uniformly better in every domain. It depends on whether uncertainty-based negative masking is semantically meaningful for that dataset.
+
+### 12.2 TDA Cache-Size Sweep
+
+I varied `shot_capacity`, which is the **effective per-class cache budget** in this implementation.
+
+| Shot Capacity | Effective Slots per Cache | Accuracy |
+|---|---:|---:|
+| 1 | 47 | 47.29 |
+| 2 | 94 | 47.66 |
+| 3 | 141 | 47.39 |
+| 5 | 235 | 47.29 |
+| 10 | 470 | 47.71 |
+
+Two conclusions follow:
+
+1. **Cache size matters, but weakly.**
+2. **Cache composition matters more than raw cache size.**
+
+The performance is not monotonic with cache size, which means simply storing more exemplars is not enough. The quality of the retained pseudo-labels matters more than memory volume.
+
+### 12.3 FreeTTA Alpha-Beta Sweep
+
+I swept FreeTTA's fusion weight `alpha` and entropy-weight parameter `beta` on DTD.
+
+Best tested setting:
+
+- `alpha = 0.3`
+- `beta = 2.0`
+- accuracy = **48.40%**
+- gain over TDA = **+1.01 points**
+
+Important trends from the sweep:
+
+- Very small `alpha` underuses the generative branch.
+- Very high `beta` (`4.5`) makes the method collapse close to the CLIP baseline because the EM updates become too weak.
+- Moderate-to-strong `alpha` with **moderate beta** works best, because the posterior correction is strong enough to matter without letting uncertain samples dominate.
+
+This gives a mathematical interpretation:
+
+- `alpha` controls **how much the generative posterior can reshape the discriminative logits**.
+- `beta` controls **how fast uncertain samples are downweighted** through
+  `w_t = exp(-beta * H_t)`.
+
+If `beta` is too large, then `w_t` becomes too small for many samples, so the online EM statistics barely move. If `alpha` is too small, the learned posterior has little influence even when the statistics are good.
+
+## 13. Updated Overall Conclusion
+
+After the new experiments, I would summarize the comparison like this:
+
+- **Why FreeTTA is superior:** it is better at making **selective, global corrections** once a small amount of target evidence has been accumulated. Its gains appear especially on harder datasets and can emerge after only about 5% of the stream.
+- **Why TDA can still win:** it is stronger when **local exemplar retrieval** is more useful than a global class-distribution model, and it can be slightly better in streams arranged from **easy-to-hard** where the global online EM statistics become anchored too early.
+- **What the new analyses add beyond the papers:** the papers do not tell us about calibration mismatch, selective entropy reduction, safe-versus-harmful correction behavior, break-even sample counts, or the easy-to-hard failure mode. These analyses give a much more workshop-ready mechanistic explanation of the baseline-versus-extension relationship.
