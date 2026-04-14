@@ -15,91 +15,13 @@ import torch.nn.functional as F
 from models.FreeTTA import FreeTTA
 from models.TDA import TDA
 from src.feature_store import list_available_datasets, load_dataset_features
-
-
-# Targets read from your table image.
-PAPER_TARGETS = {
-    "vit_b16": {
-        "caltech": 94.63,
-        "dtd": 46.96,
-        "eurosat": 62.93,
-        "pets": 90.11,
-    },
-    "rn50": {
-        "caltech": 90.12,
-        "dtd": 44.21,
-        "eurosat": 43.64,
-        "pets": 86.44,
-    },
-}
-
-
-PAPER_TDA_DEFAULTS = {
-    "dtd": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 2.0,
-        "beta": 3.0,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.05,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "caltech": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 0.75,
-        "beta": 1.5,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.0,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "eurosat": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 1.45,
-        "beta": 3.2,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.0,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "pets": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 5.9,
-        "beta": 8.9,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.32,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": False,
-        "fallback_margin": 0.0,
-    },
-}
+from src.paper_configs import (
+    DEFAULT_DATASETS,
+    DEFAULT_FREETTA_PARAMS,
+    PAPER_FREETTA_TARGETS,
+    PAPER_TDA_DEFAULTS,
+    PAPER_TDA_TARGETS,
+)
 
 
 def resolve_device(requested: str) -> torch.device:
@@ -269,7 +191,9 @@ def main() -> None:
     if not available:
         raise RuntimeError(f"No dataset feature triplets found in {args.features_dir}")
 
-    datasets = [d.lower() for d in (args.datasets if args.datasets else available)]
+    requested = [d.lower() for d in (args.datasets if args.datasets else list(DEFAULT_DATASETS))]
+    missing = [d for d in requested if d not in available]
+    datasets = [d for d in requested if d in available]
 
     tda_overrides = {}
     freetta_overrides = {}
@@ -280,16 +204,17 @@ def main() -> None:
     print(f"Device: {device}")
     print(f"Available datasets: {available}")
     print(f"Running datasets: {datasets}")
+    if missing:
+        print(f"Skipping missing datasets: {missing}")
+    if not datasets:
+        raise RuntimeError("None of the requested datasets are available in the features directory.")
 
     all_rows = []
     for ds in datasets:
         tda_params = dict(PAPER_TDA_DEFAULTS.get(ds, PAPER_TDA_DEFAULTS["dtd"]))
         tda_params.update(tda_overrides.get(ds, {}))
 
-        freetta_cfg = {
-            "alpha": args.freetta_alpha,
-            "beta": args.freetta_beta,
-        }
+        freetta_cfg = dict(DEFAULT_FREETTA_PARAMS.get(ds, {"alpha": args.freetta_alpha, "beta": args.freetta_beta}))
         freetta_cfg.update(freetta_overrides.get(ds, {}))
 
         row = evaluate_dataset(
@@ -312,7 +237,8 @@ def main() -> None:
 
     if all_rows:
         print("\nSummary")
-        targets = PAPER_TARGETS.get(args.paper_backbone, {}) if args.paper_backbone != "off" else {}
+        tda_targets = PAPER_TDA_TARGETS.get(args.paper_backbone, {}) if args.paper_backbone != "off" else {}
+        freetta_targets = PAPER_FREETTA_TARGETS.get(args.paper_backbone, {}) if args.paper_backbone != "off" else {}
         for ds, row in all_rows:
             tda_gap_clip = (row["tda_acc"] - row["clip_acc"]) * 100.0
             freetta_gap_tda = (row["freetta_acc"] - row["tda_acc"]) * 100.0
@@ -321,9 +247,15 @@ def main() -> None:
                 f"TDA={row['tda_acc']*100:.2f}% (vs CLIP {tda_gap_clip:+.2f} pts) | "
                 f"FreeTTA={row['freetta_acc']*100:.2f}% (vs TDA {freetta_gap_tda:+.2f} pts)"
             )
-            target = targets.get(ds.lower())
-            if target is not None:
-                line += f" | target({args.paper_backbone})={target:.2f}% | TDA_gap={row['tda_acc']*100.0 - target:+.2f} pts"
+            tda_target = tda_targets.get(ds.lower())
+            freetta_target = freetta_targets.get(ds.lower())
+            if tda_target is not None:
+                line += f" | TDA_target({args.paper_backbone})={tda_target:.2f}% | TDA_gap={row['tda_acc']*100.0 - tda_target:+.2f} pts"
+            if freetta_target is not None:
+                line += (
+                    f" | FreeTTA_target({args.paper_backbone})={freetta_target:.2f}% "
+                    f"| FreeTTA_gap={row['freetta_acc']*100.0 - freetta_target:+.2f} pts"
+                )
             print(line)
 
 

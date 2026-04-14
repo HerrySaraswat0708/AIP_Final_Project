@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import gc
 import math
 import sys
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -18,84 +20,12 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from models.FreeTTA import FreeTTA
 from models.TDA import TDA
-from src.feature_store import load_dataset_features
+from src.feature_store import list_available_datasets, load_dataset_features
+from src.paper_configs import DEFAULT_DATASETS, DEFAULT_FREETTA_PARAMS, PAPER_TDA_DEFAULTS
 
 
-BEST_TDA_PARAMS = {
-    "dtd": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 2.0,
-        "beta": 3.0,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.05,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "caltech": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 0.75,
-        "beta": 1.5,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.0,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "eurosat": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 1.45,
-        "beta": 3.2,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.0,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "pets": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 5.9,
-        "beta": 8.9,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.32,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": False,
-        "fallback_margin": 0.0,
-    },
-}
-
-BEST_FREETTA_PARAMS = {
-    "dtd": {"alpha": 0.2, "beta": 2.0},
-    "caltech": {"alpha": 0.1, "beta": 1.0},
-    "eurosat": {"alpha": 0.3, "beta": 4.5},
-    "pets": {"alpha": 0.1, "beta": 0.1},
-}
-
-DEFAULT_DATASETS = ("caltech", "dtd", "eurosat", "pets")
+BEST_TDA_PARAMS = PAPER_TDA_DEFAULTS
+BEST_FREETTA_PARAMS = DEFAULT_FREETTA_PARAMS
 FREETTA_ALPHA_GRID = (0.05, 0.1, 0.2, 0.3)
 FREETTA_BETA_GRID = (0.1, 0.5, 1.0, 2.0, 4.5)
 TDA_SHOT_GRID = (1, 2, 3, 5, 10)
@@ -110,6 +40,7 @@ class DatasetPayload:
     raw_clip_logits: torch.Tensor
     raw_clip_probs: torch.Tensor
     raw_clip_entropy: torch.Tensor
+    original_num_samples: int
 
     @property
     def num_samples(self) -> int:
@@ -130,6 +61,39 @@ def resolve_device(requested: str) -> torch.device:
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+def log(message: str) -> None:
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {message}", flush=True)
+
+
+def should_log_progress(step: int, total: int, interval: int) -> bool:
+    if total <= 0:
+        return False
+    if step in (1, total):
+        return True
+    return interval > 0 and step % interval == 0
+
+
+def release_gpu_memory(device: torch.device) -> None:
+    gc.collect()
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+
+
+def make_axes_grid(num_panels: int, ncols: int = 2, figsize_per_panel: tuple[float, float] = (5.2, 3.9)):
+    ncols = max(1, min(ncols, num_panels))
+    nrows = max(1, math.ceil(num_panels / ncols))
+    fig, axes = plt.subplots(
+        nrows,
+        ncols,
+        figsize=(figsize_per_panel[0] * ncols, figsize_per_panel[1] * nrows),
+        sharex=True,
+        sharey=True,
+    )
+    axes = np.atleast_1d(axes).reshape(-1)
+    return fig, axes
+
+
 def entropy_from_probs(probs: torch.Tensor, dim: int = -1) -> torch.Tensor:
     return -(probs * torch.log(probs + 1e-12)).sum(dim=dim)
 
@@ -148,11 +112,70 @@ def top2_margin(logits: torch.Tensor) -> float:
     return float((top_vals[0] - top_vals[1]).item())
 
 
-def load_payload(features_dir: Path, dataset: str, device: torch.device) -> DatasetPayload:
+def choose_subset_indices(
+    labels: np.ndarray,
+    max_samples: int | None,
+    subset_mode: str,
+    sample_seed: int,
+) -> np.ndarray:
+    total = int(labels.shape[0])
+    if max_samples is None or max_samples <= 0 or max_samples >= total:
+        return np.arange(total, dtype=np.int64)
+
+    rng = np.random.default_rng(int(sample_seed))
+    if subset_mode == "head":
+        return np.arange(max_samples, dtype=np.int64)
+    if subset_mode == "random":
+        return np.sort(rng.choice(total, size=max_samples, replace=False).astype(np.int64))
+
+    unique_labels = np.unique(labels)
+    buckets: list[np.ndarray] = []
+    for label in unique_labels:
+        bucket = np.where(labels == label)[0].astype(np.int64)
+        rng.shuffle(bucket)
+        buckets.append(bucket)
+
+    selected: list[int] = []
+    depth = 0
+    while len(selected) < max_samples:
+        progressed = False
+        for bucket in buckets:
+            if depth < len(bucket):
+                selected.append(int(bucket[depth]))
+                progressed = True
+                if len(selected) >= max_samples:
+                    break
+        if not progressed:
+            break
+        depth += 1
+
+    return np.sort(np.asarray(selected, dtype=np.int64))
+
+
+def load_payload(
+    features_dir: Path,
+    dataset: str,
+    device: torch.device,
+    max_samples: int | None = None,
+    subset_mode: str = "stratified",
+    sample_seed: int = 1,
+) -> DatasetPayload:
     raw = load_dataset_features(features_dir, dataset)
-    image_features = torch.as_tensor(raw["image_features"], dtype=torch.float32, device=device)
-    text_features = torch.as_tensor(raw["text_features"], dtype=torch.float32, device=device)
-    labels = torch.as_tensor(raw["labels"], dtype=torch.long, device=device)
+    raw_image_features = raw["image_features"]
+    raw_text_features = raw["text_features"]
+    raw_labels = raw["labels"]
+    original_num_samples = int(raw_labels.shape[0])
+
+    subset_indices = choose_subset_indices(
+        labels=raw_labels,
+        max_samples=max_samples,
+        subset_mode=subset_mode,
+        sample_seed=sample_seed,
+    )
+
+    image_features = torch.as_tensor(raw_image_features[subset_indices], dtype=torch.float32, device=device)
+    text_features = torch.as_tensor(raw_text_features, dtype=torch.float32, device=device)
+    labels = torch.as_tensor(raw_labels[subset_indices], dtype=torch.long, device=device)
 
     image_features = F.normalize(image_features, dim=-1)
     text_features = F.normalize(text_features, dim=-1)
@@ -169,6 +192,7 @@ def load_payload(features_dir: Path, dataset: str, device: torch.device) -> Data
         raw_clip_logits=raw_clip_logits,
         raw_clip_probs=raw_clip_probs,
         raw_clip_entropy=raw_clip_entropy,
+        original_num_samples=original_num_samples,
     )
 
 
@@ -225,29 +249,52 @@ def prefix_class_balance(order: torch.Tensor, labels: torch.Tensor, num_classes:
     }
 
 
-def evaluate_tda_accuracy(payload: DatasetPayload, params: dict, order: torch.Tensor) -> float:
+def evaluate_tda_accuracy(
+    payload: DatasetPayload,
+    params: dict,
+    order: torch.Tensor,
+    progress_label: str | None = None,
+    progress_interval: int = 1000,
+) -> float:
     model = TDA(text_features=payload.text_features, device=payload.image_features.device, **params)
     correct = 0
     order_list = order.detach().cpu().tolist()
+    total = len(order_list)
     with torch.inference_mode():
-        for idx in order_list:
+        for step, idx in enumerate(order_list, start=1):
             pred, _, _ = model.predict(payload.image_features[idx])
             correct += int(pred.item() == payload.labels[idx].item())
+            if progress_label is not None and should_log_progress(step, total, progress_interval):
+                log(f"{progress_label}: {step}/{total} samples")
     return correct / max(payload.num_samples, 1)
 
 
-def evaluate_freetta_accuracy(payload: DatasetPayload, params: dict, order: torch.Tensor) -> float:
+def evaluate_freetta_accuracy(
+    payload: DatasetPayload,
+    params: dict,
+    order: torch.Tensor,
+    progress_label: str | None = None,
+    progress_interval: int = 1000,
+) -> float:
     model = FreeTTA(text_features=payload.text_features, device=payload.image_features.device, **params)
     correct = 0
     order_list = order.detach().cpu().tolist()
+    total = len(order_list)
     with torch.inference_mode():
-        for idx in order_list:
+        for step, idx in enumerate(order_list, start=1):
             pred, _ = model.predict(payload.image_features[idx], payload.raw_clip_logits[idx].unsqueeze(0))
             correct += int(pred.item() == payload.labels[idx].item())
+            if progress_label is not None and should_log_progress(step, total, progress_interval):
+                log(f"{progress_label}: {step}/{total} samples")
     return correct / max(payload.num_samples, 1)
 
 
-def run_pair_detailed(payload: DatasetPayload, order: torch.Tensor) -> tuple[dict, pd.DataFrame]:
+def run_pair_detailed(
+    payload: DatasetPayload,
+    order: torch.Tensor,
+    progress_label: str | None = None,
+    progress_interval: int = 1000,
+) -> tuple[dict, pd.DataFrame]:
     tda_params = BEST_TDA_PARAMS[payload.dataset]
     freetta_params = BEST_FREETTA_PARAMS[payload.dataset]
 
@@ -262,6 +309,7 @@ def run_pair_detailed(payload: DatasetPayload, order: torch.Tensor) -> tuple[dic
     freetta_correct = 0
 
     order_list = order.detach().cpu().tolist()
+    total = len(order_list)
     with torch.inference_mode():
         for stream_step, idx in enumerate(order_list):
             x = payload.image_features[idx]
@@ -385,9 +433,15 @@ def run_pair_detailed(payload: DatasetPayload, order: torch.Tensor) -> tuple[dic
                 }
             )
 
+            step = stream_step + 1
+            if progress_label is not None and should_log_progress(step, total, progress_interval):
+                log(f"{progress_label}: {step}/{total} samples")
+
     summary = {
         "dataset": payload.dataset,
         "samples": payload.num_samples,
+        "original_samples": payload.original_num_samples,
+        "sample_fraction": payload.num_samples / max(payload.original_num_samples, 1),
         "clip_acc": clip_correct / max(payload.num_samples, 1),
         "tda_acc": tda_correct / max(payload.num_samples, 1),
         "freetta_acc": freetta_correct / max(payload.num_samples, 1),
@@ -510,86 +564,212 @@ def summarize_break_even(details: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
     return pd.DataFrame(summary_rows), pd.DataFrame(running_rows)
 
 
-def run_order_stress_test(payloads: dict[str, DatasetPayload]) -> pd.DataFrame:
+def run_order_stress_test(
+    features_dir: Path,
+    datasets: list[str],
+    device: torch.device,
+    max_samples: int | None = None,
+    subset_mode: str = "stratified",
+    sample_seed: int = 1,
+    progress_interval: int = 1000,
+    output_path: Path | None = None,
+) -> pd.DataFrame:
     rows: list[dict] = []
-    for dataset, payload in payloads.items():
-        clip_acc = float((torch.argmax(payload.raw_clip_logits, dim=-1) == payload.labels).float().mean().item())
-        for scheme, order in build_orders(payload).items():
-            balance = prefix_class_balance(order, payload.labels, payload.num_classes)
-            tda_acc = evaluate_tda_accuracy(payload, BEST_TDA_PARAMS[dataset], order)
-            freetta_acc = evaluate_freetta_accuracy(payload, BEST_FREETTA_PARAMS[dataset], order)
-            rows.append(
-                {
-                    "dataset": dataset,
-                    "scheme": scheme,
-                    "clip_acc": clip_acc,
-                    "tda_acc": tda_acc,
-                    "freetta_acc": freetta_acc,
-                    "freetta_minus_tda": freetta_acc - tda_acc,
-                    **balance,
-                }
-            )
+    total_datasets = len(datasets)
+    for dataset_idx, dataset in enumerate(datasets, start=1):
+        log(f"[Order Stress {dataset_idx}/{total_datasets}] Loading {dataset}")
+        payload = load_payload(
+            features_dir,
+            dataset,
+            device,
+            max_samples=max_samples,
+            subset_mode=subset_mode,
+            sample_seed=sample_seed,
+        )
+        try:
+            clip_acc = float((torch.argmax(payload.raw_clip_logits, dim=-1) == payload.labels).float().mean().item())
+            orders = build_orders(payload)
+            total_schemes = len(orders)
+            for scheme_idx, (scheme, order) in enumerate(orders.items(), start=1):
+                label_prefix = f"[Order Stress {dataset} {scheme_idx}/{total_schemes}]"
+                log(f"{label_prefix} Evaluating TDA and FreeTTA")
+                balance = prefix_class_balance(order, payload.labels, payload.num_classes)
+                tda_acc = evaluate_tda_accuracy(
+                    payload,
+                    BEST_TDA_PARAMS[dataset],
+                    order,
+                    progress_label=f"{label_prefix} TDA",
+                    progress_interval=progress_interval,
+                )
+                freetta_acc = evaluate_freetta_accuracy(
+                    payload,
+                    BEST_FREETTA_PARAMS[dataset],
+                    order,
+                    progress_label=f"{label_prefix} FreeTTA",
+                    progress_interval=progress_interval,
+                )
+                rows.append(
+                    {
+                        "dataset": dataset,
+                        "scheme": scheme,
+                        "clip_acc": clip_acc,
+                        "tda_acc": tda_acc,
+                        "freetta_acc": freetta_acc,
+                        "freetta_minus_tda": freetta_acc - tda_acc,
+                        **balance,
+                    }
+                )
+                if output_path is not None:
+                    pd.DataFrame(rows).to_csv(output_path, index=False)
+        finally:
+            del payload
+            release_gpu_memory(device)
     return pd.DataFrame(rows)
 
 
-def run_tda_cache_ablation(payloads: dict[str, DatasetPayload]) -> tuple[pd.DataFrame, pd.DataFrame]:
+def run_tda_cache_ablation(
+    features_dir: Path,
+    datasets: list[str],
+    device: torch.device,
+    max_samples: int | None = None,
+    subset_mode: str = "stratified",
+    sample_seed: int = 1,
+    progress_interval: int = 1000,
+    variant_output_path: Path | None = None,
+    shot_output_path: Path | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     variant_rows: list[dict] = []
     shot_rows: list[dict] = []
 
-    for dataset, payload in payloads.items():
-        natural = build_orders(payload)["natural"]
-        base_params = dict(BEST_TDA_PARAMS[dataset])
+    total_datasets = len(datasets)
+    for dataset_idx, dataset in enumerate(datasets, start=1):
+        log(f"[TDA Ablation {dataset_idx}/{total_datasets}] Loading {dataset}")
+        payload = load_payload(
+            features_dir,
+            dataset,
+            device,
+            max_samples=max_samples,
+            subset_mode=subset_mode,
+            sample_seed=sample_seed,
+        )
+        try:
+            natural = build_orders(payload)["natural"]
+            base_params = dict(BEST_TDA_PARAMS[dataset])
 
-        for variant in ("both", "positive_only", "negative_only"):
-            params = dict(base_params)
-            if variant == "positive_only":
-                params["neg_alpha"] = 0.0
-            elif variant == "negative_only":
-                params["alpha"] = 0.0
-            acc = evaluate_tda_accuracy(payload, params, natural)
-            variant_rows.append(
-                {
-                    "dataset": dataset,
-                    "variant": variant,
-                    "tda_acc": acc,
-                    "clip_acc": float((torch.argmax(payload.raw_clip_logits, dim=-1) == payload.labels).float().mean().item()),
-                }
-            )
+            for variant in ("both", "positive_only", "negative_only"):
+                params = dict(base_params)
+                if variant == "positive_only":
+                    params["neg_alpha"] = 0.0
+                elif variant == "negative_only":
+                    params["alpha"] = 0.0
+                log(f"[TDA Ablation {dataset}] Variant {variant}")
+                acc = evaluate_tda_accuracy(
+                    payload,
+                    params,
+                    natural,
+                    progress_label=f"[TDA Ablation {dataset} {variant}]",
+                    progress_interval=progress_interval,
+                )
+                variant_rows.append(
+                    {
+                        "dataset": dataset,
+                        "variant": variant,
+                        "tda_acc": acc,
+                        "clip_acc": float((torch.argmax(payload.raw_clip_logits, dim=-1) == payload.labels).float().mean().item()),
+                    }
+                )
+                if variant_output_path is not None:
+                    pd.DataFrame(variant_rows).to_csv(variant_output_path, index=False)
 
-        for shot_capacity in TDA_SHOT_GRID:
-            params = dict(base_params)
-            params["shot_capacity"] = int(shot_capacity)
-            acc = evaluate_tda_accuracy(payload, params, natural)
-            shot_rows.append(
-                {
-                    "dataset": dataset,
-                    "shot_capacity": int(shot_capacity),
-                    "effective_slots_per_cache": int(shot_capacity) * payload.num_classes,
-                    "tda_acc": acc,
-                }
-            )
+            for shot_capacity in TDA_SHOT_GRID:
+                params = dict(base_params)
+                params["shot_capacity"] = int(shot_capacity)
+                log(f"[TDA Ablation {dataset}] Shot capacity {shot_capacity}")
+                acc = evaluate_tda_accuracy(
+                    payload,
+                    params,
+                    natural,
+                    progress_label=f"[TDA Ablation {dataset} shots={shot_capacity}]",
+                    progress_interval=progress_interval,
+                )
+                shot_rows.append(
+                    {
+                        "dataset": dataset,
+                        "shot_capacity": int(shot_capacity),
+                        "effective_slots_per_cache": int(shot_capacity) * payload.num_classes,
+                        "tda_acc": acc,
+                    }
+                )
+                if shot_output_path is not None:
+                    pd.DataFrame(shot_rows).to_csv(shot_output_path, index=False)
+        finally:
+            del payload
+            release_gpu_memory(device)
 
     return pd.DataFrame(variant_rows), pd.DataFrame(shot_rows)
 
 
-def run_freetta_param_sweep(payloads: dict[str, DatasetPayload]) -> pd.DataFrame:
+def run_freetta_param_sweep(
+    features_dir: Path,
+    datasets: list[str],
+    device: torch.device,
+    max_samples: int | None = None,
+    subset_mode: str = "stratified",
+    sample_seed: int = 1,
+    progress_interval: int = 1000,
+    output_path: Path | None = None,
+) -> pd.DataFrame:
     rows: list[dict] = []
-    for dataset, payload in payloads.items():
-        natural = build_orders(payload)["natural"]
-        tda_reference = evaluate_tda_accuracy(payload, BEST_TDA_PARAMS[dataset], natural)
-        for alpha in FREETTA_ALPHA_GRID:
-            for beta in FREETTA_BETA_GRID:
-                params = {"alpha": float(alpha), "beta": float(beta)}
-                acc = evaluate_freetta_accuracy(payload, params, natural)
-                rows.append(
-                    {
-                        "dataset": dataset,
-                        "alpha": float(alpha),
-                        "beta": float(beta),
-                        "freetta_acc": acc,
-                        "freetta_minus_tda": acc - tda_reference,
-                    }
-                )
+    total_datasets = len(datasets)
+    total_combos = len(FREETTA_ALPHA_GRID) * len(FREETTA_BETA_GRID)
+    for dataset_idx, dataset in enumerate(datasets, start=1):
+        log(f"[FreeTTA Sweep {dataset_idx}/{total_datasets}] Loading {dataset}")
+        payload = load_payload(
+            features_dir,
+            dataset,
+            device,
+            max_samples=max_samples,
+            subset_mode=subset_mode,
+            sample_seed=sample_seed,
+        )
+        try:
+            natural = build_orders(payload)["natural"]
+            log(f"[FreeTTA Sweep {dataset}] Computing TDA reference")
+            tda_reference = evaluate_tda_accuracy(
+                payload,
+                BEST_TDA_PARAMS[dataset],
+                natural,
+                progress_label=f"[FreeTTA Sweep {dataset} TDA reference]",
+                progress_interval=progress_interval,
+            )
+            combo_idx = 0
+            for alpha in FREETTA_ALPHA_GRID:
+                for beta in FREETTA_BETA_GRID:
+                    combo_idx += 1
+                    params = {"alpha": float(alpha), "beta": float(beta)}
+                    combo_label = f"[FreeTTA Sweep {dataset} {combo_idx}/{total_combos}] alpha={alpha}, beta={beta}"
+                    log(combo_label)
+                    acc = evaluate_freetta_accuracy(
+                        payload,
+                        params,
+                        natural,
+                        progress_label=combo_label,
+                        progress_interval=progress_interval,
+                    )
+                    rows.append(
+                        {
+                            "dataset": dataset,
+                            "alpha": float(alpha),
+                            "beta": float(beta),
+                            "freetta_acc": acc,
+                            "freetta_minus_tda": acc - tda_reference,
+                        }
+                    )
+                    if output_path is not None:
+                        pd.DataFrame(rows).to_csv(output_path, index=False)
+        finally:
+            del payload
+            release_gpu_memory(device)
     return pd.DataFrame(rows)
 
 
@@ -663,8 +843,7 @@ def plot_flip_precision(mechanism_df: pd.DataFrame, output_path: Path) -> None:
 
 def plot_running_gains(running_df: pd.DataFrame, break_even_df: pd.DataFrame, output_path: Path) -> None:
     datasets = running_df["dataset"].unique().tolist()
-    fig, axes = plt.subplots(2, 2, figsize=(10.5, 7.8), sharex=True, sharey=True)
-    axes = axes.flatten()
+    fig, axes = make_axes_grid(len(datasets), ncols=2)
 
     for ax, dataset in zip(axes, datasets):
         group = running_df[running_df["dataset"] == dataset]
@@ -676,10 +855,11 @@ def plot_running_gains(running_df: pd.DataFrame, break_even_df: pd.DataFrame, ou
         ax.set_title(dataset)
         ax.grid(alpha=0.25)
 
-    for ax in axes[2:]:
+    for ax in axes[: len(datasets)]:
         ax.set_xlabel("Stream progress")
-    for ax in (axes[0], axes[2]):
         ax.set_ylabel("Rolling FreeTTA - TDA accuracy (pp)")
+    for ax in axes[len(datasets) :]:
+        ax.set_visible(False)
 
     fig.suptitle("When FreeTTA Starts Beating TDA")
     fig.tight_layout()
@@ -757,8 +937,7 @@ def plot_tda_ablation(variant_df: pd.DataFrame, shot_df: pd.DataFrame, summary_d
 
 def plot_freetta_heatmaps(param_df: pd.DataFrame, output_path: Path) -> None:
     datasets = sorted(param_df["dataset"].unique().tolist())
-    fig, axes = plt.subplots(2, 2, figsize=(10.8, 7.8), sharex=True, sharey=True)
-    axes = axes.flatten()
+    fig, axes = make_axes_grid(len(datasets), ncols=2)
 
     alpha_labels = list(FREETTA_ALPHA_GRID)
     beta_labels = list(FREETTA_BETA_GRID)
@@ -782,12 +961,13 @@ def plot_freetta_heatmaps(param_df: pd.DataFrame, output_path: Path) -> None:
             for j in range(mat.shape[1]):
                 ax.text(j, i, f"{mat[i, j]:.1f}", ha="center", va="center", fontsize=8)
 
-    for ax in axes[2:]:
+    for ax in axes[: len(datasets)]:
         ax.set_xlabel("beta")
-    for ax in (axes[0], axes[2]):
         ax.set_ylabel("alpha")
+    for ax in axes[len(datasets) :]:
+        ax.set_visible(False)
 
-    fig.colorbar(im, ax=axes.tolist(), fraction=0.03, pad=0.02, label="FreeTTA - TDA (pp)")
+    fig.colorbar(im, ax=axes[: len(datasets)].tolist(), fraction=0.03, pad=0.02, label="FreeTTA - TDA (pp)")
     fig.suptitle("FreeTTA sensitivity to alpha and beta")
     fig.tight_layout()
     fig.savefig(output_path, dpi=220)
@@ -848,6 +1028,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/workshop_superiority"))
     parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="cpu")
     parser.add_argument("--datasets", nargs="*", default=list(DEFAULT_DATASETS))
+    parser.add_argument("--max-samples-per-dataset", type=int, default=None)
+    parser.add_argument("--subset-mode", choices=["stratified", "random", "head"], default="stratified")
+    parser.add_argument("--sample-seed", type=int, default=1)
+    parser.add_argument("--progress-interval", type=int, default=1000)
     parser.add_argument("--skip-order-stress", action="store_true")
     parser.add_argument("--skip-tda-ablation", action="store_true")
     parser.add_argument("--skip-freetta-sweep", action="store_true")
@@ -857,34 +1041,115 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     device = resolve_device(args.device)
+    available = set(list_available_datasets(args.features_dir))
+    requested = [str(dataset).lower() for dataset in args.datasets]
+    datasets = [dataset for dataset in requested if dataset in available]
+    skipped = [dataset for dataset in requested if dataset not in available]
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    payloads = {dataset: load_payload(args.features_dir, dataset, device) for dataset in args.datasets}
+    log(
+        "Starting superiority analysis "
+        f"on {len(datasets)} dataset(s) with device={device.type}, "
+        f"max_samples_per_dataset={args.max_samples_per_dataset}, subset_mode={args.subset_mode}, "
+        f"progress_interval={args.progress_interval}"
+    )
+    if skipped:
+        log(f"Skipping datasets without features: {skipped}")
+    if not datasets:
+        raise RuntimeError(f"No requested datasets were available in {args.features_dir}")
 
     summary_rows: list[dict] = []
     detail_frames: list[pd.DataFrame] = []
-    for dataset, payload in payloads.items():
-        natural = build_orders(payload)["natural"]
-        summary, detail_df = run_pair_detailed(payload, natural)
-        summary_rows.append(summary)
-        detail_frames.append(detail_df)
+    total_datasets = len(datasets)
+    for dataset_idx, dataset in enumerate(datasets, start=1):
+        log(f"[Natural Pass {dataset_idx}/{total_datasets}] Loading {dataset}")
+        payload = load_payload(
+            args.features_dir,
+            dataset,
+            device,
+            max_samples=args.max_samples_per_dataset,
+            subset_mode=args.subset_mode,
+            sample_seed=args.sample_seed,
+        )
+        try:
+            if payload.num_samples != payload.original_num_samples:
+                log(
+                    f"[Natural Pass {dataset_idx}/{total_datasets}] Using subset for {dataset}: "
+                    f"{payload.num_samples}/{payload.original_num_samples} samples"
+                )
+            natural = build_orders(payload)["natural"]
+            summary, detail_df = run_pair_detailed(
+                payload,
+                natural,
+                progress_label=f"[Natural Pass {dataset}]",
+                progress_interval=args.progress_interval,
+            )
+            summary_rows.append(summary)
+            detail_frames.append(detail_df)
+            pd.DataFrame(summary_rows).sort_values("dataset").reset_index(drop=True).to_csv(
+                args.output_dir / "natural_order_summary.csv", index=False
+            )
+            pd.concat(detail_frames, ignore_index=True).to_csv(args.output_dir / "natural_order_per_sample.csv", index=False)
+            log(f"[Natural Pass {dataset_idx}/{total_datasets}] Saved intermediate natural-order outputs for {dataset}")
+        finally:
+            del payload
+            release_gpu_memory(device)
 
     summary_df = pd.DataFrame(summary_rows).sort_values("dataset").reset_index(drop=True)
     details_df = pd.concat(detail_frames, ignore_index=True)
+    log("Summarizing mechanism and break-even metrics")
     mechanism_df = summarize_mechanism_metrics(details_df)
     break_even_df, running_df = summarize_break_even(details_df)
-    order_df = run_order_stress_test(payloads) if not args.skip_order_stress else pd.DataFrame()
-    if not args.skip_tda_ablation:
-        variant_df, shot_df = run_tda_cache_ablation(payloads)
-    else:
-        variant_df, shot_df = pd.DataFrame(), pd.DataFrame()
-    freetta_sweep_df = run_freetta_param_sweep(payloads) if not args.skip_freetta_sweep else pd.DataFrame()
-
     summary_df.to_csv(args.output_dir / "natural_order_summary.csv", index=False)
     details_df.to_csv(args.output_dir / "natural_order_per_sample.csv", index=False)
     mechanism_df.to_csv(args.output_dir / "mechanism_metrics.csv", index=False)
     break_even_df.to_csv(args.output_dir / "break_even_metrics.csv", index=False)
     running_df.to_csv(args.output_dir / "running_gain_metrics.csv", index=False)
+
+    if not args.skip_order_stress:
+        log("Starting order stress test")
+        order_df = run_order_stress_test(
+            features_dir=args.features_dir,
+            datasets=list(datasets),
+            device=device,
+            max_samples=args.max_samples_per_dataset,
+            subset_mode=args.subset_mode,
+            sample_seed=args.sample_seed,
+            progress_interval=args.progress_interval,
+            output_path=args.output_dir / "order_stress_test.csv",
+        )
+    else:
+        order_df = pd.DataFrame()
+    if not args.skip_tda_ablation:
+        log("Starting TDA cache ablation")
+        variant_df, shot_df = run_tda_cache_ablation(
+            features_dir=args.features_dir,
+            datasets=list(datasets),
+            device=device,
+            max_samples=args.max_samples_per_dataset,
+            subset_mode=args.subset_mode,
+            sample_seed=args.sample_seed,
+            progress_interval=args.progress_interval,
+            variant_output_path=args.output_dir / "tda_cache_variants.csv",
+            shot_output_path=args.output_dir / "tda_shot_capacity_sweep.csv",
+        )
+    else:
+        variant_df, shot_df = pd.DataFrame(), pd.DataFrame()
+    if not args.skip_freetta_sweep:
+        log("Starting FreeTTA parameter sweep")
+        freetta_sweep_df = run_freetta_param_sweep(
+            features_dir=args.features_dir,
+            datasets=list(datasets),
+            device=device,
+            max_samples=args.max_samples_per_dataset,
+            subset_mode=args.subset_mode,
+            sample_seed=args.sample_seed,
+            progress_interval=args.progress_interval,
+            output_path=args.output_dir / "freetta_param_sweep.csv",
+        )
+    else:
+        freetta_sweep_df = pd.DataFrame()
+
     if not order_df.empty:
         order_df.to_csv(args.output_dir / "order_stress_test.csv", index=False)
     if not variant_df.empty:
@@ -894,6 +1159,7 @@ def main() -> None:
     if not freetta_sweep_df.empty:
         freetta_sweep_df.to_csv(args.output_dir / "freetta_param_sweep.csv", index=False)
 
+    log("Rendering plots")
     plot_calibration(mechanism_df, args.output_dir / "calibration_ece.png")
     plot_entropy_quality(mechanism_df, args.output_dir / "entropy_quality.png")
     plot_flip_precision(mechanism_df, args.output_dir / "flip_precision.png")
@@ -906,6 +1172,7 @@ def main() -> None:
         plot_freetta_heatmaps(freetta_sweep_df, args.output_dir / "freetta_param_heatmaps.png")
 
     if not order_df.empty and not variant_df.empty and not freetta_sweep_df.empty:
+        log("Writing report notes")
         write_report_notes(
             summary_df=summary_df,
             mechanism_df=mechanism_df,
@@ -915,6 +1182,8 @@ def main() -> None:
             freetta_sweep_df=freetta_sweep_df,
             output_path=args.output_dir / "report_notes.md",
         )
+
+    log(f"Superiority analysis complete. Outputs written to {args.output_dir}")
 
 
 if __name__ == "__main__":

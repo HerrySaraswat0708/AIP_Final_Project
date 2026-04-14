@@ -35,6 +35,7 @@ Place feature files in `data/processed` using names:
 - `<dataset>_labels.npy`
 
 The loader is case-insensitive and supports aliases like `caltech101 -> caltech`, `pet -> pets`.
+It also recognizes `imagenet64`, `imagenet64_val`, and `imagenet_64eval -> imagenet64`.
 
 ## Run the Full Comparison
 
@@ -47,6 +48,12 @@ python experiments/run_project_comparison.py \
 
 `imagenet` is optional and will be skipped automatically if feature files are not present.
 
+You can also run the downsampled ImageNet64 validation dump as a separate dataset:
+
+```bash
+python comparison.py --datasets imagenet64 --paper-backbone off
+```
+
 ## (Optional) Extract ImageNet Features
 
 If you have the official ImageNet validation set at `data/raw/IMAGENET`:
@@ -54,6 +61,32 @@ If you have the official ImageNet validation set at `data/raw/IMAGENET`:
 ```bash
 python src/imagenet_extractor.py --root data/raw/IMAGENET --batch-size 32
 ```
+
+The extractor supports either:
+
+- a `torchvision`-style ImageNet root with `meta.bin` and `val/`, or
+- a folder layout like `images/val/<wnid>/*.JPEG` plus `classnames.txt`
+
+## (Optional) Extract ImageNet64 Features
+
+If you have a downsampled validation dump such as `data/raw/Imagenet64_val/val_data`:
+
+```bash
+python src/imagenet64_extractor.py --root data/raw/Imagenet64_val
+```
+
+If you already extracted the image features once and only need to refresh the label prompts:
+
+```bash
+python src/imagenet64_extractor.py \
+  --root data/raw/Imagenet64_val \
+  --skip-image-features
+```
+
+For the best label mapping, place `map_clsloc.txt` next to `val_data`.
+The repo now prefers that file automatically when building ImageNet64 text prompts.
+
+`imagenet64` is included as a convenience dataset for the downsampled dump, but it is not the same benchmark as the paper's full-resolution `ImageNet-1K` validation set.
 
 ## Quick Debug Run
 

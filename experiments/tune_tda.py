@@ -6,15 +6,15 @@ from pathlib import Path
 import torch
 
 from experiments.evaluate_tda import evaluate_clip_loaded, evaluate_loaded, load_tda_dataset
+from src.feature_store import list_available_datasets
+from src.paper_configs import DEFAULT_DATASETS, PAPER_TDA_DEFAULTS
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 PAPER_DEFAULTS = {
-    "dtd": {"alpha": 2.0, "beta": 3.0},
-    "caltech": {"alpha": 5.0, "beta": 5.0},
-    "eurosat": {"alpha": 4.0, "beta": 8.0},
-    "pets": {"alpha": 2.0, "beta": 7.0},
+    key: {"alpha": float(value["alpha"]), "beta": float(value["beta"])}
+    for key, value in PAPER_TDA_DEFAULTS.items()
 }
 
 
@@ -29,21 +29,21 @@ def canonical(ds: str) -> str:
 # ----------------------------
 # SEARCH SPACE (paper-aligned)
 # ----------------------------
-datasets = ["dtd", "caltech", "eurosat", "pets"]
+features_dir = Path("data/processed")
+available = set(list_available_datasets(features_dir))
+datasets = [dataset for dataset in DEFAULT_DATASETS if dataset in available]
 cache_size_list = [1000]  # retained for backward compatibility
 shot_capacity_list = [3]
 k_list = [0]
-alpha_scales = [2.0, 0.75, 1.5, 6.0]
-beta_scales = [3.0, 1.5, 9]
+alpha_scales = [0.75, 1.0, 1.5, 2.0, 6.0]
+beta_scales = [1.0, 1.5, 3.0, 9.0]
 low_entropy_thresh_list = [0.2]
 high_entropy_thresh_list = [0.5]
-neg_alpha_list = [0.0, 0.05, 0.3]
+neg_alpha_list = [0.0, 0.05, 0.117, 0.3]
 neg_beta_list = [1.0]
 neg_mask_lower_list = [0.03]
 neg_mask_upper_list = [1.0]
 clip_scale_list = [100.0]
-fallback_to_clip = True
-fallback_margin = 0.0
 max_samples = None
 
 use_cuda = device.type == "cuda"
@@ -60,7 +60,7 @@ for dataset_name in datasets:
         dataset=dataset_name,
         device=device,
         max_samples=max_samples,
-        features_dir="data/processed",
+        features_dir=str(features_dir),
     )
     dataset_key = canonical(payload["dataset"])
 
@@ -68,6 +68,9 @@ for dataset_name in datasets:
     print(f"\n[Loaded] {dataset_key} samples={payload['num_samples']} device={device} clip_acc={clip_acc:.6f}")
 
     base = PAPER_DEFAULTS.get(dataset_key, {"alpha": 2.0, "beta": 5.0})
+    base_cfg = PAPER_TDA_DEFAULTS.get(dataset_key, PAPER_TDA_DEFAULTS["imagenet"])
+    fallback_to_clip = bool(base_cfg.get("fallback_to_clip", True))
+    fallback_margin = float(base_cfg.get("fallback_margin", 0.0))
 
     dataset_rows = []
     for c_size in cache_size_list:
@@ -168,7 +171,7 @@ report = {
     "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     "device": str(device),
     "max_samples": max_samples,
-    "features_dir": "data/processed",
+    "features_dir": str(features_dir),
     "search_space": {
         "datasets": datasets,
         "cache_size_list": cache_size_list,

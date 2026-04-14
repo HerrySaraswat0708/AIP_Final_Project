@@ -13,9 +13,10 @@ if str(PROJECT_ROOT) not in sys.path:
 import torch
 
 from experiments.evaluate_tda import evaluate_clip_loaded, evaluate_loaded, load_tda_dataset
+from src.feature_store import list_available_datasets
+from src.paper_configs import DEFAULT_DATASETS, PAPER_TDA_DEFAULTS
 
 
-DEFAULT_DATASETS = ["dtd", "caltech", "eurosat", "pets"]
 PARAMS_JSON = Path("outputs/tuning/tda_target_matched_params.json")
 OUTPUT_JSON = Path("outputs/tuning/best_tda_run_results.json")
 
@@ -30,15 +31,19 @@ def load_best_configs(path):
 
 def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    best_configs = load_best_configs(PARAMS_JSON)
+    best_configs = load_best_configs(PARAMS_JSON) if PARAMS_JSON.exists() else {}
     rows = []  # type: List[Dict]
+    available = set(list_available_datasets(Path("data/processed")))
 
     for dataset in DEFAULT_DATASETS:
-        if dataset not in best_configs:
-            print(f"[Skip] No TDA config found for dataset={dataset}")
+        if dataset not in available:
+            print(f"[Skip] Missing features for dataset={dataset}")
             continue
 
-        cfg = best_configs[dataset]
+        cfg = dict(best_configs.get(dataset, PAPER_TDA_DEFAULTS.get(dataset, {})))
+        if not cfg:
+            print(f"[Skip] No TDA config found for dataset={dataset}")
+            continue
         payload = load_tda_dataset(
             dataset=dataset,
             device=device,

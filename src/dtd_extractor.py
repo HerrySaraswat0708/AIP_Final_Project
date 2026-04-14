@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
-import clip
 import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.clip_compat import get_clip_module
 from src.dtd_loader import load_dtd
 
 
@@ -156,6 +161,7 @@ def extract_dtd():
     if device.type == "cuda":
         print("GPU:", torch.cuda.get_device_name(0))
 
+    clip = get_clip_module()
     model, preprocess = clip.load("ViT-B/16", device=device)
     model.eval()
 

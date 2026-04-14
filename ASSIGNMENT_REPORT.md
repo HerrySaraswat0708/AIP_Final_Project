@@ -458,3 +458,135 @@ After the new experiments, I would summarize the comparison like this:
 - **Why FreeTTA is superior:** it is better at making **selective, global corrections** once a small amount of target evidence has been accumulated. Its gains appear especially on harder datasets and can emerge after only about 5% of the stream.
 - **Why TDA can still win:** it is stronger when **local exemplar retrieval** is more useful than a global class-distribution model, and it can be slightly better in streams arranged from **easy-to-hard** where the global online EM statistics become anchored too early.
 - **What the new analyses add beyond the papers:** the papers do not tell us about calibration mismatch, selective entropy reduction, safe-versus-harmful correction behavior, break-even sample counts, or the easy-to-hard failure mode. These analyses give a much more workshop-ready mechanistic explanation of the baseline-versus-extension relationship.
+
+## 14. Additional Analyses Found in the Provided PDF
+
+I also checked the user-provided PDF report:
+
+- `C:/Users/LENOVO/OneDrive/Desktop/Deep Comparative Study of TDA and FreeTTA for Test-Time Adaptation in Vision–Language Models.pdf`
+
+It contains several useful analyses that are **not yet explicitly covered** in my main benchmark-based report. I am adding them here, but with an important honesty note:
+
+- the sections below are **derived from the provided PDF**,
+- they are conceptually valuable and report-ready,
+- but they were **not rerun inside this repository** unless explicitly stated earlier in Sections 11-13.
+
+This keeps the final report academically cleaner: benchmark results come from this repo, while the following points are imported from the supplied PDF's synthetic-study perspective.
+
+### 14.1 Sufficient-Statistic Compression Versus Finite Cache Approximation
+
+The PDF frames TDA and FreeTTA as two fundamentally different estimators:
+
+- **TDA** is a finite-memory, non-parametric approximation of the target distribution using a small cache of exemplar features.
+- **FreeTTA** is a parametric compressed estimator that stores sufficient-statistic-like state: class means, covariance, and priors.
+
+This is a strong new conceptual lens because it explains FreeTTA's superiority not only in terms of accuracy, but also in terms of:
+
+- **statistical efficiency**,
+- **memory efficiency**,
+- **distribution-level modeling ability**.
+
+The report-quality takeaway is:
+
+> TDA spends memory on remembered samples, while FreeTTA spends memory on remembered statistics.
+
+That makes FreeTTA especially attractive in long streams or memory-constrained deployment, where a finite cache can saturate but sufficient-statistics updates can continue absorbing evidence.
+
+### 14.2 Confidence-Gated Cache Selection Creates Selection Bias
+
+The provided PDF highlights a subtle issue with TDA that is not usually emphasized:
+
+- TDA's positive cache is filled mainly by **low-entropy / high-confidence** pseudo-labels.
+- This means the cache may become a **biased subset of easy examples**, rather than a faithful representation of the whole target class distribution.
+
+This is different from simply saying "TDA uses entropy."
+
+The deeper point is:
+
+- In **TDA**, entropy affects **which samples are allowed to represent the class**.
+- In **FreeTTA**, entropy affects **how much each sample influences the parameter update**.
+
+So the two methods use uncertainty in structurally different ways. This gives another mechanistic argument for why FreeTTA can better capture target-distribution structure, especially when classes contain easy and hard sub-modes.
+
+### 14.3 Burn-In / Initial-Sample Sensitivity for FreeTTA
+
+The provided PDF also includes a useful ablation for the question:
+
+> "How many initial samples are needed before FreeTTA should start adapting?"
+
+Its synthetic study introduces a **burn-in period**, where FreeTTA delays its online updates for the first `B` samples.
+
+The key message from that PDF analysis is:
+
+- a **small burn-in** can stabilize early adaptation,
+- but a **large burn-in** leaves the distribution parameters stale for too long and hurts adaptation quality.
+
+This complements my own benchmark-based break-even analysis from Section 11.4:
+
+- Section 11.4 measured **when FreeTTA starts helping** on real benchmark streams.
+- The PDF's burn-in study explains **why too much delay can be harmful**, even if some early caution is useful.
+
+Together, these give a stronger report story:
+
+- FreeTTA generally needs only a modest amount of evidence,
+- but adaptation should not be postponed too aggressively.
+
+### 14.4 Multimodal Class Structure Is a Natural Failure Case for FreeTTA
+
+One of the clearest additional insights in the PDF is a synthetic **multimodal-class** experiment:
+
+- when each class has multiple separated modes,
+- and the stream shifts between modes,
+- **TDA can outperform FreeTTA**.
+
+This is extremely important because it gives a mathematically justified limitation:
+
+- FreeTTA's class model is approximately **one Gaussian per class** with shared covariance,
+- so it is fundamentally **unimodal** at the class level,
+- whereas TDA's cache is **non-parametric** and can preserve several separated exemplars.
+
+This strengthens my earlier claim from Section 13:
+
+- **FreeTTA** is stronger when the class distribution is smooth and summarizable,
+- **TDA** can be stronger when the target class geometry is multi-modal, rare-subtype-heavy, or exemplar-driven.
+
+This PDF analysis therefore provides the cleanest structural explanation of **when the baseline can still beat the extension**.
+
+### 14.5 Single-Sample Influence and Poisoning Sensitivity
+
+Another useful analysis in the PDF is a controlled **single-sample perturbation / poisoning sensitivity** test:
+
+- replace one mid-stream sample with a highly confident prototype-like sample,
+- then measure how much downstream behavior changes.
+
+The PDF reports that:
+
+- **TDA** shows nonzero downstream sensitivity,
+- **FreeTTA** shows much smaller or near-zero downstream effect in the demonstrated setup.
+
+This aligns well with the conceptual update rules:
+
+- TDA can change abruptly because a new exemplar may enter or replace a cache entry,
+- FreeTTA updates its statistics through smoother weighted averaging.
+
+So this PDF contributes one more strong workshop-quality message:
+
+> FreeTTA is not only a distribution model; it is also a smoother online estimator with lower single-sample leverage.
+
+That matters in safety-sensitive settings, because stability is often as important as top-1 accuracy.
+
+### 14.6 How These PDF Analyses Fit With My Main Report
+
+After integrating the PDF, the overall comparative picture becomes even stronger:
+
+- My repo-based experiments establish **real benchmark evidence** for accuracy, disagreement quality, calibration mismatch, break-even sample counts, order sensitivity, and parameter sweeps.
+- The provided PDF adds **extra theoretical and synthetic support** for:
+  - memory-versus-statistics interpretation,
+  - selection-bias effects from hard confidence gating,
+  - burn-in sensitivity,
+  - multimodal failure cases for FreeTTA,
+  - and single-sample influence stability.
+
+So if you want the final workshop-style narrative to sound more mature, the cleanest summary is:
+
+> TDA and FreeTTA are not just two TTA algorithms. They are two different beliefs about what should be remembered from the test stream: exemplars versus distribution parameters. FreeTTA wins when compressed target statistics are enough and stability matters; TDA wins when rare modes, exemplar diversity, or strong local neighborhoods matter more than a unimodal class summary.

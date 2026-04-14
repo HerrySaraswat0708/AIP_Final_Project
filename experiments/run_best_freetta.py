@@ -12,21 +12,27 @@ if str(PROJECT_ROOT) not in sys.path:
 import torch
 
 from experiments.evaluate_freetta import evaluate_loaded, load_freetta_dataset
+from src.feature_store import list_available_datasets
+from src.paper_configs import DEFAULT_DATASETS, DEFAULT_FREETTA_PARAMS
 
 
-BEST_CONFIGS = {
-    "dtd": {"alpha": 0.2, "beta": 2.0},
-    "caltech": {"alpha": 0.1, "beta": 1.0},
-    "eurosat": {"alpha": 0.3, "beta": 4.5},
-    "pets": {"alpha": 0.1, "beta": 0.1},
-}
+BEST_CONFIGS = DEFAULT_FREETTA_PARAMS
 
 
 def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     rows = {}
+    available = set(list_available_datasets(Path("data/processed")))
 
-    for dataset, cfg in BEST_CONFIGS.items():
+    for dataset in DEFAULT_DATASETS:
+        if dataset not in available:
+            print(f"[Skip] Missing features for dataset={dataset}")
+            continue
+
+        cfg = BEST_CONFIGS.get(dataset)
+        if cfg is None:
+            print(f"[Skip] No FreeTTA config found for dataset={dataset}")
+            continue
         payload = load_freetta_dataset(
             dataset=dataset,
             device=device,

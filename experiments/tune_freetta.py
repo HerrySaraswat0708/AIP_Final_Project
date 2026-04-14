@@ -6,6 +6,8 @@ from pathlib import Path
 import torch
 
 from experiments.evaluate_freetta import evaluate_loaded, load_freetta_dataset
+from src.feature_store import list_available_datasets
+from src.paper_configs import DEFAULT_DATASETS, DEFAULT_FREETTA_PARAMS
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -15,19 +17,16 @@ def best_by_accuracy(rows):
     return max(rows, key=lambda item: float(item["accuracy"]))
 
 
-datasets = ["DTD", "caltech", "eurosat", "pets"]
+features_dir = Path("data/processed")
+available = set(list_available_datasets(features_dir))
+datasets = [dataset for dataset in DEFAULT_DATASETS if dataset in available]
 
 # FreeTTA is sensitive to alpha; beta controls entropy-based update weight.
 alpha_list = [0.0, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2]
 beta_list = [0.1, 0.5, 1.0, 2.0, 4.5]
 
 # Strong defaults from corrected online-EM runs in this repo.
-recommended_defaults = {
-    "dtd": {"alpha": 0.2, "beta": 2.0},
-    "caltech": {"alpha": 0.1, "beta": 1.0},
-    "eurosat": {"alpha": 0.3, "beta": 4.5},
-    "pets": {"alpha": 0.1, "beta": 0.1},
-}
+recommended_defaults = DEFAULT_FREETTA_PARAMS
 
 
 best_per_dataset = {}
@@ -44,7 +43,7 @@ for dataset in datasets:
         dataset=dataset,
         device=device,
         max_samples=None,
-        features_dir="data/processed",
+        features_dir=str(features_dir),
     )
 
     print(f"[Loaded] {dataset} samples={payload['num_samples']} device={device}")
@@ -63,7 +62,7 @@ for dataset in datasets:
                 )
             )
             row = {
-                "dataset": dataset,
+                "dataset": key,
                 "alpha": float(alpha),
                 "beta": float(beta),
                 "accuracy": acc,
@@ -73,6 +72,7 @@ for dataset in datasets:
             print(f"{dataset:>8} alpha={alpha:.4f} beta={beta:.2f} acc={acc:.6f}")
 
     best_row = best_by_accuracy(dataset_rows)
+    best_row["dataset"] = key
     best_per_dataset[key] = best_row
     print(f"[Best/{dataset}] {best_row}")
 

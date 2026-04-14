@@ -19,82 +19,12 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from models.FreeTTA import FreeTTA
 from models.TDA import TDA
-from src.feature_store import load_dataset_features
+from src.feature_store import list_available_datasets, load_dataset_features
+from src.paper_configs import DEFAULT_DATASETS, DEFAULT_FREETTA_PARAMS, PAPER_TDA_DEFAULTS
 
 
-BEST_TDA_PARAMS = {
-    "dtd": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 2.0,
-        "beta": 3.0,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.05,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "caltech": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 0.75,
-        "beta": 1.5,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.0,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "eurosat": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 1.45,
-        "beta": 3.2,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.0,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "pets": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 5.9,
-        "beta": 8.9,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.32,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": False,
-        "fallback_margin": 0.0,
-    },
-}
-
-BEST_FREETTA_PARAMS = {
-    "dtd": {"alpha": 0.2, "beta": 2.0},
-    "caltech": {"alpha": 0.1, "beta": 1.0},
-    "eurosat": {"alpha": 0.3, "beta": 4.5},
-    "pets": {"alpha": 0.1, "beta": 0.1},
-}
+BEST_TDA_PARAMS = PAPER_TDA_DEFAULTS
+BEST_FREETTA_PARAMS = DEFAULT_FREETTA_PARAMS
 
 
 @dataclass
@@ -590,7 +520,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate assignment-ready TDA vs FreeTTA analysis.")
     parser.add_argument("--features-dir", type=Path, default=Path("data/processed"))
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/assignment_analysis"))
-    parser.add_argument("--datasets", nargs="*", default=["dtd", "caltech", "eurosat", "pets"])
+    parser.add_argument("--datasets", nargs="*", default=list(DEFAULT_DATASETS))
     parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     parser.add_argument("--order-seeds", nargs="*", type=int, default=[1, 2, 3, 4, 5])
     return parser.parse_args()
@@ -600,13 +530,21 @@ def main() -> None:
     args = parse_args()
     device = resolve_device(args.device)
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    available = set(list_available_datasets(args.features_dir))
+    requested = [str(x).lower() for x in args.datasets]
+    datasets = [dataset for dataset in requested if dataset in available]
+    missing = [dataset for dataset in requested if dataset not in available]
+    if missing:
+        print(f"[Skip] Missing feature triplets for: {missing}")
+    if not datasets:
+        raise RuntimeError(f"No requested datasets were available in {args.features_dir}")
 
     summary_rows: list[dict] = []
     geometry_rows: list[dict] = []
     merged_datasets: list[pd.DataFrame] = []
     order_frames: list[pd.DataFrame] = []
 
-    for dataset in [str(x).lower() for x in args.datasets]:
+    for dataset in datasets:
         payload = load_payload(args.features_dir, dataset, device)
         print(f"[Run] dataset={payload.dataset} samples={payload.num_samples} device={device}")
 
@@ -711,7 +649,8 @@ def main() -> None:
 
     run_report = {
         "device": str(device),
-        "datasets": [str(x).lower() for x in args.datasets],
+        "datasets": datasets,
+        "skipped_missing_datasets": missing,
         "summary_metrics_csv": str(args.output_dir / "summary_metrics.csv"),
         "geometry_probe_csv": str(args.output_dir / "geometry_probe.csv"),
         "entropy_conditioned_csv": str(args.output_dir / "entropy_conditioned_metrics.csv"),
