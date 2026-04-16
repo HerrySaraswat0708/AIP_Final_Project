@@ -1,2 +1,0 @@
-dataset,disagreement_samples,disagreement_rate,tda_acc_on_disagreement,freetta_acc_on_disagreement,freetta_wins_on_disagreement,tda_wins_on_disagreement
-eurosat,950,0.11728395061728394,0.16736842105263158,0.5210526315789473,495,159

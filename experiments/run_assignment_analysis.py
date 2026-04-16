@@ -20,81 +20,11 @@ if str(PROJECT_ROOT) not in sys.path:
 from models.FreeTTA import FreeTTA
 from models.TDA import TDA
 from src.feature_store import load_dataset_features
+from src.paper_configs import DEFAULT_FREETTA_PARAMS, PAPER_TDA_DEFAULTS
 
 
-BEST_TDA_PARAMS = {
-    "dtd": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 2.0,
-        "beta": 3.0,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.05,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "caltech": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 0.75,
-        "beta": 1.5,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.0,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "eurosat": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 1.45,
-        "beta": 3.2,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.0,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": True,
-        "fallback_margin": 0.0,
-    },
-    "pets": {
-        "cache_size": 1000,
-        "shot_capacity": 3,
-        "k": 0,
-        "alpha": 5.9,
-        "beta": 8.9,
-        "low_entropy_thresh": 0.2,
-        "high_entropy_thresh": 0.5,
-        "neg_alpha": 0.32,
-        "neg_beta": 1.0,
-        "neg_mask_lower": 0.03,
-        "neg_mask_upper": 1.0,
-        "clip_scale": 100.0,
-        "fallback_to_clip": False,
-        "fallback_margin": 0.0,
-    },
-}
-
-BEST_FREETTA_PARAMS = {
-    "dtd": {"alpha": 0.2, "beta": 2.0},
-    "caltech": {"alpha": 0.1, "beta": 1.0},
-    "eurosat": {"alpha": 0.3, "beta": 4.5},
-    "pets": {"alpha": 0.1, "beta": 0.1},
-}
+BEST_TDA_PARAMS = {key: dict(value) for key, value in PAPER_TDA_DEFAULTS.items()}
+BEST_FREETTA_PARAMS = {key: dict(value) for key, value in DEFAULT_FREETTA_PARAMS.items()}
 
 
 @dataclass
@@ -590,7 +520,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate assignment-ready TDA vs FreeTTA analysis.")
     parser.add_argument("--features-dir", type=Path, default=Path("data/processed"))
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/assignment_analysis"))
-    parser.add_argument("--datasets", nargs="*", default=["dtd", "caltech", "eurosat", "pets"])
+    parser.add_argument("--datasets", nargs="*", default=["dtd", "caltech", "eurosat", "pets", "imagenet"])
     parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     parser.add_argument("--order-seeds", nargs="*", type=int, default=[1, 2, 3, 4, 5])
     return parser.parse_args()

@@ -49,10 +49,10 @@ python experiments/run_project_comparison.py \
 
 ## (Optional) Extract ImageNet Features
 
-If you have the official ImageNet validation set at `data/raw/IMAGENET`:
+This repo maps `imagenet` to the public `ImageNetV2 matched-frequency` evaluation set, because the official ILSVRC validation set is gated. The extractor will download and cache it under `data/raw/IMAGENET` automatically:
 
 ```bash
-python src/imagenet_extractor.py --root data/raw/IMAGENET --batch-size 32
+python -m src.imagenet_extractor
 ```
 
 ## Quick Debug Run

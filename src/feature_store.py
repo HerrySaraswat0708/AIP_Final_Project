@@ -22,6 +22,10 @@ DATASET_ALIASES: Dict[str, str] = {
     "oxford_pets": "pets",
     "oxfordpets": "pets",
     "imagenet": "imagenet",
+    "imagenetv2": "imagenet",
+    "imagenet_v2": "imagenet",
+    "imagenet-v2": "imagenet",
+    "imagenetv2_matched_frequency": "imagenet",
 }
 
 
@@ -64,6 +68,17 @@ def list_available_datasets(features_dir: Path) -> List[str]:
     return sorted(indexed.keys())
 
 
+def _safe_load_npy(path: Path, kind: str, dataset: str) -> np.ndarray:
+    try:
+        return np.load(path)
+    except (OSError, ValueError) as exc:
+        raise ValueError(
+            f"Failed to load {kind} for dataset '{dataset}' from {path}. "
+            "The .npy file appears to be truncated, corrupted, or only partially copied. "
+            "Please regenerate that dataset's features or recopy the file and try again."
+        ) from exc
+
+
 def load_dataset_features(features_dir: Path, dataset: str) -> Dict[str, np.ndarray]:
     indexed = index_feature_files(features_dir)
     canonical = _canonical_name(dataset)
@@ -75,9 +90,37 @@ def load_dataset_features(features_dir: Path, dataset: str) -> Dict[str, np.ndar
         )
 
     paths = indexed[canonical]
-    image_features = np.load(paths.image_features).astype(np.float32)
-    text_features = np.load(paths.text_features).astype(np.float32)
-    labels = np.load(paths.labels).astype(np.int64)
+    image_features = _safe_load_npy(paths.image_features, "image features", canonical).astype(np.float32)
+    text_features = _safe_load_npy(paths.text_features, "text features", canonical).astype(np.float32)
+    labels = _safe_load_npy(paths.labels, "labels", canonical).astype(np.int64)
+
+    if image_features.ndim != 2:
+        raise ValueError(
+            f"Expected 2D image features for dataset '{canonical}', got shape {image_features.shape} "
+            f"from {paths.image_features}"
+        )
+    if text_features.ndim != 2:
+        raise ValueError(
+            f"Expected 2D text features for dataset '{canonical}', got shape {text_features.shape} "
+            f"from {paths.text_features}"
+        )
+    if labels.ndim != 1:
+        raise ValueError(
+            f"Expected 1D labels for dataset '{canonical}', got shape {labels.shape} "
+            f"from {paths.labels}"
+        )
+    if image_features.shape[0] != labels.shape[0]:
+        raise ValueError(
+            f"Mismatched sample counts for dataset '{canonical}': "
+            f"{image_features.shape[0]} image features vs {labels.shape[0]} labels. "
+            f"Files: {paths.image_features}, {paths.labels}"
+        )
+    if image_features.shape[1] != text_features.shape[1]:
+        raise ValueError(
+            f"Mismatched embedding dimensions for dataset '{canonical}': "
+            f"{image_features.shape[1]} for image features vs {text_features.shape[1]} for text features. "
+            f"Files: {paths.image_features}, {paths.text_features}"
+        )
 
     return {
         "dataset_key": canonical,

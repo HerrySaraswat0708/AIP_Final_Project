@@ -44,8 +44,10 @@ def evaluate_loaded(
     neg_mask_lower=0.03,
     neg_mask_upper=1.0,
     shot_capacity=3,
+    pos_shot_capacity=None,
+    neg_shot_capacity=None,
     clip_scale=100.0,
-    fallback_to_clip=True,
+    fallback_to_clip=False,
     fallback_margin=0.0,
 ):
     image_features = payload["image_features"]
@@ -66,6 +68,8 @@ def evaluate_loaded(
         neg_mask_lower=neg_mask_lower,
         neg_mask_upper=neg_mask_upper,
         shot_capacity=shot_capacity,
+        pos_shot_capacity=pos_shot_capacity,
+        neg_shot_capacity=neg_shot_capacity,
         clip_scale=clip_scale,
         fallback_to_clip=fallback_to_clip,
         fallback_margin=fallback_margin,
@@ -77,7 +81,7 @@ def evaluate_loaded(
     with INFERENCE_MODE():
         for i in range(total):
             pred, _, _ = model.predict(image_features[i])
-            correct_count += int(pred.item() == labels[i].item())
+            correct_count += (pred.squeeze(0) == labels[i]).to(correct_count.dtype)
 
     return float(correct_count.item() / max(total, 1))
 

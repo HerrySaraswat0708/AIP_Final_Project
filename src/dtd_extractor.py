@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
-import clip
 import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.clip_compat import get_clip_module, get_extraction_runtime
 from src.dtd_loader import load_dtd
 
 
@@ -87,7 +92,7 @@ def _auto_generate_dtd_split(split_path: Path, dtd_root: Path) -> bool:
     return True
 
 
-def _load_dtd_split(preprocess):
+def _load_dtd_split(preprocess, batch_size: int, num_workers: int, pin_memory: bool):
     split_candidates = [
         Path("data/splits/split_zhou_DescribableTextures.json"),
         Path("data/splits/split_zhou_DescribableTextures_tda.json"),
@@ -139,30 +144,43 @@ def _load_dtd_split(preprocess):
 
     loader = DataLoader(
         SplitImageDataset(samples=samples, transform=preprocess),
-        batch_size=128,
+        batch_size=batch_size,
         shuffle=False,
-        num_workers=0,
-        pin_memory=True,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
     )
 
     return loader, class_names
 
 
 def extract_dtd():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device, batch_size, num_workers, pin_memory = get_extraction_runtime()
 
     print("CUDA available:", torch.cuda.is_available())
     print("Using device:", device)
+    print("Batch size:", batch_size)
+    print("DataLoader workers:", num_workers)
     if device.type == "cuda":
         print("GPU:", torch.cuda.get_device_name(0))
+        torch.cuda.empty_cache()
 
+    clip = get_clip_module()
     model, preprocess = clip.load("ViT-B/16", device=device)
     model.eval()
 
-    split_loaded = _load_dtd_split(preprocess=preprocess)
+    split_loaded = _load_dtd_split(
+        preprocess=preprocess,
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+    )
     if split_loaded is None:
         print("split_zhou_DescribableTextures.json not available/readable, falling back to torchvision loader.")
-        loader, class_names = load_dtd()
+        loader, class_names = load_dtd(
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+        )
         class_names = [c.replace("_", " ").lower() for c in class_names]
     else:
         loader, class_names = split_loaded
@@ -198,10 +216,15 @@ def extract_dtd():
         text_features = torch.stack(text_feature_list, dim=0).mean(dim=0)
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
 
-    np.save("data/processed/DTD_image_features.npy", image_features)
-    np.save("data/processed/DTD_text_features.npy", text_features.cpu().numpy())
-    np.save("data/processed/DTD_labels.npy", labels)
+    output_dir = PROJECT_ROOT / "data" / "processed"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
+    np.save(output_dir / "DTD_image_features.npy", image_features)
+    np.save(output_dir / "DTD_text_features.npy", text_features.cpu().numpy())
+    np.save(output_dir / "DTD_labels.npy", labels)
+
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
     print("Feature extraction completed!")
 
 

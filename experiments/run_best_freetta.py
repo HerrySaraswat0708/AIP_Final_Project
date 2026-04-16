@@ -12,14 +12,10 @@ if str(PROJECT_ROOT) not in sys.path:
 import torch
 
 from experiments.evaluate_freetta import evaluate_loaded, load_freetta_dataset
+from src.paper_configs import DEFAULT_FREETTA_PARAMS
 
 
-BEST_CONFIGS = {
-    "dtd": {"alpha": 0.2, "beta": 2.0},
-    "caltech": {"alpha": 0.1, "beta": 1.0},
-    "eurosat": {"alpha": 0.3, "beta": 4.5},
-    "pets": {"alpha": 0.1, "beta": 0.1},
-}
+BEST_CONFIGS = {key: dict(value) for key, value in DEFAULT_FREETTA_PARAMS.items()}
 
 
 def main() -> None:
@@ -44,8 +40,7 @@ def main() -> None:
             alpha=float(cfg["alpha"]),
             beta=float(cfg["beta"]),
             device=device,
-            shuffle_stream=True,
-            stream_seed=1,
+            shuffle_stream=False,
         )
 
         rows[dataset] = {
@@ -56,7 +51,7 @@ def main() -> None:
 
     out_dir = Path("outputs")
     out_dir.mkdir(exist_ok=True)
-    out_path = out_dir / "best_freetta_run_results.json"
+    out_path = out_dir / "freetta_best_results.json"
     out_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
     print(f"\n[Saved] {out_path}")
 

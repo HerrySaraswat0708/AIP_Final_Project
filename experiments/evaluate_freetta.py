@@ -67,17 +67,17 @@ def evaluate_loaded(
         order = torch.arange(total, device=labels.device)
 
     with INFERENCE_MODE():
-        for i in order.tolist():
-            x = image_features[i]
-            y = labels[i]
+        for idx in order:
+            x = image_features[idx]
+            y = labels[idx]
 
             # Eq. (13) in FreeTTA uses cosine-similarity logits (no extra x100 scaling).
             clip_logits = x @ text_features.t()
             clip_pred = torch.argmax(clip_logits, dim=-1)
-            clip_correct += (clip_pred == y)
+            clip_correct += (clip_pred == y).to(clip_correct.dtype)
 
             pred, _ = model.predict(x, clip_logits)
-            freetta_correct += (pred.squeeze(0) == y)
+            freetta_correct += (pred.squeeze(0) == y).to(freetta_correct.dtype)
 
     clip_acc = float(clip_correct.item() / max(total, 1))
     freetta_acc = float(freetta_correct.item() / max(total, 1))
