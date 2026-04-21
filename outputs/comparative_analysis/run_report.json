@@ -1,0 +1,19 @@
+{
+  "device": "cuda",
+  "datasets": [
+    "caltech",
+    "dtd",
+    "eurosat",
+    "pets",
+    "imagenet"
+  ],
+  "stream_seed": null,
+  "summary_metrics_csv": "outputs/comparative_analysis/summary_metrics.csv",
+  "geometry_metrics_csv": "outputs/comparative_analysis/geometry_metrics.csv",
+  "per_sample_metrics_csv": "outputs/comparative_analysis/per_sample_metrics.csv",
+  "flip_metrics_csv": "outputs/comparative_analysis/flip_metrics.csv",
+  "disagreement_metrics_csv": "outputs/comparative_analysis/disagreement_metrics.csv",
+  "latency_metrics_csv": "outputs/comparative_analysis/latency_metrics.csv",
+  "difficulty_metrics_csv": "outputs/comparative_analysis/difficulty_metrics.csv",
+  "internal_metrics_csv": "outputs/comparative_analysis/internal_metrics.csv"
+}

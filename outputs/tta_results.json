@@ -20,19 +20,19 @@
     "recommended_defaults": {
         "dtd": {
             "alpha": 0.2,
-            "beta": 2.0
+            "beta": 4.5
         },
         "caltech": {
-            "alpha": 0.1,
-            "beta": 1.0
+            "alpha": 0.2,
+            "beta": 4.5
         },
         "eurosat": {
-            "alpha": 0.3,
+            "alpha": 0.2,
             "beta": 4.5
         },
         "pets": {
-            "alpha": 0.1,
-            "beta": 0.1
+            "alpha": 0.2,
+            "beta": 4.5
         },
         "imagenet": {
             "alpha": 0.2,
@@ -44,31 +44,31 @@
             "dataset": "DTD",
             "alpha": 0.2,
             "beta": 2.0,
-            "accuracy": 0.4765957446808511
+            "accuracy": 0.46117021276595743
         },
         "caltech": {
             "dataset": "caltech",
-            "alpha": 0.1,
-            "beta": 1.0,
-            "accuracy": 0.944421906693712
+            "alpha": 0.2,
+            "beta": 2.0,
+            "accuracy": 0.9407707910750507
         },
         "eurosat": {
             "dataset": "eurosat",
             "alpha": 0.2,
             "beta": 4.5,
-            "accuracy": 0.5932222222222222
+            "accuracy": 0.4971604938271605
         },
         "pets": {
             "dataset": "pets",
-            "alpha": 0.2,
-            "beta": 0.1,
-            "accuracy": 0.9122376669392205
+            "alpha": 0.02,
+            "beta": 2.0,
+            "accuracy": 0.8841646225129463
         },
         "imagenet": {
             "dataset": "imagenet",
-            "alpha": 0.005,
-            "beta": 0.1,
-            "accuracy": 0.5965
+            "alpha": 0.05,
+            "beta": 2.0,
+            "accuracy": 0.6236
         }
     },
     "all_rows": [
@@ -76,1051 +76,1051 @@
             "dataset": "DTD",
             "alpha": 0.0,
             "beta": 0.1,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.0,
             "beta": 0.5,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.0,
             "beta": 1.0,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.0,
             "beta": 2.0,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.0,
             "beta": 4.5,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.005,
             "beta": 0.1,
-            "accuracy": 0.4696808510638298
+            "accuracy": 0.43882978723404253
         },
         {
             "dataset": "DTD",
             "alpha": 0.005,
             "beta": 0.5,
-            "accuracy": 0.4702127659574468
+            "accuracy": 0.43882978723404253
         },
         {
             "dataset": "DTD",
             "alpha": 0.005,
             "beta": 1.0,
-            "accuracy": 0.4702127659574468
+            "accuracy": 0.43882978723404253
         },
         {
             "dataset": "DTD",
             "alpha": 0.005,
             "beta": 2.0,
-            "accuracy": 0.4702127659574468
+            "accuracy": 0.43882978723404253
         },
         {
             "dataset": "DTD",
             "alpha": 0.005,
             "beta": 4.5,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.01,
             "beta": 0.1,
-            "accuracy": 0.4696808510638298
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.01,
             "beta": 0.5,
-            "accuracy": 0.4696808510638298
+            "accuracy": 0.43882978723404253
         },
         {
             "dataset": "DTD",
             "alpha": 0.01,
             "beta": 1.0,
-            "accuracy": 0.4696808510638298
+            "accuracy": 0.4398936170212766
         },
         {
             "dataset": "DTD",
             "alpha": 0.01,
             "beta": 2.0,
-            "accuracy": 0.47074468085106386
+            "accuracy": 0.4409574468085106
         },
         {
             "dataset": "DTD",
             "alpha": 0.01,
             "beta": 4.5,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.02,
             "beta": 0.1,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.4377659574468085
         },
         {
             "dataset": "DTD",
             "alpha": 0.02,
             "beta": 0.5,
-            "accuracy": 0.46808510638297873
+            "accuracy": 0.44148936170212766
         },
         {
             "dataset": "DTD",
             "alpha": 0.02,
             "beta": 1.0,
-            "accuracy": 0.47074468085106386
+            "accuracy": 0.44148936170212766
         },
         {
             "dataset": "DTD",
             "alpha": 0.02,
             "beta": 2.0,
-            "accuracy": 0.4723404255319149
+            "accuracy": 0.4409574468085106
         },
         {
             "dataset": "DTD",
             "alpha": 0.02,
             "beta": 4.5,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.05,
             "beta": 0.1,
-            "accuracy": 0.47127659574468084
+            "accuracy": 0.43563829787234043
         },
         {
             "dataset": "DTD",
             "alpha": 0.05,
             "beta": 0.5,
-            "accuracy": 0.4718085106382979
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.05,
             "beta": 1.0,
-            "accuracy": 0.4728723404255319
+            "accuracy": 0.4409574468085106
         },
         {
             "dataset": "DTD",
             "alpha": 0.05,
             "beta": 2.0,
-            "accuracy": 0.4723404255319149
+            "accuracy": 0.4430851063829787
         },
         {
             "dataset": "DTD",
             "alpha": 0.05,
             "beta": 4.5,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.1,
             "beta": 0.1,
-            "accuracy": 0.4702127659574468
+            "accuracy": 0.43563829787234043
         },
         {
             "dataset": "DTD",
             "alpha": 0.1,
             "beta": 0.5,
-            "accuracy": 0.47393617021276596
+            "accuracy": 0.44042553191489364
         },
         {
             "dataset": "DTD",
             "alpha": 0.1,
             "beta": 1.0,
-            "accuracy": 0.475
+            "accuracy": 0.4420212765957447
         },
         {
             "dataset": "DTD",
             "alpha": 0.1,
             "beta": 2.0,
-            "accuracy": 0.475
+            "accuracy": 0.4521276595744681
         },
         {
             "dataset": "DTD",
             "alpha": 0.1,
             "beta": 4.5,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "DTD",
             "alpha": 0.2,
             "beta": 0.1,
-            "accuracy": 0.4702127659574468
+            "accuracy": 0.4351063829787234
         },
         {
             "dataset": "DTD",
             "alpha": 0.2,
             "beta": 0.5,
-            "accuracy": 0.4718085106382979
+            "accuracy": 0.44574468085106383
         },
         {
             "dataset": "DTD",
             "alpha": 0.2,
             "beta": 1.0,
-            "accuracy": 0.475531914893617
+            "accuracy": 0.4531914893617021
         },
         {
             "dataset": "DTD",
             "alpha": 0.2,
             "beta": 2.0,
-            "accuracy": 0.4765957446808511
+            "accuracy": 0.46117021276595743
         },
         {
             "dataset": "DTD",
             "alpha": 0.2,
             "beta": 4.5,
-            "accuracy": 0.46914893617021275
+            "accuracy": 0.43936170212765957
         },
         {
             "dataset": "caltech",
             "alpha": 0.0,
             "beta": 0.1,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.0,
+            "beta": 0.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.0,
+            "beta": 1.0,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.0,
+            "beta": 2.0,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.0,
+            "beta": 4.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.005,
+            "beta": 0.1,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.005,
+            "beta": 0.5,
+            "accuracy": 0.9350912778904665
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.005,
+            "beta": 1.0,
+            "accuracy": 0.9350912778904665
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.005,
+            "beta": 2.0,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.005,
+            "beta": 4.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.01,
+            "beta": 0.1,
+            "accuracy": 0.9350912778904665
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.01,
+            "beta": 0.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.01,
+            "beta": 1.0,
+            "accuracy": 0.9350912778904665
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.01,
+            "beta": 2.0,
+            "accuracy": 0.9359026369168357
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.01,
+            "beta": 4.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.02,
+            "beta": 0.1,
+            "accuracy": 0.9350912778904665
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.02,
+            "beta": 0.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.02,
+            "beta": 1.0,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.02,
+            "beta": 2.0,
+            "accuracy": 0.9346855983772819
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.02,
+            "beta": 4.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.05,
+            "beta": 0.1,
+            "accuracy": 0.9346855983772819
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.05,
+            "beta": 0.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.05,
+            "beta": 1.0,
+            "accuracy": 0.9359026369168357
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.05,
+            "beta": 2.0,
+            "accuracy": 0.9359026369168357
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.05,
+            "beta": 4.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.1,
+            "beta": 0.1,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.1,
+            "beta": 0.5,
+            "accuracy": 0.937525354969574
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.1,
+            "beta": 1.0,
+            "accuracy": 0.9391480730223124
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.1,
+            "beta": 2.0,
+            "accuracy": 0.937525354969574
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.1,
+            "beta": 4.5,
+            "accuracy": 0.9354969574036511
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.2,
+            "beta": 0.1,
+            "accuracy": 0.9359026369168357
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.2,
+            "beta": 0.5,
+            "accuracy": 0.9399594320486815
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.2,
+            "beta": 1.0,
+            "accuracy": 0.9403651115618661
+        },
+        {
+            "dataset": "caltech",
+            "alpha": 0.2,
+            "beta": 2.0,
             "accuracy": 0.9407707910750507
         },
         {
             "dataset": "caltech",
-            "alpha": 0.0,
-            "beta": 0.5,
-            "accuracy": 0.9407707910750507
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.0,
-            "beta": 1.0,
-            "accuracy": 0.9407707910750507
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.0,
-            "beta": 2.0,
-            "accuracy": 0.9407707910750507
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.0,
-            "beta": 4.5,
-            "accuracy": 0.9407707910750507
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.005,
-            "beta": 0.1,
-            "accuracy": 0.9411764705882353
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.005,
-            "beta": 0.5,
-            "accuracy": 0.9415821501014199
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.005,
-            "beta": 1.0,
-            "accuracy": 0.9415821501014199
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.005,
-            "beta": 2.0,
-            "accuracy": 0.9419878296146045
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.005,
-            "beta": 4.5,
-            "accuracy": 0.9407707910750507
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.01,
-            "beta": 0.1,
-            "accuracy": 0.9415821501014199
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.01,
-            "beta": 0.5,
-            "accuracy": 0.9415821501014199
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.01,
-            "beta": 1.0,
-            "accuracy": 0.9419878296146045
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.01,
-            "beta": 2.0,
-            "accuracy": 0.9423935091277891
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.01,
-            "beta": 4.5,
-            "accuracy": 0.9407707910750507
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.02,
-            "beta": 0.1,
-            "accuracy": 0.9415821501014199
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.02,
-            "beta": 0.5,
-            "accuracy": 0.9423935091277891
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.02,
-            "beta": 1.0,
-            "accuracy": 0.9432048681541582
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.02,
-            "beta": 2.0,
-            "accuracy": 0.9427991886409737
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.02,
-            "beta": 4.5,
-            "accuracy": 0.9407707910750507
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.05,
-            "beta": 0.1,
-            "accuracy": 0.9415821501014199
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.05,
-            "beta": 0.5,
-            "accuracy": 0.9440162271805274
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.05,
-            "beta": 1.0,
-            "accuracy": 0.9440162271805274
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.05,
-            "beta": 2.0,
-            "accuracy": 0.9432048681541582
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.05,
-            "beta": 4.5,
-            "accuracy": 0.9407707910750507
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.1,
-            "beta": 0.1,
-            "accuracy": 0.9423935091277891
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.1,
-            "beta": 0.5,
-            "accuracy": 0.9436105476673428
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.1,
-            "beta": 1.0,
-            "accuracy": 0.944421906693712
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.1,
-            "beta": 2.0,
-            "accuracy": 0.9427991886409737
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.1,
-            "beta": 4.5,
-            "accuracy": 0.9407707910750507
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.2,
-            "beta": 0.1,
-            "accuracy": 0.9436105476673428
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.2,
-            "beta": 0.5,
-            "accuracy": 0.9423935091277891
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.2,
-            "beta": 1.0,
-            "accuracy": 0.9423935091277891
-        },
-        {
-            "dataset": "caltech",
-            "alpha": 0.2,
-            "beta": 2.0,
-            "accuracy": 0.9427991886409737
-        },
-        {
-            "dataset": "caltech",
             "alpha": 0.2,
             "beta": 4.5,
-            "accuracy": 0.9407707910750507
+            "accuracy": 0.9354969574036511
         },
         {
             "dataset": "eurosat",
             "alpha": 0.0,
             "beta": 0.1,
-            "accuracy": 0.575925925925926
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.0,
             "beta": 0.5,
-            "accuracy": 0.575925925925926
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.0,
             "beta": 1.0,
-            "accuracy": 0.575925925925926
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.0,
             "beta": 2.0,
-            "accuracy": 0.575925925925926
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.0,
             "beta": 4.5,
-            "accuracy": 0.575925925925926
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.005,
             "beta": 0.1,
-            "accuracy": 0.575925925925926
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.005,
             "beta": 0.5,
-            "accuracy": 0.575925925925926
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.005,
             "beta": 1.0,
-            "accuracy": 0.5762592592592592
+            "accuracy": 0.48419753086419753
         },
         {
             "dataset": "eurosat",
             "alpha": 0.005,
             "beta": 2.0,
-            "accuracy": 0.5762592592592592
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.005,
             "beta": 4.5,
-            "accuracy": 0.5765185185185185
+            "accuracy": 0.48518518518518516
         },
         {
             "dataset": "eurosat",
             "alpha": 0.01,
             "beta": 0.1,
-            "accuracy": 0.5758518518518518
+            "accuracy": 0.4840740740740741
         },
         {
             "dataset": "eurosat",
             "alpha": 0.01,
             "beta": 0.5,
-            "accuracy": 0.576
+            "accuracy": 0.4839506172839506
         },
         {
             "dataset": "eurosat",
             "alpha": 0.01,
             "beta": 1.0,
-            "accuracy": 0.5763333333333334
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.01,
             "beta": 2.0,
-            "accuracy": 0.5765555555555556
+            "accuracy": 0.4849382716049383
         },
         {
             "dataset": "eurosat",
             "alpha": 0.01,
             "beta": 4.5,
-            "accuracy": 0.5773333333333334
+            "accuracy": 0.48604938271604936
         },
         {
             "dataset": "eurosat",
             "alpha": 0.02,
             "beta": 0.1,
-            "accuracy": 0.5757777777777778
+            "accuracy": 0.4840740740740741
         },
         {
             "dataset": "eurosat",
             "alpha": 0.02,
             "beta": 0.5,
-            "accuracy": 0.5761481481481482
+            "accuracy": 0.4840740740740741
         },
         {
             "dataset": "eurosat",
             "alpha": 0.02,
             "beta": 1.0,
-            "accuracy": 0.5766296296296296
+            "accuracy": 0.48518518518518516
         },
         {
             "dataset": "eurosat",
             "alpha": 0.02,
             "beta": 2.0,
-            "accuracy": 0.576925925925926
+            "accuracy": 0.4855555555555556
         },
         {
             "dataset": "eurosat",
             "alpha": 0.02,
             "beta": 4.5,
-            "accuracy": 0.5786296296296296
+            "accuracy": 0.48617283950617285
         },
         {
             "dataset": "eurosat",
             "alpha": 0.05,
             "beta": 0.1,
-            "accuracy": 0.575037037037037
+            "accuracy": 0.48358024691358026
         },
         {
             "dataset": "eurosat",
             "alpha": 0.05,
             "beta": 0.5,
-            "accuracy": 0.5761851851851851
+            "accuracy": 0.48345679012345677
         },
         {
             "dataset": "eurosat",
             "alpha": 0.05,
             "beta": 1.0,
-            "accuracy": 0.577037037037037
+            "accuracy": 0.48518518518518516
         },
         {
             "dataset": "eurosat",
             "alpha": 0.05,
             "beta": 2.0,
-            "accuracy": 0.5780740740740741
+            "accuracy": 0.4854320987654321
         },
         {
             "dataset": "eurosat",
             "alpha": 0.05,
             "beta": 4.5,
-            "accuracy": 0.5817407407407408
+            "accuracy": 0.4880246913580247
         },
         {
             "dataset": "eurosat",
             "alpha": 0.1,
             "beta": 0.1,
-            "accuracy": 0.5734074074074074
+            "accuracy": 0.48185185185185186
         },
         {
             "dataset": "eurosat",
             "alpha": 0.1,
             "beta": 0.5,
-            "accuracy": 0.5753703703703704
+            "accuracy": 0.4832098765432099
         },
         {
             "dataset": "eurosat",
             "alpha": 0.1,
             "beta": 1.0,
-            "accuracy": 0.577037037037037
+            "accuracy": 0.48432098765432097
         },
         {
             "dataset": "eurosat",
             "alpha": 0.1,
             "beta": 2.0,
-            "accuracy": 0.5783333333333334
+            "accuracy": 0.4867901234567901
         },
         {
             "dataset": "eurosat",
             "alpha": 0.1,
             "beta": 4.5,
-            "accuracy": 0.5861851851851851
+            "accuracy": 0.49271604938271607
         },
         {
             "dataset": "eurosat",
             "alpha": 0.2,
             "beta": 0.1,
-            "accuracy": 0.570037037037037
+            "accuracy": 0.47987654320987655
         },
         {
             "dataset": "eurosat",
             "alpha": 0.2,
             "beta": 0.5,
-            "accuracy": 0.5737777777777778
+            "accuracy": 0.4828395061728395
         },
         {
             "dataset": "eurosat",
             "alpha": 0.2,
             "beta": 1.0,
-            "accuracy": 0.572037037037037
+            "accuracy": 0.48691358024691356
         },
         {
             "dataset": "eurosat",
             "alpha": 0.2,
             "beta": 2.0,
-            "accuracy": 0.5753703703703704
+            "accuracy": 0.4901234567901235
         },
         {
             "dataset": "eurosat",
             "alpha": 0.2,
             "beta": 4.5,
-            "accuracy": 0.5932222222222222
+            "accuracy": 0.4971604938271605
         },
         {
             "dataset": "pets",
             "alpha": 0.0,
             "beta": 0.1,
-            "accuracy": 0.9051512673753066
+            "accuracy": 0.883892068683565
         },
         {
             "dataset": "pets",
             "alpha": 0.0,
             "beta": 0.5,
-            "accuracy": 0.9051512673753066
+            "accuracy": 0.883892068683565
         },
         {
             "dataset": "pets",
             "alpha": 0.0,
             "beta": 1.0,
-            "accuracy": 0.9051512673753066
+            "accuracy": 0.883892068683565
         },
         {
             "dataset": "pets",
             "alpha": 0.0,
             "beta": 2.0,
-            "accuracy": 0.9051512673753066
+            "accuracy": 0.883892068683565
         },
         {
             "dataset": "pets",
             "alpha": 0.0,
             "beta": 4.5,
-            "accuracy": 0.9051512673753066
+            "accuracy": 0.883892068683565
         },
         {
             "dataset": "pets",
             "alpha": 0.005,
             "beta": 0.1,
-            "accuracy": 0.9051512673753066
+            "accuracy": 0.8836195148541837
         },
         {
             "dataset": "pets",
             "alpha": 0.005,
             "beta": 0.5,
-            "accuracy": 0.9054238212046879
+            "accuracy": 0.8836195148541837
         },
         {
             "dataset": "pets",
             "alpha": 0.005,
             "beta": 1.0,
-            "accuracy": 0.9054238212046879
+            "accuracy": 0.8833469610248024
         },
         {
             "dataset": "pets",
             "alpha": 0.005,
             "beta": 2.0,
-            "accuracy": 0.9056963750340692
+            "accuracy": 0.8833469610248024
         },
         {
             "dataset": "pets",
             "alpha": 0.005,
             "beta": 4.5,
-            "accuracy": 0.9056963750340692
+            "accuracy": 0.8836195148541837
         },
         {
             "dataset": "pets",
             "alpha": 0.01,
             "beta": 0.1,
-            "accuracy": 0.9059689288634505
+            "accuracy": 0.8836195148541837
         },
         {
             "dataset": "pets",
             "alpha": 0.01,
             "beta": 0.5,
-            "accuracy": 0.9054238212046879
+            "accuracy": 0.8833469610248024
         },
         {
             "dataset": "pets",
             "alpha": 0.01,
             "beta": 1.0,
-            "accuracy": 0.9054238212046879
+            "accuracy": 0.8830744071954211
         },
         {
             "dataset": "pets",
             "alpha": 0.01,
             "beta": 2.0,
-            "accuracy": 0.9056963750340692
+            "accuracy": 0.883892068683565
         },
         {
             "dataset": "pets",
             "alpha": 0.01,
             "beta": 4.5,
-            "accuracy": 0.9059689288634505
+            "accuracy": 0.8836195148541837
         },
         {
             "dataset": "pets",
             "alpha": 0.02,
             "beta": 0.1,
-            "accuracy": 0.9073316980103571
+            "accuracy": 0.8822567457072772
         },
         {
             "dataset": "pets",
             "alpha": 0.02,
             "beta": 0.5,
-            "accuracy": 0.9067865903515945
+            "accuracy": 0.8833469610248024
         },
         {
             "dataset": "pets",
             "alpha": 0.02,
             "beta": 1.0,
-            "accuracy": 0.9062414826928318
+            "accuracy": 0.883892068683565
         },
         {
             "dataset": "pets",
             "alpha": 0.02,
             "beta": 2.0,
-            "accuracy": 0.9062414826928318
+            "accuracy": 0.8841646225129463
         },
         {
             "dataset": "pets",
             "alpha": 0.02,
             "beta": 4.5,
-            "accuracy": 0.9056963750340692
+            "accuracy": 0.8836195148541837
         },
         {
             "dataset": "pets",
             "alpha": 0.05,
             "beta": 0.1,
-            "accuracy": 0.9089670209866448
+            "accuracy": 0.8822567457072772
         },
         {
             "dataset": "pets",
             "alpha": 0.05,
             "beta": 0.5,
-            "accuracy": 0.9070591441809758
+            "accuracy": 0.8819841918778959
         },
         {
             "dataset": "pets",
             "alpha": 0.05,
             "beta": 1.0,
-            "accuracy": 0.9054238212046879
+            "accuracy": 0.8814390842191333
         },
         {
             "dataset": "pets",
             "alpha": 0.05,
             "beta": 2.0,
-            "accuracy": 0.9054238212046879
+            "accuracy": 0.8828018533660398
         },
         {
             "dataset": "pets",
             "alpha": 0.05,
             "beta": 4.5,
-            "accuracy": 0.9043336058871627
+            "accuracy": 0.8817116380485146
         },
         {
             "dataset": "pets",
             "alpha": 0.1,
             "beta": 0.1,
-            "accuracy": 0.9114200054510766
+            "accuracy": 0.8822567457072772
         },
         {
             "dataset": "pets",
             "alpha": 0.1,
             "beta": 0.5,
-            "accuracy": 0.9062414826928318
+            "accuracy": 0.8819841918778959
         },
         {
             "dataset": "pets",
             "alpha": 0.1,
             "beta": 1.0,
-            "accuracy": 0.9035159443990188
+            "accuracy": 0.8806214227309894
         },
         {
             "dataset": "pets",
             "alpha": 0.1,
             "beta": 2.0,
-            "accuracy": 0.9035159443990188
+            "accuracy": 0.8795312074134641
         },
         {
             "dataset": "pets",
             "alpha": 0.1,
             "beta": 4.5,
-            "accuracy": 0.9037884982284001
+            "accuracy": 0.8798037612428454
         },
         {
             "dataset": "pets",
             "alpha": 0.2,
             "beta": 0.1,
-            "accuracy": 0.9122376669392205
+            "accuracy": 0.8822567457072772
         },
         {
             "dataset": "pets",
             "alpha": 0.2,
             "beta": 0.5,
-            "accuracy": 0.9078768056691197
+            "accuracy": 0.881166530389752
         },
         {
             "dataset": "pets",
             "alpha": 0.2,
             "beta": 1.0,
-            "accuracy": 0.9007904061052058
+            "accuracy": 0.8773507767784138
         },
         {
             "dataset": "pets",
             "alpha": 0.2,
             "beta": 2.0,
-            "accuracy": 0.9016080675933497
+            "accuracy": 0.8776233306077951
         },
         {
             "dataset": "pets",
             "alpha": 0.2,
             "beta": 4.5,
-            "accuracy": 0.8988825292995366
+            "accuracy": 0.8781684382665577
         },
         {
             "dataset": "imagenet",
             "alpha": 0.0,
             "beta": 0.1,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.0,
             "beta": 0.5,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.0,
             "beta": 1.0,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.0,
             "beta": 2.0,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.0,
             "beta": 4.5,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.005,
             "beta": 0.1,
-            "accuracy": 0.5965
+            "accuracy": 0.6234
         },
         {
             "dataset": "imagenet",
             "alpha": 0.005,
             "beta": 0.5,
-            "accuracy": 0.5959
+            "accuracy": 0.6234
         },
         {
             "dataset": "imagenet",
             "alpha": 0.005,
             "beta": 1.0,
-            "accuracy": 0.5956
+            "accuracy": 0.6234
         },
         {
             "dataset": "imagenet",
             "alpha": 0.005,
             "beta": 2.0,
-            "accuracy": 0.5959
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.005,
             "beta": 4.5,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.01,
             "beta": 0.1,
-            "accuracy": 0.5959
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.01,
             "beta": 0.5,
-            "accuracy": 0.5948
+            "accuracy": 0.6232
         },
         {
             "dataset": "imagenet",
             "alpha": 0.01,
             "beta": 1.0,
-            "accuracy": 0.595
+            "accuracy": 0.6234
         },
         {
             "dataset": "imagenet",
             "alpha": 0.01,
             "beta": 2.0,
-            "accuracy": 0.5955
+            "accuracy": 0.6234
         },
         {
             "dataset": "imagenet",
             "alpha": 0.01,
             "beta": 4.5,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.02,
             "beta": 0.1,
-            "accuracy": 0.5959
+            "accuracy": 0.6234
         },
         {
             "dataset": "imagenet",
             "alpha": 0.02,
             "beta": 0.5,
-            "accuracy": 0.5954
+            "accuracy": 0.6229
         },
         {
             "dataset": "imagenet",
             "alpha": 0.02,
             "beta": 1.0,
-            "accuracy": 0.595
+            "accuracy": 0.6225
         },
         {
             "dataset": "imagenet",
             "alpha": 0.02,
             "beta": 2.0,
-            "accuracy": 0.5957
+            "accuracy": 0.6218
         },
         {
             "dataset": "imagenet",
             "alpha": 0.02,
             "beta": 4.5,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.05,
             "beta": 0.1,
-            "accuracy": 0.596
+            "accuracy": 0.6228
         },
         {
             "dataset": "imagenet",
             "alpha": 0.05,
             "beta": 0.5,
-            "accuracy": 0.5942
+            "accuracy": 0.6228
         },
         {
             "dataset": "imagenet",
             "alpha": 0.05,
             "beta": 1.0,
-            "accuracy": 0.5945
+            "accuracy": 0.623
         },
         {
             "dataset": "imagenet",
             "alpha": 0.05,
             "beta": 2.0,
-            "accuracy": 0.5953
+            "accuracy": 0.6236
         },
         {
             "dataset": "imagenet",
             "alpha": 0.05,
             "beta": 4.5,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.1,
             "beta": 0.1,
-            "accuracy": 0.5963
+            "accuracy": 0.6231
         },
         {
             "dataset": "imagenet",
             "alpha": 0.1,
             "beta": 0.5,
-            "accuracy": 0.5904
+            "accuracy": 0.622
         },
         {
             "dataset": "imagenet",
             "alpha": 0.1,
             "beta": 1.0,
-            "accuracy": 0.5907
+            "accuracy": 0.6215
         },
         {
             "dataset": "imagenet",
             "alpha": 0.1,
             "beta": 2.0,
-            "accuracy": 0.5951
+            "accuracy": 0.622
         },
         {
             "dataset": "imagenet",
             "alpha": 0.1,
             "beta": 4.5,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         },
         {
             "dataset": "imagenet",
             "alpha": 0.2,
             "beta": 0.1,
-            "accuracy": 0.5924
+            "accuracy": 0.6225
         },
         {
             "dataset": "imagenet",
             "alpha": 0.2,
             "beta": 0.5,
-            "accuracy": 0.575
+            "accuracy": 0.6207
         },
         {
             "dataset": "imagenet",
             "alpha": 0.2,
             "beta": 1.0,
-            "accuracy": 0.5784
+            "accuracy": 0.6174
         },
         {
             "dataset": "imagenet",
             "alpha": 0.2,
             "beta": 2.0,
-            "accuracy": 0.5865
+            "accuracy": 0.6134
         },
         {
             "dataset": "imagenet",
             "alpha": 0.2,
             "beta": 4.5,
-            "accuracy": 0.5961
+            "accuracy": 0.6235
         }
     ]
 }

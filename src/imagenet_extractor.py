@@ -13,17 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.clip_compat import get_clip_module, get_extraction_runtime
 from src.imagenet_loader import ensure_imagenetv2, load_imagenet
-
-
-IMAGENET_TEMPLATES = [
-    "itap of a {}.",
-    "a bad photo of the {}.",
-    "a origami {}.",
-    "a photo of the large {}.",
-    "a {} in a video game.",
-    "art of the {}.",
-    "a photo of the small {}.",
-]
+from src.paper_setup import EXPECTED_TEST_SPLIT_SIZES, IMAGENET_TEMPLATES
 
 
 def extract_imagenet() -> None:
@@ -50,7 +40,11 @@ def extract_imagenet() -> None:
         pin_memory=pin_memory,
         preprocess=preprocess,
     )
-    print(f"ImageNet sample count: {len(loader.dataset)}")
+    dataset_size = len(loader.dataset)
+    print(f"ImageNet sample count: {dataset_size}")
+    expected = EXPECTED_TEST_SPLIT_SIZES["imagenet"]
+    if dataset_size != expected:
+        print(f"[Warning] ImageNet sample count {dataset_size} differs from paper split size {expected}.")
 
     image_features = []
     labels = []

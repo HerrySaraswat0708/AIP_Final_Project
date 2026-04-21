@@ -12,8 +12,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.clip_compat import get_clip_module, get_extraction_runtime
 from src.caltech_loader import load_caltech
+from src.clip_compat import get_clip_module, get_extraction_runtime
+from src.paper_setup import CALTECH_TEMPLATES, EXPECTED_TEST_SPLIT_SIZES
 
 
 def _resolve_project_path(*parts: str) -> Path:
@@ -160,15 +161,13 @@ def extract_caltech():
     image_features = torch.cat(image_features).cpu().numpy()
     labels = torch.cat(labels).numpy()
 
-    templates = [
-        "itap of a {}.",
-        "a photo of the large {}.",
-        "a {} in a video game.",
-        "a clean photo of a {}.",
-    ]
+    expected = EXPECTED_TEST_SPLIT_SIZES["caltech"]
+    if dataset_size != expected:
+        print(f"[Warning] Caltech sample count {dataset_size} differs from paper split size {expected}.")
+
     with torch.no_grad():
         text_feature_list = []
-        for template in templates:
+        for template in CALTECH_TEMPLATES:
             prompts = [template.format(c) for c in class_names]
             tokens = clip.tokenize(prompts).to(device)
             text_features = model.encode_text(tokens)

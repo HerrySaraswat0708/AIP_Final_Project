@@ -16,6 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.clip_compat import get_clip_module, get_extraction_runtime
 from src.dtd_loader import load_dtd
+from src.paper_setup import DTD_TEMPLATES, EXPECTED_TEST_SPLIT_SIZES
 
 
 class SplitImageDataset(Dataset):
@@ -200,15 +201,14 @@ def extract_dtd():
     image_features = torch.cat(image_features).cpu().numpy()
     labels = torch.cat(labels).numpy()
 
-    templates = [
-        "a cropped photo of {} texture.",
-        "a photo of the {} pattern.",
-        "{}",
-    ]
+    expected = EXPECTED_TEST_SPLIT_SIZES["dtd"]
+    if len(loader.dataset) != expected:
+        print(f"[Warning] DTD sample count {len(loader.dataset)} differs from paper split size {expected}.")
+
     with torch.no_grad():
         text_feature_list = []
-        for template in templates:
-            prompts = [template.format(c.replace('_', ' ')) for c in class_names]
+        for template in DTD_TEMPLATES:
+            prompts = [template.format(c.replace("_", " ")) for c in class_names]
             tokens = clip.tokenize(prompts).to(device)
             text_features = model.encode_text(tokens)
             text_features = text_features / text_features.norm(dim=-1, keepdim=True)

@@ -13,9 +13,19 @@ import torch
 
 from experiments.evaluate_freetta import evaluate_loaded, load_freetta_dataset
 from src.paper_configs import DEFAULT_FREETTA_PARAMS
+from src.paper_setup import EXPECTED_TEST_SPLIT_SIZES
 
 
 BEST_CONFIGS = {key: dict(value) for key, value in DEFAULT_FREETTA_PARAMS.items()}
+
+
+def _validate_payload(dataset: str, payload) -> None:
+    expected = EXPECTED_TEST_SPLIT_SIZES.get(str(dataset).lower())
+    actual = int(payload["num_samples"])
+    if expected is not None and actual != expected:
+        raise ValueError(
+            f"Dataset '{dataset}' has {actual} samples in data/processed, expected {expected} for the official split."
+        )
 
 
 def main() -> None:
@@ -29,6 +39,8 @@ def main() -> None:
             max_samples=None,
             features_dir="data/processed",
         )
+
+        _validate_payload(dataset, payload)
 
         print(
             f"\n[Run] {dataset} "
@@ -51,7 +63,7 @@ def main() -> None:
 
     out_dir = Path("outputs")
     out_dir.mkdir(exist_ok=True)
-    out_path = out_dir / "freetta_best_results.json"
+    out_path = out_dir / "/tuning/best_freetta_run_results.json"
     out_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
     print(f"\n[Saved] {out_path}")
 

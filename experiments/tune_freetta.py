@@ -31,12 +31,12 @@ datasets = ["DTD", "caltech", "eurosat", "pets", "imagenet"]
 alpha_list = [0.0, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2]
 beta_list = [0.1, 0.5, 1.0, 2.0, 4.5]
 
-# Strong defaults from corrected online-EM runs in this repo.
+# Paper default: a shared alpha/beta pair is used across datasets.
 recommended_defaults = {
-    "dtd": {"alpha": 0.2, "beta": 2.0},
-    "caltech": {"alpha": 0.1, "beta": 1.0},
-    "eurosat": {"alpha": 0.3, "beta": 4.5},
-    "pets": {"alpha": 0.1, "beta": 0.1},
+    "dtd": {"alpha": 0.2, "beta": 4.5},
+    "caltech": {"alpha": 0.2, "beta": 4.5},
+    "eurosat": {"alpha": 0.2, "beta": 4.5},
+    "pets": {"alpha": 0.2, "beta": 4.5},
     "imagenet": {"alpha": 0.2, "beta": 4.5},
 }
 

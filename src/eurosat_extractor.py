@@ -14,6 +14,11 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.clip_compat import get_clip_module, get_extraction_runtime
 from src.eurosat_loader import load_eurosat
+from src.paper_setup import (
+    EUROSAT_TEMPLATES,
+    EXPECTED_TEST_SPLIT_SIZES,
+    normalize_eurosat_classname,
+)
 
 
 class SplitImageDataset(Dataset):
@@ -28,28 +33,6 @@ class SplitImageDataset(Dataset):
         image_path, label = self.samples[idx]
         image = Image.open(image_path).convert("RGB")
         return self.transform(image), label
-
-
-NEW_CLASSNAMES = {
-    "annualcrop": "annual crop land",
-    "forest": "forest",
-    "herbaceousvegetation": "brushland or shrubland",
-    "highway": "highway or road",
-    "industrial": "industrial buildings or commercial buildings",
-    "pasture": "pasture land",
-    "permanentcrop": "permanent crop land",
-    "residential": "residential buildings or homes or apartments",
-    "river": "river",
-    "sealake": "lake or sea",
-    "annual crop land": "annual crop land",
-    "herbaceous vegetation land": "brushland or shrubland",
-    "highway or road": "highway or road",
-    "industrial buildings": "industrial buildings or commercial buildings",
-    "pasture land": "pasture land",
-    "permanent crop land": "permanent crop land",
-    "residential buildings": "residential buildings or homes or apartments",
-    "sea or lake": "lake or sea",
-}
 
 
 def _load_eurosat_split(preprocess, batch_size: int, num_workers: int, pin_memory: bool):
@@ -84,10 +67,7 @@ def _load_eurosat_split(preprocess, batch_size: int, num_workers: int, pin_memor
             return None
         samples.append((image_path, int(label)))
         raw_name = str(class_name).strip()
-        mapped = NEW_CLASSNAMES.get(raw_name.lower().replace(" ", ""), None)
-        if mapped is None:
-            mapped = NEW_CLASSNAMES.get(raw_name.lower(), raw_name.lower())
-        class_names[int(label)] = mapped
+        class_names[int(label)] = normalize_eurosat_classname(raw_name)
 
     dataset = SplitImageDataset(samples=samples, transform=preprocess)
     loader = DataLoader(
@@ -127,10 +107,14 @@ def extract_eurosat():
             num_workers=num_workers,
             pin_memory=pin_memory,
         )
-        class_names = [NEW_CLASSNAMES.get(c.lower(), c.replace("_", " ").lower()) for c in class_names]
+        class_names = [normalize_eurosat_classname(c.replace("_", " ")) for c in class_names]
     else:
         loader, class_names = split_loaded
         print(f"Using split_zhou test split for EuroSAT: {len(loader.dataset)} samples")
+
+    expected = EXPECTED_TEST_SPLIT_SIZES["eurosat"]
+    if len(loader.dataset) != expected:
+        print(f"[Warning] EuroSAT sample count {len(loader.dataset)} differs from paper split size {expected}.")
 
     image_features = []
     labels = []
@@ -145,13 +129,9 @@ def extract_eurosat():
     image_features = torch.cat(image_features).cpu().numpy()
     labels = torch.cat(labels).numpy()
 
-    templates = [
-        "aerial imagery showing {}.",
-        "an orthographic view of {}.",
-    ]
     with torch.no_grad():
         text_feature_list = []
-        for template in templates:
+        for template in EUROSAT_TEMPLATES:
             prompts = [template.format(c) for c in class_names]
             tokens = clip.tokenize(prompts).to(device)
             text_features = model.encode_text(tokens)

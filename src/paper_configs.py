@@ -6,9 +6,10 @@ DEFAULT_DATASETS = ("caltech", "dtd", "eurosat", "pets", "imagenet")
 PAPER_TDA_TARGETS = {
     "vit_b16": {
         "caltech": 94.24,
-        "dtd": 46.40,
+        "dtd": 47.40,
         "eurosat": 58.00,
         "pets": 88.63,
+        # This repo evaluates "imagenet" on ImageNetV2 matched-frequency.
         "imagenet": 64.67,
     },
 }
@@ -17,9 +18,10 @@ PAPER_TDA_TARGETS = {
 PAPER_FREETTA_TARGETS = {
     "vit_b16": {
         "caltech": 94.63,
-        "dtd": 47.96,
+        "dtd": 46.96,
         "eurosat": 62.93,
         "pets": 90.11,
+        # This repo evaluates "imagenet" on ImageNetV2 matched-frequency.
         "imagenet": 64.92,
     },
     "rn50": {
@@ -126,9 +128,9 @@ PAPER_TDA_DEFAULTS = {
 
 
 DEFAULT_FREETTA_PARAMS = {
-    "dtd": {"alpha": 0.2, "beta": 2.0},
-    "caltech": {"alpha": 0.1, "beta": 1.0},
-    "eurosat": {"alpha": 0.3, "beta": 4.5},
-    "pets": {"alpha": 0.1, "beta": 0.1},
+    "dtd": {"alpha": 0.2, "beta": 4.5},
+    "caltech": {"alpha": 0.2, "beta": 4.5},
+    "eurosat": {"alpha": 0.2, "beta": 4.5},
+    "pets": {"alpha": 0.2, "beta": 4.5},
     "imagenet": {"alpha": 0.2, "beta": 4.5},
 }

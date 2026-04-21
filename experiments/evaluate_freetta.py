@@ -40,8 +40,8 @@ def load_freetta_dataset(
 
 def evaluate_loaded(
     payload,
-    alpha=0.008,
-    beta=1.0,
+    alpha=0.2,
+    beta=4.5,
     device="cuda",
     shuffle_stream=True,
     stream_seed=1,
@@ -71,7 +71,6 @@ def evaluate_loaded(
             x = image_features[idx]
             y = labels[idx]
 
-            # Eq. (13) in FreeTTA uses cosine-similarity logits (no extra x100 scaling).
             clip_logits = x @ text_features.t()
             clip_pred = torch.argmax(clip_logits, dim=-1)
             clip_correct += (clip_pred == y).to(clip_correct.dtype)
@@ -88,8 +87,8 @@ def evaluate_loaded(
 
 def evaluate(
     dataset,
-    alpha=0.008,
-    beta=1.0,
+    alpha=0.2,
+    beta=4.5,
     device="cuda",
     max_samples=None,
     features_dir="data/processed",

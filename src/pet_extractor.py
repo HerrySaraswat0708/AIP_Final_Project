@@ -144,6 +144,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.clip_compat import get_clip_module, get_extraction_runtime
+from src.paper_setup import EXPECTED_TEST_SPLIT_SIZES, PETS_TEMPLATES
 from src.pet_loader import load_pets, resolve_pet_image_root
 
 
@@ -282,14 +283,13 @@ def extract_pets():
     image_features = torch.cat(image_features).cpu().numpy()
     labels = torch.cat(labels).numpy()
 
-    templates = [
-        "a photo of a {}, a type of pet.",
-        "a photo of the pet {}.",
-        "a cute photo of a {}.",
-    ]
+    expected = EXPECTED_TEST_SPLIT_SIZES["pets"]
+    if dataset_size != expected:
+        print(f"[Warning] OxfordPets sample count {dataset_size} differs from paper split size {expected}.")
+
     with torch.no_grad():
         text_feature_list = []
-        for template in templates:
+        for template in PETS_TEMPLATES:
             prompts = [template.format(c) for c in class_names]
             tokens = clip.tokenize(prompts).to(device)
             text_features = model.encode_text(tokens)

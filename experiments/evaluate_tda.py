@@ -49,6 +49,8 @@ def evaluate_loaded(
     clip_scale=100.0,
     fallback_to_clip=False,
     fallback_margin=0.0,
+    shuffle_stream=True,
+    stream_seed=1,
 ):
     image_features = payload["image_features"]
     labels = payload["labels"]
@@ -77,11 +79,17 @@ def evaluate_loaded(
     )
 
     correct_count = torch.tensor(0, device=device)
+    if shuffle_stream:
+        generator = torch.Generator()
+        generator.manual_seed(int(stream_seed))
+        order = torch.randperm(total, generator=generator).to(labels.device)
+    else:
+        order = torch.arange(total, device=labels.device)
 
     with INFERENCE_MODE():
-        for i in range(total):
-            pred, _, _ = model.predict(image_features[i])
-            correct_count += (pred.squeeze(0) == labels[i]).to(correct_count.dtype)
+        for idx in order:
+            pred, _, _ = model.predict(image_features[idx])
+            correct_count += (pred.squeeze(0) == labels[idx]).to(correct_count.dtype)
 
     return float(correct_count.item() / max(total, 1))
 

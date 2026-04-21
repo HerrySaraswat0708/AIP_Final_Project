@@ -1,6 +1,7 @@
 from .adapters import (
     AdapterOutput,
     CLIPBaselineAdapter,
+    EdgeFreeTTALowRankAdapter,
     FreeTTAOnlineEMAdapter,
     TDAMemoryAdapter,
 )
@@ -8,6 +9,7 @@ from .adapters import (
 __all__ = [
     "AdapterOutput",
     "CLIPBaselineAdapter",
+    "EdgeFreeTTALowRankAdapter",
     "TDAMemoryAdapter",
     "FreeTTAOnlineEMAdapter",
 ]

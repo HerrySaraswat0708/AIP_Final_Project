@@ -14,6 +14,7 @@ import torch
 
 from experiments.evaluate_tda import evaluate_clip_loaded, evaluate_loaded, load_tda_dataset
 from src.paper_configs import PAPER_TDA_DEFAULTS
+from src.paper_setup import EXPECTED_TEST_SPLIT_SIZES
 
 
 DEFAULT_DATASETS = list(PAPER_TDA_DEFAULTS.keys())
@@ -88,6 +89,15 @@ def load_best_configs(path):
     raise ValueError(f"No valid TDA config mapping found in {path}")
 
 
+def _validate_payload(dataset: str, payload) -> None:
+    expected = EXPECTED_TEST_SPLIT_SIZES.get(str(dataset).lower())
+    actual = int(payload["num_samples"])
+    if expected is not None and actual != expected:
+        raise ValueError(
+            f"Dataset '{dataset}' has {actual} samples in data/processed, expected {expected} for the official split."
+        )
+
+
 def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     best_configs = {str(dataset).lower(): dict(cfg) for dataset, cfg in PAPER_TDA_DEFAULTS.items()}
@@ -108,6 +118,8 @@ def main() -> None:
             max_samples=None,
             features_dir="data/processed",
         )
+
+        _validate_payload(dataset, payload)
 
         print(
             f"\n[Run] {dataset} "
