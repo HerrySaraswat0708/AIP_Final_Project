@@ -3,6 +3,8 @@ from typing import Dict, Optional, Tuple
 import torch
 import torch.nn.functional as F
 
+from models.EdgeFreeTTA import EdgeFreeTTA
+
 
 class AdapterOutput(object):
     def __init__(self, pred, extra):
@@ -216,3 +218,56 @@ class FreeTTAOnlineEMAdapter:
 
     def get_class_means(self) -> Tuple[torch.Tensor, torch.Tensor]:
         return self.initial_mu.detach().cpu(), self.mu.detach().cpu()
+
+
+class EdgeFreeTTALowRankAdapter:
+    def __init__(
+        self,
+        text_features: torch.Tensor,
+        rank: int = 8,
+        fusion_alpha: float = 0.5,
+        learning_rate: float = 1e-2,
+        beta: float = 4.5,
+        min_confidence: float = 0.65,
+        align_weight: float = 0.5,
+        residual_weight: float = 0.05,
+        weight_decay: float = 1e-4,
+        device: str = "cpu",
+    ) -> None:
+        self.model = EdgeFreeTTA(
+            text_features=text_features,
+            rank=rank,
+            fusion_alpha=fusion_alpha,
+            learning_rate=learning_rate,
+            beta=beta,
+            min_confidence=min_confidence,
+            align_weight=align_weight,
+            residual_weight=residual_weight,
+            weight_decay=weight_decay,
+            device=device,
+        )
+
+    def process_sample(
+        self, x: torch.Tensor, clip_probs: torch.Tensor, clip_logits: torch.Tensor
+    ) -> AdapterOutput:
+        x = F.normalize(x, dim=-1)
+        clip_logits = clip_logits.to(self.model.device, dtype=torch.float32)
+        pred, probs, stats = self.model.predict_and_adapt(x=x, clip_logits=clip_logits)
+        probs = probs.squeeze(0)
+        pred_i = int(pred.squeeze(0).item())
+        entropy = float(_entropy(probs).item())
+        return AdapterOutput(
+            pred=pred_i,
+            extra={
+                "pred_confidence": float(probs[pred_i].item()),
+                "entropy": entropy,
+                "edge_rank": float(self.model.rank),
+                "edge_updated": stats["updated"],
+                "edge_update_weight": stats["update_weight"],
+                "edge_adapter_norm": stats["adapter_norm"],
+                "edge_residual_norm": stats["residual_norm"],
+            },
+        )
+
+    def state_nbytes(self) -> int:
+        return self.model.state_nbytes()

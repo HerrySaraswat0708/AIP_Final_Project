@@ -1,0 +1,15 @@
+{
+  "device": "cuda",
+  "datasets": [
+    "caltech",
+    "dtd",
+    "eurosat",
+    "pets",
+    "imagenet"
+  ],
+  "max_samples": null,
+  "shuffle_stream": false,
+  "stream_seed": 1,
+  "summary_table_csv": "outputs/edgefreetta_comparison/summary_table.csv",
+  "summary_table_md": "outputs/edgefreetta_comparison/summary_table.md"
+}

@@ -39,10 +39,13 @@ class FreeTTA:
         clip_probs = F.softmax(clip_logits, dim=-1)
 
         entropy = -torch.sum(clip_probs * torch.log(clip_probs + 1e-8), dim=-1)
-        weight = torch.exp(-self.beta * entropy).item()
+        weight = torch.exp(-self.beta * entropy)
 
         sigma = self.sigma + 1e-4 * self.eye
-        if hasattr(torch, "linalg") and hasattr(torch.linalg, "solve"):
+        if hasattr(torch, "linalg") and hasattr(torch.linalg, "cholesky"):
+            chol = torch.linalg.cholesky(sigma)
+            inv_sigma_mu = torch.cholesky_solve(self.mu.t(), chol)
+        elif hasattr(torch, "linalg") and hasattr(torch.linalg, "solve"):
             inv_sigma_mu = torch.linalg.solve(sigma, self.mu.t())
         else:
             inv_sigma_mu = torch.solve(self.mu.t(), sigma)[0]
@@ -59,9 +62,10 @@ class FreeTTA:
         sigma_old = self.sigma.clone()
         mu_old = self.mu.clone()
 
-        delta = weight * gamma
+        weight_scalar = weight.squeeze(0)
+        delta = weight_scalar * gamma
         self.Ny = self.Ny + delta
-        self.t = self.t + weight
+        self.t = self.t + weight_scalar
 
         self.mu = (Ny_old.unsqueeze(1) * mu_old + delta.unsqueeze(1) * x.squeeze(0)) / (
             self.Ny.unsqueeze(1) + 1e-8
@@ -69,11 +73,11 @@ class FreeTTA:
         self.mu = F.normalize(self.mu, dim=-1)
 
         # Eq. (12)-style online covariance update.
-        if float(self.t.item()) > 1.0:
+        if bool(self.t > 1.0):
             diff = x.squeeze(0).unsqueeze(0) - self.mu
             outer = diff.unsqueeze(2) @ diff.unsqueeze(1)
             weighted_cov = (gamma.unsqueeze(1).unsqueeze(2) * outer).sum(dim=0)
-            self.sigma = sigma_old + (weight * weighted_cov) / (self.t - 1 + 1e-8)
+            self.sigma = sigma_old + (weight_scalar * weighted_cov) / (self.t - 1 + 1e-8)
 
         self.sigma = self.sigma + 1e-6 * self.eye
 

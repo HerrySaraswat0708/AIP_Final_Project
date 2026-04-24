@@ -47,7 +47,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 
 
-def load_dtd():
+def load_dtd(batch_size: int = 64, num_workers: int = 0, pin_memory: bool = False):
     transform = transforms.Compose([
     transforms.Resize(224),
     transforms.CenterCrop(224),
@@ -68,10 +68,10 @@ def load_dtd():
 
     loader = DataLoader(
         dataset,
-        batch_size=128,
+        batch_size=batch_size,
         shuffle=False,
-        num_workers=0,
-        pin_memory=True,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
     )
 
     class_names = dataset.classes

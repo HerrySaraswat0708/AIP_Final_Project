@@ -1,0 +1,2 @@
+dataset,disagreement_rate,tda_acc_on_disagreement,freetta_acc_on_disagreement,avg_clip_entropy_on_disagreement
+pets,0.014445352957209048,0.5094339622641509,0.24528301886792453,3.6098897232199616

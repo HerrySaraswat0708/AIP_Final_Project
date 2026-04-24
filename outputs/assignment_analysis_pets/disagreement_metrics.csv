@@ -1,2 +1,0 @@
-dataset,disagreement_samples,disagreement_rate,tda_acc_on_disagreement,freetta_acc_on_disagreement,freetta_wins_on_disagreement,tda_wins_on_disagreement
-pets,279,0.07604251839738348,0.3906810035842294,0.44086021505376344,123,109

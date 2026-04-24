@@ -1,0 +1,6 @@
+bucket,count,rate
+clip_wrong_tda_wrong_freetta_correct,52,0.027659574468085105
+clip_wrong_tda_correct_freetta_wrong,32,0.01702127659574468
+clip_correct_tda_wrong_freetta_correct,23,0.01223404255319149
+clip_correct_tda_correct_freetta_wrong,21,0.011170212765957447
+all_wrong,948,0.5042553191489362
