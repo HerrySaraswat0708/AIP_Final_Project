@@ -2,6 +2,8 @@
 
 ## Overview
 
+This note is optional supporting material in the final course submission. The main graded narrative for the selected project option is the `TDA` vs `FreeTTA` comparative study. `EdgeFreeTTA` is retained as extra exploration.
+
 We propose **EdgeFreeTTA**, an efficient test-time adaptation framework that updates the model in a **compact low-dimensional space** instead of adapting the full parameter set.
 
 The central idea is to keep the pretrained backbone largely frozen and perform adaptation through a **small low-rank module** that captures the correction needed under distribution shift. This makes adaptation substantially lighter than full-model updates while preserving the robustness of the original pretrained representation.

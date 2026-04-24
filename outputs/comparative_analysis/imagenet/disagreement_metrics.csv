@@ -1,0 +1,2 @@
+dataset,disagreement_rate,tda_acc_on_disagreement,freetta_acc_on_disagreement,avg_clip_entropy_on_disagreement
+imagenet,0.0366,0.2896174863387978,0.19398907103825136,6.9073365542406595

@@ -1,275 +1,408 @@
 # Comparative Analysis of TDA and FreeTTA for Test-Time Adaptation
 
-## 1. Papers and Framing
+This report is written for **proposal option 2** of the course project:
 
-This report compares:
+> choose one recent paper and a stronger later method for the same problem, explain why the later method should improve over the baseline, add new analysis not present in either paper, and experimentally analyze when the improvement occurs.
+
+## 1. Problem Motivation
+
+Large vision-language models such as CLIP are strong zero-shot classifiers, but their accuracy drops under test-time distribution shift. The practical question is whether we can improve a frozen CLIP model at test time without retraining on source data.
+
+This project studies two recent answers to that question:
+
+1. **TDA**: a training-free cache-based adaptation method.
+2. **FreeTTA**: a later online EM-style adaptation method.
+
+The key motivation is not only to compare final accuracies, but to understand:
+
+- what each method is doing to CLIP predictions,
+- what internal statistics each method changes,
+- when one method should theoretically beat the other,
+- why that expected ordering may or may not appear in our own benchmark.
+
+## 2. Papers Chosen and Why the Comparison Is Meaningful
+
+This project compares:
 
 1. **TDA**: *Training-Free Test-Time Adaptation for Vision-Language Models*.
 2. **FreeTTA**: *Free on the Fly: Enhancing Flexibility in Test-Time Adaptation with Online EM*.
 
-FreeTTA is not literally built on top of TDA, but the two methods are directly comparable because they solve the same problem under the same frozen CLIP-style backbone setting. The clean comparison is therefore not "baseline vs add-on module" but **memory-based local adaptation vs online global distribution modeling**.
+`FreeTTA` is not a literal code extension of `TDA`, but it is a later method for the **same frozen-CLIP test-time adaptation problem**. That makes the comparison meaningful:
 
-## 2. Shared Backbone, Losses, and Why the Comparison is Meaningful
+- both methods use the same pretrained CLIP representation space,
+- both avoid backbone retraining at test time,
+- both try to improve classification under target-domain shift,
+- they differ mainly in **how they modify CLIP's decision rule**.
 
-Both methods inherit the same pretrained CLIP representation space. That space is created by CLIP's **contrastive image-text pretraining loss**, which aligns image features and text features by maximizing similarity of matched pairs and minimizing similarity of mismatched pairs.
+So the real comparison is:
 
-That matters for the comparison because neither TDA nor FreeTTA retrains the backbone at test time:
+> given the same frozen CLIP feature space, is it better to adapt using local exemplar memory or global class-statistic modeling?
 
-- The **architecture** is the same frozen image encoder plus frozen text encoder.
-- The **adaptation target** is the same: improve test-time classification under shift without source retraining.
-- The main difference is **how they exploit the geometry of the CLIP feature space**.
+## 3. What Each Method Does in Simple Words
 
-So the comparison reduces to this question:
+### 3.1 CLIP Baseline
 
-> Given the same frozen CLIP geometry, is it better to adapt by storing a few local exemplars, or by estimating global class statistics online?
+CLIP predicts using image-text similarity in a shared embedding space:
 
-## 3. What Each Method is Actually Doing
+`z_y = f(x)^T g(t_y)`
 
-### 3.1 TDA
+where `f(x)` is the image feature and `g(t_y)` is the text feature for class `y`.
 
-TDA does not optimize a test-time loss with backpropagation. Instead, it performs **retrieval-style logit correction** using online caches.
+CLIP itself does not adapt at test time. It is the frozen baseline.
 
-Mechanically it has:
+### 3.2 TDA
 
-- a **positive cache** that adds support for classes similar to stored confident examples,
-- a **negative cache** that suppresses classes when entropy falls in an uncertainty band,
-- entropy gates that decide whether a test sample is informative enough to be stored.
+TDA is best understood as **memory-based local correction**.
 
-So TDA is best understood as a **non-parametric local memory method**. It is strong when nearby target exemplars are informative and a few stored examples per class are enough.
+It maintains:
 
-### 3.2 FreeTTA
+- a positive cache of confident target examples,
+- a negative cache used for suppression under uncertainty,
+- entropy gates that decide when a sample is reliable enough to store.
 
-FreeTTA treats each class as a Gaussian-like component in feature space and performs an **online EM-style update**.
+At test time, TDA does not change the CLIP backbone. Instead, it changes the output logits by adding retrieval-style support from the cache.
 
-Mechanically it has:
+Intuition:
 
-- class means initialized from text embeddings,
-- class priors updated online,
-- a shared covariance matrix,
-- an entropy-derived weight that scales how much each sample influences the update,
-- final prediction from combining CLIP logits with a generative logit term.
+- if a new test sample is close to previously seen confident examples,
+- TDA can push CLIP toward the locally supported class.
 
-So FreeTTA is best understood as a **global distribution-modeling method**. It is strong when the target shift is class-level and enough stream evidence exists to estimate meaningful class statistics.
+So TDA helps when **local neighborhoods** in feature space are reliable.
 
-## 4. Paper-Level Quantitative Comparison
+### 3.3 FreeTTA
 
-To compare the two papers fairly, I use the numbers reported in their tables for the shared ViT-B/16 datasets available in this repository.
+FreeTTA is best understood as **online global distribution modeling**.
+
+It maintains:
+
+- class means,
+- class priors,
+- a shared covariance estimate,
+- an entropy-based weight for how much each sample should influence the online update.
+
+FreeTTA also leaves the CLIP backbone frozen. But instead of using exemplar retrieval, it changes the output by combining CLIP logits with a generative score based on the evolving class statistics.
+
+Intuition:
+
+- if the target stream reveals stable class-level drift,
+- then estimating global class statistics can correct CLIP systematically.
+
+So FreeTTA should help when the target domain is better described by **class-level global structure** than by sparse local memory.
+
+## 4. Theoretical Expectation From the Papers
+
+From the papers, the broad expectation is:
+
+- `FreeTTA` should be stronger overall on most shared datasets,
+- especially when the target stream is long and class-level statistics can be estimated well,
+- while `TDA` should remain strong on datasets where local exemplar structure matters more.
+
+Paper-reported numbers for shared datasets show that expectation clearly:
 
 | Dataset | TDA | FreeTTA | FreeTTA - TDA |
-|---|---:|---:|---:|
+| --- | ---: | ---: | ---: |
 | Caltech101 | 94.24 | 94.63 | +0.39 |
 | DTD | 47.40 | 46.96 | -0.44 |
 | EuroSAT | 58.00 | 62.93 | +4.93 |
 | OxfordPets | 88.63 | 90.11 | +1.48 |
-| ImageNetV2-style evaluation used in this repo | 64.67 | 64.92 | +0.25 |
+| ImageNet-style setting reported by the papers | 64.67 | 64.92 | +0.25 |
 
-### Immediate quantitative takeaway
+So the paper-level theory is not that `FreeTTA` wins every dataset. The real theoretical claim is:
 
-FreeTTA is **not uniformly superior**. It is better on most shared datasets, but the gain is highly uneven:
+- `FreeTTA` should win more often,
+- its gains should be largest when global class statistics are the right abstraction,
+- `TDA` should remain competitive or better when local retrieval structure is more informative.
 
-- **large** on `EuroSAT`,
-- **moderate** on `OxfordPets`,
-- **small** on `Caltech101` and `ImageNet`,
-- **negative** on `DTD`.
+## 5. What We Reproduced in This Repository
 
-That pattern already suggests that the real distinction is not model size or optimization power. It is the **match between dataset geometry and adaptation mechanism**.
+Our final tuned full-dataset runs in this repository are:
 
-## 5. New Analyses Not Presented in Either Paper
+| Dataset | CLIP | TDA | FreeTTA | TDA - CLIP | FreeTTA - CLIP | FreeTTA - TDA |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Caltech | 0.9355 | 0.9408 | 0.9359 | +0.0053 | +0.0004 | -0.0049 |
+| DTD | 0.4394 | 0.4702 | 0.4638 | +0.0309 | +0.0245 | -0.0064 |
+| EuroSAT | 0.4843 | 0.5600 | 0.5106 | +0.0757 | +0.0263 | -0.0494 |
+| ImageNet | 0.6237 | 0.6282 | 0.6237 | +0.0045 | +0.0000 | -0.0045 |
+| Pets | 0.8839 | 0.8861 | 0.8842 | +0.0022 | +0.0003 | -0.0019 |
 
-I replaced the old multi-file analysis setup with one consolidated pipeline:
+These results do **not** match the overall paper expectation. In this reproduced benchmark:
 
-- [experiments/run_comparative_analysis.py](/home/herrys/projects/AIP-Final-project/experiments/run_comparative_analysis.py)
+- `TDA` beats `CLIP` on all five datasets,
+- `FreeTTA` improves over `CLIP` on some datasets but not by much,
+- `TDA` remains stronger than `FreeTTA` on all five datasets in the final tuned table.
 
-It is designed to support paper comparison plus new mechanism-level analysis under one script.
+## 6. Why the Paper Expectation and Our Reproduction Differ
 
-The main new analyses are:
+This mismatch is central to the viva story and should be stated clearly.
+
+The comparison in this repository is still meaningful, but the numbers do not perfectly follow the paper ordering. The most likely reasons are:
+
+1. **Protocol mismatch**
+   The repository evaluates both methods in a shared extracted-feature benchmark rather than exactly reproducing every paper's full raw-image pipeline and official evaluation environment.
+
+2. **Implementation availability mismatch**
+   `TDA` has an official public implementation that we checked against.
+   `FreeTTA` does not have the same level of public official code availability in this repo workflow, so its reproduction is more dependent on paper-based reimplementation and tuning.
+
+3. **Benchmark-specific geometry**
+   The frozen CLIP features used in this repository may expose local structure differently from the setups used in the papers.
+
+4. **High baseline accuracy on several datasets**
+   On datasets such as Caltech and Pets, CLIP is already very strong. In that regime, even a theoretically better adaptive method can fail to show large gains because the room for improvement is tiny.
+
+The important point is:
+
+> the reproduction gap does not invalidate the project. It creates the main research question for the project: why does the expected ordering fail here, and what does that reveal about the methods?
+
+## 7. Our Main Contribution Beyond Both Papers
+
+The main contribution of this project is **not** claiming a new better method for option 2. The main contribution is a unified comparison framework that explains how the two methods behave.
+
+The new analyses added in this repository are:
 
 1. **Geometry Alignment Probe**
-2. **Flip Efficiency Analysis**
+2. **Prediction Flip Analysis**
 3. **Adaptation Latency / Break-Even Analysis**
 4. **Cache Pressure Analysis**
 5. **Disagreement Reliability Analysis**
+6. **Internal-State Diagnostics**
 
-These are described mathematically in [queries.md](/home/herrys/projects/AIP-Final-project/queries.md).
+These analyses are not presented as one unified mechanism-level framework in either paper.
 
-## 6. New Analysis 1: Geometry Alignment Probe
+## 8. What We Wanted to Understand
 
-This is the strongest new analysis.
+The project is organized around the following questions:
 
-I compare two post-hoc oracle probes in the same CLIP feature space:
+1. How are `TDA` and `FreeTTA` different from base `CLIP`?
+2. What changes do they make to CLIP outputs?
+3. Are those changes mostly helpful or harmful?
+4. How quickly do they start helping?
+5. What internal statistics do they update?
+6. Where do they fail?
+7. When should one method theoretically succeed while the other should struggle?
 
-- an **oracle centroid classifier**,
-- an **oracle leave-one-out 1-NN classifier**.
+Those questions are formalized in [queries.md](/home/herrys/projects/AIP-Final-project/queries.md).
 
-Why this is useful:
+## 9. How TDA and FreeTTA Change CLIP Outputs
 
-- The centroid probe matches FreeTTA's modeling assumption: classes are well represented by global means.
-- The 1-NN probe matches TDA's operating bias: decisions can be improved using local exemplar neighborhoods.
+This is one of the most viva-relevant parts of the project.
 
-### Interpretation rule
+### 9.1 How TDA changes CLIP outputs
 
-- If **centroid oracle > 1-NN oracle**, the dataset geometry is more favorable to FreeTTA.
-- If **1-NN oracle > centroid oracle**, the dataset geometry is more favorable to TDA.
+TDA changes CLIP predictions by adding **retrieval-based support or suppression**:
 
-### What this says about the shared datasets
+- if a test sample is similar to stored positive-cache samples from a class, that class logit gets boosted,
+- if uncertainty enters the negative-gate regime, some classes can be suppressed using the negative cache.
 
-- **EuroSAT**: a class-level remote-sensing problem with relatively coherent class clusters and long streams. This is exactly the sort of setting where global distribution modeling should dominate sparse memory.
-- **DTD**: texture categories are often multi-modal and locally structured. A single centroid or shared-covariance Gaussian is a weaker description here, so TDA remains competitive or superior.
-- **Caltech101 / OxfordPets**: both are relatively well-structured categories, so centroid modeling is plausible, but the headroom is smaller because CLIP is already strong.
+So TDA changes CLIP output in a **local, sample-specific way**.
 
-This directly explains why FreeTTA's biggest paper gain is on EuroSAT and why DTD is the main failure case.
+It does not try to change the meaning of the whole dataset distribution. It tries to fix CLIP using nearby target evidence.
 
-## 7. New Analysis 2: Flip Efficiency
+### 9.2 How FreeTTA changes CLIP outputs
 
-Instead of only measuring final accuracy, I analyze **what happens when a method changes CLIP's decision**.
+FreeTTA changes CLIP predictions by updating **global class statistics**:
 
-A prediction change can be:
+- class means move,
+- priors change,
+- covariance summarizes the stream,
+- the final logit combines the original CLIP similarity with a generative score from the updated statistics.
 
-- **beneficial**: CLIP was wrong, method becomes correct,
-- **harmful**: CLIP was correct, method becomes wrong.
+So FreeTTA changes CLIP output in a **global, distribution-level way**.
 
-This is a better mechanism-level comparison than plain accuracy because the two methods fail for different reasons:
+It is effectively saying:
 
-- TDA flips are caused by **cache retrieval plus entropy-gated suppression**.
-- FreeTTA flips are caused by **drift in the estimated generative model**.
+- "based on the whole test stream so far, this class center and prior should now look different from the original text anchor."
 
-### Why this matters
+### 9.3 Why this difference matters
 
-A good adaptation method should not just change predictions often. It should change them **selectively**.
+This directly explains the different failure modes:
 
-The useful quantity is not just change rate, but:
+- `TDA` can fail if local retrieved neighbors are misleading or too sparse.
+- `FreeTTA` can fail if the estimated class distribution drifts in the wrong direction or if the Gaussian-style assumption is a poor fit.
 
+## 10. New Comparison 1: Geometry Alignment
+
+We compare:
+
+- an oracle centroid classifier,
+- an oracle leave-one-out 1-NN classifier.
+
+Interpretation:
+
+- centroid-friendly geometry supports the logic behind `FreeTTA`,
+- local-neighbor-friendly geometry supports the logic behind `TDA`.
+
+This comparison is important because it separates:
+
+- "the method should win in theory"
+
+from:
+
+- "the feature geometry in this benchmark actually supports that theory."
+
+In other words, this is how we test whether the benchmark geometry matches the paper intuition.
+
+## 11. New Comparison 2: Prediction Flips
+
+A method should not be judged only by final accuracy. It should also be judged by **what kind of prediction changes it makes**.
+
+We measure:
+
+- beneficial flips,
+- harmful flips,
 - beneficial flip precision,
-- harmful flip rate on CLIP-correct samples,
-- confidence/entropy after beneficial vs harmful flips.
+- harmful flip rate on CLIP-correct samples.
 
-### Expected pattern
+This tells us whether the method is:
 
-- **TDA** should be better when the useful correction is highly local and only a few samples need to flip.
-- **FreeTTA** should be better when many medium-confidence samples benefit from consistent global drift in class statistics.
+- selectively correcting CLIP,
+- or overcorrecting and damaging already-correct predictions.
 
-## 8. New Analysis 3: Adaptation Latency
+This is one of the cleanest ways to explain "what the method is doing to CLIP."
 
-This measures **how many test samples each method needs before it starts helping**.
+## 12. New Comparison 3: Adaptation Trajectory
 
-I compute a rolling-window break-even point versus CLIP and versus the competing method.
+We compare how the two methods evolve over the target stream.
 
-This is a direct reflection of internal mechanics:
+The relevant question is not only:
 
-- TDA can improve quickly because one strong stored exemplar can immediately help the next similar sample.
-- FreeTTA often needs more samples before its estimated means and priors become useful.
+- "who ends higher?"
 
-### Interpretation
+but also:
 
-- **short break-even latency** favors TDA,
-- **longer latency but larger late-stage gain** favors FreeTTA.
+- "who starts helping earlier?"
+- "who needs more evidence?"
+- "who gets stronger late in the stream?"
 
-This separates **fast local adaptation** from **slow but global distribution estimation**.
+This is captured by:
 
-## 9. New Analysis 4: Cache Pressure
+- rolling accuracy curves,
+- break-even latency,
+- dataset-wise adaptation dynamics plots.
 
-TDA has a hard memory bottleneck. With class count `C`, positive shot capacity `S+`, and negative shot capacity `S-`, the total retained memory is approximately:
+Interpretation:
 
-`MemorySlots = C * (S+ + S-)`
+- early gains support `TDA`'s local-memory advantage,
+- later gains support `FreeTTA`'s global-statistics advantage.
 
-A useful derived quantity is:
+## 13. New Comparison 4: Internal Statistics and Entropy
 
-`CachePressure = N / MemorySlots`
+We also compare internal quantities that are not visible from final accuracy alone.
 
-where `N` is the number of test samples.
+### TDA internals
 
-### Interpretation
+- positive cache size,
+- negative cache size,
+- gate activity,
+- effective cache pressure.
 
-- **High cache pressure** means the test stream contains much more evidence than TDA can retain.
-- In that case, FreeTTA has an advantage because it compresses evidence into sufficient statistics instead of discarding almost all of it.
+These tell us whether TDA has enough useful local evidence to retrieve from.
 
-This is especially relevant for `EuroSAT`, where the stream is long relative to the tiny TDA cache.
+### FreeTTA internals
 
-## 10. New Analysis 5: Disagreement Reliability
+- EM weight,
+- mean update norm,
+- total mean drift,
+- prior entropy,
+- covariance trace.
 
-I evaluate only the samples where TDA and FreeTTA disagree.
+These tell us whether FreeTTA is updating meaningfully, remaining stable, or drifting too far from the original CLIP anchor.
 
-This isolates the regime where the methods are making genuinely different corrections rather than both inheriting CLIP's answer.
+This is the key comparison for explaining:
 
-### Interpretation
+- how both methods modify statistics relative to base `CLIP`,
+- and how those statistic changes relate to success or failure.
 
-- If FreeTTA is consistently better on disagreement samples, its global model is correcting errors that sparse local memory misses.
-- If TDA is better on disagreements, local exemplar reasoning is capturing structure that a class-mean model washes out.
+## 14. When One Method Should Succeed and the Other Should Struggle
 
-This analysis is especially valuable because it avoids the misleading comfort of overall accuracy, where both methods can look similar simply because CLIP is already strong.
+### FreeTTA should succeed when:
 
-## 11. When FreeTTA Should Be Superior
+- class-level global structure is coherent,
+- the stream is long enough to estimate useful statistics,
+- cache compression would otherwise discard too much evidence,
+- late-stage global correction matters more than immediate local fixes.
 
-FreeTTA should be superior when most of the following hold:
+### TDA should succeed when:
 
-1. **The class geometry is globally coherent.**
-   - Evidence: centroid oracle stronger than 1-NN oracle.
+- local neighborhood information is highly informative,
+- classes are multi-modal or not well summarized by one mean,
+- a few strong local corrections are enough,
+- harmful global drift would be riskier than sparse retrieval.
 
-2. **The stream is long relative to TDA's memory budget.**
-   - Evidence: high cache pressure.
+These are not guarantees in a formal proof sense, but they are the most defensible mechanism-level conditions supported by the design of the methods.
 
-3. **The main target shift is class-level drift, not just local neighborhood irregularity.**
-   - Evidence: global statistics continue improving late in the stream.
+## 15. Dataset-Wise Observations in This Repo
 
-4. **Late-stage gains matter more than early adaptation speed.**
-   - Evidence: longer break-even latency but stronger late rolling advantage.
+### Caltech
 
-5. **Prediction changes are globally consistent rather than sparse and local.**
-   - Evidence: high beneficial-flip precision on medium/hard samples.
+- CLIP is already near saturation.
+- `TDA` gets a small gain.
+- `FreeTTA` is almost tied with CLIP.
+- Main lesson: low headroom makes it hard for global distribution modeling to show a clear advantage.
 
-### Datasets where this logic points toward FreeTTA
+### DTD
 
-- **EuroSAT**: strongest case.
-- **OxfordPets**: moderate case.
-- **Caltech101**: plausible, but only modest gains because CLIP is already near saturation.
-- **ImageNet**: only slight expected advantage because the class space is large and the shared-covariance assumption is demanding.
+- both methods improve over CLIP,
+- `TDA` is slightly stronger in the final tuned table,
+- texture-heavy local structure is consistent with TDA staying strong.
 
-## 12. When TDA Should Be Superior
+### EuroSAT
 
-TDA should be superior when most of the following hold:
+- both methods improve over CLIP,
+- `TDA` gains much more than `FreeTTA` in this reproduction,
+- this is the biggest mismatch with paper intuition and therefore the most interesting analysis case in the project.
 
-1. **Useful evidence is local rather than globally centroid-like.**
-   - Evidence: 1-NN oracle stronger than centroid oracle.
+### ImageNet
 
-2. **The dataset has multi-modal classes or strong local texture variation.**
-   - A single Gaussian per class is a poor fit.
+- gains are small for both methods,
+- `TDA` gives a modest positive lift,
+- `FreeTTA` is essentially tied with CLIP,
+- this suggests weak practical headroom under the current benchmark.
 
-3. **Fast early corrections matter more than long-term statistical estimation.**
-   - Evidence: short break-even latency.
+### Pets
 
-4. **The method must avoid harmful model drift.**
-   - TDA is more conservative because it never tries to estimate a full target distribution.
+- CLIP is already strong,
+- `TDA` gives a small improvement,
+- `FreeTTA` gives only a marginal gain,
+- again, limited headroom reduces the chance of seeing the paper-style ordering clearly.
 
-5. **Only a small number of local corrections are needed.**
-   - Then a sparse cache is enough.
+## 16. Main Conclusion
 
-### Datasets where this logic points toward TDA
+The core conclusion of the project is:
 
-- **DTD** is the clearest case.
-- It can also stay competitive in easy, low-headroom settings where there is little to gain from fitting global statistics.
+> `TDA` and `FreeTTA` are not simply two methods where one always dominates the other. They exploit different structure in the same CLIP feature space.
 
-## 13. Final Comparative Judgment
+- `TDA` exploits local target evidence through retrieval-like cache correction.
+- `FreeTTA` exploits global target evidence through online distribution modeling.
 
-The best way to understand these papers is not "which one wins more datasets?" but:
+The paper-level expectation says `FreeTTA` should often be stronger. Our reproduction does not fully match that expectation. That mismatch becomes the main scientific contribution of the project, because it motivates a deeper comparison of:
 
-> **TDA and FreeTTA are exploiting different kinds of structure in the same CLIP feature space.**
+- geometry,
+- trajectory,
+- prediction flips,
+- entropy,
+- internal statistics,
+- and disagreement cases.
 
-- TDA exploits **local neighbor evidence**.
-- FreeTTA exploits **global class-statistic evidence**.
+So the final contribution of this work is a **mechanism-level explanation framework** for comparing test-time adaptation methods beyond a single accuracy table.
 
-That is why the winner changes by dataset.
+## 17. Code and Contribution Statement
 
-### My main new conclusion
+This project includes both reused and newly written components.
 
-The strongest new conclusion from this comparison is:
+### Reused or paper-derived components
 
-> **The decisive factor is not simply how much target information exists, but whether that information is better compressed as a few useful exemplars or as global class statistics.**
+- `TDA` logic was checked against the official public implementation.
+- `FreeTTA` was implemented and tuned in this repository using the paper description and the shared benchmark setup.
 
-This conclusion is not stated directly in either paper, and it is what the new analyses are designed to test.
+### New work in this repository
 
-## 14. Deliverables
+- unified comparison runners,
+- tuning scripts,
+- final full-suite evaluation across datasets,
+- new analysis metrics and plots,
+- report-ready summaries and dataset-wise interpretations.
 
-- New single analysis script: [experiments/run_comparative_analysis.py](/home/herrys/projects/AIP-Final-project/experiments/run_comparative_analysis.py)
-- Methodology and mathematical background: [queries.md](/home/herrys/projects/AIP-Final-project/queries.md)
-- This report: [ASSIGNMENT_REPORT.md](/home/herrys/projects/AIP-Final-project/ASSIGNMENT_REPORT.md)
+The main project contribution is therefore:
 
+> a unified experimental and analytical framework for understanding how `TDA` and `FreeTTA` differ in practice, especially when reproduced behavior diverges from paper-level expectations.

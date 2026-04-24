@@ -1,0 +1,2 @@
+dataset,clip_acc,tda_acc,freetta_acc
+imagenet,0.6235,0.627,0.6235

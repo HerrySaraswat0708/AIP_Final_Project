@@ -8,6 +8,15 @@ This document explains the comparison questions used to analyze **TDA** and **Fr
 - when **TDA** should be better,
 - what those outcomes reveal about the architecture, losses, and internal workings of both methods.
 
+It is important to read these queries together with the report:
+
+- [ASSIGNMENT_REPORT.md](/home/herrys/projects/AIP-Final-project/ASSIGNMENT_REPORT.md)
+
+The papers suggest that `FreeTTA` should often be stronger overall. In this repository, the reproduced benchmark does not fully follow that ordering. These queries are therefore designed for two purposes:
+
+1. to explain the **paper-level theoretical expectation**,
+2. to explain **why our reproduced benchmark may behave differently**.
+
 The implementation for these comparisons is consolidated in:
 
 - [experiments/run_comparative_analysis.py](/home/herrys/projects/AIP-Final-project/experiments/run_comparative_analysis.py)
@@ -91,8 +100,8 @@ This is conceptually aligned with TDA, because TDA relies on exemplar similarity
 
 ### Cases
 
-- **FreeTTA superior**: datasets with coherent class clusters, such as EuroSAT-like scenarios.
-- **TDA superior**: datasets with multi-modal or texture-heavy local structure, such as DTD-like scenarios.
+- **FreeTTA superior**: datasets with coherent class clusters and stable class-level drift.
+- **TDA superior**: datasets with multi-modal or texture-heavy local structure.
 
 ## 4. Query 2: Are Prediction Changes Helpful or Harmful?
 
@@ -151,6 +160,7 @@ Then:
 
 - **FreeTTA superior** when many medium-confidence CLIP mistakes can be corrected consistently by global class statistics.
 - **TDA superior** when only sparse local mistakes need correction and over-modeling the whole stream is risky.
+- If `FreeTTA` barely changes CLIP predictions at all, that usually indicates that the learned statistics are not moving enough to produce a meaningful generative correction in the current benchmark.
 
 ## 5. Query 3: How Long Until Adaptation Starts Helping?
 
@@ -189,6 +199,7 @@ and similarly for FreeTTA versus TDA.
 
 - **TDA superior** when early local corrections matter most.
 - **FreeTTA superior** when late-stage gains are worth waiting for.
+- If `FreeTTA` never reaches break-even against CLIP, then the benchmark is not giving it enough usable evidence to overcome its slower global-estimation dynamics.
 
 ## 6. Query 4: Is TDA Memory Under Compression Pressure?
 
@@ -223,6 +234,7 @@ FreeTTA does not store a sparse set of exemplars. It stores sufficient statistic
 
 - **FreeTTA superior** when `CachePressure` is high.
 - **TDA superior** when `CachePressure` is low and local exemplars are enough.
+- If high cache pressure still does not help `FreeTTA`, that suggests the issue is not just memory bottleneck. It suggests mismatch between the benchmark geometry and FreeTTA's modeling assumptions.
 
 ## 7. Query 5: Which Method Is More Reliable Exactly When They Disagree?
 
@@ -248,6 +260,7 @@ This isolates the truly informative region of the comparison. If both methods ag
 
 - **FreeTTA superior** if disagreement accuracy is higher on high-entropy samples and in late stream phases.
 - **TDA superior** if disagreement accuracy is higher on locally structured or multi-modal samples.
+- This metric is especially useful when the final accuracies are close, because it isolates the samples where the two inductive biases really diverge.
 
 ## 8. Query 6: What Do the Internal Signals Say?
 
@@ -297,10 +310,11 @@ FreeTTA should be superior when most of these signals align:
 5. Disagreement accuracy favors FreeTTA.
 6. Internal drift is meaningful but not chaotic.
 
-This usually describes datasets like:
+This usually describes datasets with:
 
-- **EuroSAT**: coherent class-level shift, long stream, low class count, high compression pressure on TDA.
-- **OxfordPets**: moderate centroid structure and enough stream evidence to help distribution modeling.
+- coherent class-level shift,
+- enough stream evidence to estimate stable statistics,
+- target drift that is better captured by moving means and priors than by sparse retrieval.
 
 ## 10. Which Cases Favor TDA?
 
@@ -313,9 +327,11 @@ TDA should be superior when most of these signals align:
 5. Disagreement accuracy favors TDA.
 6. The dataset is locally structured, multi-modal, or texture-heavy.
 
-This usually describes datasets like:
+This usually describes datasets with:
 
-- **DTD**: a poor match for one-global-centroid-per-class reasoning, but a better match for local exemplar correction.
+- local texture or neighborhood structure,
+- multi-modal classes,
+- cases where sparse but high-quality local corrections are more reliable than global drift estimation.
 
 ## 11. Why This Comparison Is New Relative to the Papers
 
@@ -326,6 +342,12 @@ Neither paper gives a unified answer to:
 - whether each method's prediction changes are mostly helpful or harmful,
 - how memory bottlenecks change the comparison,
 - which method is more trustworthy exactly when they disagree.
+
+Neither paper is mainly organized around the question:
+
+- "what should we conclude when the expected paper ordering does not cleanly reproduce under a shared benchmark?"
+
+That is a central reason these queries are useful in this project.
 
 That is why these queries are useful. They turn the comparison from a single accuracy table into a mechanism-level explanation.
 
@@ -340,4 +362,3 @@ Equivalently:
 
 - **FreeTTA wins when distribution compression is the right abstraction.**
 - **TDA wins when exemplar retrieval is the right abstraction.**
-

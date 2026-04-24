@@ -7,7 +7,7 @@
     "pets",
     "imagenet"
   ],
-  "stream_seed": 1,
+  "stream_seed": null,
   "tda_config": "outputs/tuning/best_tda_run_results.json",
   "freetta_config": "outputs/tuning/best_freetta_run_results.json",
   "summary_table_csv": "outputs/final_method_suite/summary_table.csv",

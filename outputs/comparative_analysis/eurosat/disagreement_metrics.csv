@@ -1,0 +1,2 @@
+dataset,disagreement_rate,tda_acc_on_disagreement,freetta_acc_on_disagreement,avg_clip_entropy_on_disagreement
+eurosat,0.4022222222222222,0.3170656844689994,0.24462860650705956,2.3024645863756072
