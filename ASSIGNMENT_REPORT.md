@@ -134,16 +134,18 @@ This repository now uses **two different evaluation modes**, and this distinctio
 
 ### 6.1 Best-accuracy reproduction mode
 
-This mode is for the cleanest headline accuracy comparison after per-dataset tuning.
+This mode is for checking how close the repository gets to the paper-level behavior.
 
 Output folder:
 
-- [outputs/final_method_suite](/home/herrys/projects/AIP-Final-project/outputs/final_method_suite)
+- [outputs/reproduction](/home/herrys/projects/AIP-Final-project/outputs/reproduction)
+- [outputs/tuning](/home/herrys/projects/AIP-Final-project/outputs/tuning)
 
 Purpose:
 
-- reproduce the strongest local accuracies we can obtain in this repository,
-- compare the final performance of `CLIP`, `TDA`, `FreeTTA`, and `EdgeFreeTTA`.
+- audit paper/default settings on the local benchmark,
+- run per-dataset recovery sweeps for `TDA` and `FreeTTA`,
+- record the strongest results we can recover before doing the deeper aligned analysis.
 
 ### 6.2 Shared-order mechanism-analysis mode
 
@@ -169,25 +171,39 @@ This second mode is the right setup for questions like:
 
 Because this mode enforces a common stream order and aligned per-sample bookkeeping, its numbers do not need to match the best-accuracy table exactly.
 
-## 7. Best Local Reproduction in This Repository
+## 7. Paper-Default Audit and Best Recovered Results
 
-From [outputs/final_method_suite/summary_table.csv](/home/herrys/projects/AIP-Final-project/outputs/final_method_suite/summary_table.csv):
+The most important reproduction check is the paper/default audit in [outputs/reproduction](/home/herrys/projects/AIP-Final-project/outputs/reproduction):
 
-| Dataset | CLIP | TDA | FreeTTA | TDA - CLIP | FreeTTA - CLIP | FreeTTA - TDA |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Caltech | 0.9355 | 0.9408 | 0.9359 | +0.0053 | +0.0004 | -0.0049 |
-| DTD | 0.4394 | 0.4702 | 0.4638 | +0.0309 | +0.0245 | -0.0064 |
-| EuroSAT | 0.4843 | 0.5600 | 0.5106 | +0.0757 | +0.0263 | -0.0494 |
-| ImageNet | 0.6237 | 0.6282 | 0.6237 | +0.0045 | +0.0000 | -0.0045 |
-| Pets | 0.8839 | 0.8861 | 0.8842 | +0.0022 | +0.0003 | -0.0019 |
+- [paper_default_tda_full.json](/home/herrys/projects/AIP-Final-project/outputs/reproduction/paper_default_tda_full.json)
+- [paper_default_freetta_full.json](/home/herrys/projects/AIP-Final-project/outputs/reproduction/paper_default_freetta_full.json)
+- [reproduction_audit.md](/home/herrys/projects/AIP-Final-project/outputs/reproduction/reproduction_audit.md)
 
-These are the strongest final tuned results currently reproduced in this repository.
+On the current benchmark, the paper/default runs are:
 
-They do **not** fully match the overall paper ordering.
+| Dataset | TDA default | FreeTTA default |
+| --- | ---: | ---: |
+| DTD | 0.4601 | 0.4394 |
+| Caltech | 0.9379 | 0.9355 |
+| EuroSAT | 0.5958 | 0.4825 |
+| Pets | 0.8896 | 0.8839 |
+| ImageNetV2 | 0.6272 | 0.6235 |
 
-This mismatch is not something to hide. It creates the main research question of the project:
+After targeted tuning and recovery sweeps, the strongest saved FreeTTA results in this repository are approximately:
 
-> if FreeTTA is theoretically stronger overall, why does the expected ordering fail in this benchmark?
+| Dataset | Best saved FreeTTA |
+| --- | ---: |
+| DTD | 0.4681 |
+| Caltech | 0.9420 |
+| EuroSAT | 0.5106 |
+| Pets | 0.8842 |
+| ImageNetV2 | 0.6235 |
+
+So the local recovery story is mixed:
+
+- `FreeTTA` can be recovered close to paper behavior on `DTD` and `Caltech`,
+- but on `EuroSAT`, `Pets`, and `ImageNetV2`, it still does not match the paper-level advantage over `TDA`,
+- which motivates the deeper mechanism analysis in the rest of the report.
 
 ## 8. Why Paper Expectation and Local Reproduction Can Differ
 
@@ -208,6 +224,20 @@ The most likely reasons are:
 
 5. **Mechanism mismatch**
    FreeTTA can update global statistics internally, but those updates only help if the final generative correction changes CLIP in the right direction strongly enough.
+
+## 8.1 Shared-Order Analysis Results
+
+From [outputs/comparative_analysis/summary_metrics.csv](/home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/summary_metrics.csv), using one aligned stream order and the tuned per-dataset parameters already found in this repository:
+
+| Dataset | CLIP | TDA | FreeTTA | FreeTTA - TDA |
+| --- | ---: | ---: | ---: | ---: |
+| Caltech | 0.9355 | 0.9359 | 0.9359 | +0.0000 |
+| DTD | 0.4394 | 0.4516 | 0.4633 | +0.0117 |
+| EuroSAT | 0.4843 | 0.5304 | 0.5106 | -0.0198 |
+| ImageNet | 0.6235 | 0.6270 | 0.6235 | -0.0035 |
+| Pets | 0.8839 | 0.8880 | 0.8842 | -0.0038 |
+
+This table is the right one to use when discussing the deep per-sample mechanism analysis in this report, because all three methods are compared on the same stream order and the same sample alignment.
 
 ## 9. What We Implemented for Deep Analysis
 
@@ -441,8 +471,8 @@ These are not absolute guarantees, but they are the clearest mechanism-level hyp
 
 For viva and presentation, the most informative visual sequence is:
 
-1. [outputs/final_method_suite/overall_accuracy.png](/home/herrys/projects/AIP-Final-project/outputs/final_method_suite/overall_accuracy.png)
-   This gives the headline comparison.
+1. [outputs/presentation_figures/paper_vs_repo.png](/home/herrys/projects/AIP-Final-project/outputs/presentation_figures/paper_vs_repo.png)
+   This gives the cleanest high-level paper-vs-repo comparison.
 
 2. [outputs/comparative_analysis/flip_analysis.png](/home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/flip_analysis.png)
    This shows whether each method changes CLIP safely.
@@ -459,7 +489,78 @@ For viva and presentation, the most informative visual sequence is:
 6. per-dataset `pca_logit_visualization.png`
    This gives the most intuitive picture of how logits move away from CLIP.
 
-## 18. Main Takeaway
+## 18. Concrete Observations From the Tuned Shared-Order Analysis
+
+The most useful dataset-level observations from [outputs/comparative_analysis](/home/herrys/projects/AIP-Final-project/outputs/comparative_analysis) are:
+
+### Caltech
+
+- `CLIP`, `TDA`, and `FreeTTA` are all very close.
+- `TDA` and `FreeTTA` both improve CLIP by only `+0.0004`.
+- `TDA` changes more predictions than `FreeTTA`:
+  roughly `0.81%` vs `0.12%`.
+- `FreeTTA` shows large internal mean drift in the tuned shared-order run, but it still changes only a tiny number of predictions.
+
+Interpretation:
+
+- this is a low-headroom dataset,
+- and it is a good example of how **internal statistic movement does not automatically translate into meaningful output correction**.
+
+### DTD
+
+- in the tuned shared-order analysis, `FreeTTA` beats `TDA`:
+  `0.4633` vs `0.4516`.
+- both methods change CLIP on roughly `12%` of samples,
+- but `FreeTTA` has better beneficial-flip precision and better net correction.
+
+Interpretation:
+
+- this is the strongest case in the current shared-order analysis where `FreeTTA` clearly improves over `TDA`,
+- so DTD should not be presented as a universal TDA win in this repository.
+
+### EuroSAT
+
+- both methods improve CLIP,
+- but `TDA` remains stronger:
+  `0.5304` vs `0.5106`.
+- `TDA` changes many more predictions and gets a larger net correction.
+- the geometry alignment score is negative here, meaning the local-neighbor probe is stronger than the centroid probe in this benchmark.
+
+Interpretation:
+
+- this is the main case where the paper expectation and the current benchmark disagree most,
+- and it shows that **high stream length and cache pressure alone are not sufficient** if the feature geometry still favors local structure.
+
+### Pets
+
+- both methods are close to CLIP,
+- `TDA` is slightly better than `FreeTTA`,
+- both methods make only small corrections because CLIP is already strong.
+
+Interpretation:
+
+- this is another low-headroom regime,
+- where small harmful flips can easily cancel small beneficial flips.
+
+### ImageNet
+
+- `TDA` gives a small gain,
+- `FreeTTA` is effectively tied with CLIP.
+- in the current shared-order analysis, `FreeTTA` barely changes predictions at all.
+
+Interpretation:
+
+- this is the clearest case where `FreeTTA` behaves like a near-no-op under the current benchmark,
+- so the global statistic update is either too weak or too poorly matched to the feature geometry to create useful logit shifts.
+
+These observations are exactly why the project needs more than a final accuracy table. They connect:
+
+- what the method is changing,
+- how much it is changing it,
+- whether those changes are helpful,
+- and how the internal state evolves while that happens.
+
+## 19. Main Takeaway
 
 The main conclusion of the project is:
 
@@ -482,7 +583,7 @@ So the real contribution of this project is:
 
 > a mechanism-level analysis framework for understanding how `TDA` and `FreeTTA` differ beyond a single final accuracy table.
 
-## 19. Contribution Statement
+## 20. Contribution Statement
 
 This project contains both reused and newly written components.
 

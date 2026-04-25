@@ -1,6 +1,6 @@
 bucket,count,rate
-clip_wrong_tda_wrong_freetta_correct,0,0.0
-clip_wrong_tda_correct_freetta_wrong,106,0.0106
-clip_correct_tda_wrong_freetta_correct,71,0.0071
-clip_correct_tda_correct_freetta_wrong,0,0.0
-all_wrong,3659,0.3659
+clip_wrong_tda_wrong_freetta_correct,81,0.0081
+clip_wrong_tda_correct_freetta_wrong,80,0.008
+clip_correct_tda_wrong_freetta_correct,60,0.006
+clip_correct_tda_correct_freetta_wrong,61,0.0061
+all_wrong,3569,0.3569

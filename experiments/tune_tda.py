@@ -6,12 +6,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import torch
+import torch.nn.functional as F
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from experiments.evaluate_tda import evaluate_clip_loaded, evaluate_loaded, load_tda_dataset
+from models.TDA import TDA
+from src.feature_store import load_dataset_features
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -60,6 +62,99 @@ if use_cuda:
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(line_buffering=True)
+
+
+def load_tda_dataset(dataset, device, max_samples=None, features_dir="data/processed"):
+    raw = load_dataset_features(Path(features_dir), dataset)
+    image_features = raw["image_features"]
+    text_features = raw["text_features"]
+    labels = raw["labels"]
+
+    if max_samples is not None and max_samples > 0:
+        image_features = image_features[:max_samples]
+        labels = labels[:max_samples]
+
+    return {
+        "dataset": raw["dataset_key"],
+        "image_features": torch.from_numpy(image_features).float().to(device),
+        "text_features": torch.from_numpy(text_features).float().to(device),
+        "labels": torch.from_numpy(labels).long().to(device),
+        "num_samples": int(len(labels)),
+    }
+
+
+def evaluate_loaded(
+    payload,
+    cache_size,
+    k,
+    alpha,
+    beta,
+    low_entropy_thresh,
+    high_entropy_thresh,
+    device,
+    neg_alpha=0.117,
+    neg_beta=1.0,
+    neg_mask_lower=0.03,
+    neg_mask_upper=1.0,
+    shot_capacity=3,
+    pos_shot_capacity=None,
+    neg_shot_capacity=None,
+    clip_scale=100.0,
+    fallback_to_clip=False,
+    fallback_margin=0.0,
+    shuffle_stream=True,
+    stream_seed=1,
+):
+    image_features = payload["image_features"]
+    labels = payload["labels"]
+    text_features = payload["text_features"]
+    total = int(payload["num_samples"])
+
+    model = TDA(
+        text_features=text_features,
+        cache_size=cache_size,
+        k=k,
+        alpha=alpha,
+        beta=beta,
+        low_entropy_thresh=low_entropy_thresh,
+        high_entropy_thresh=high_entropy_thresh,
+        neg_alpha=neg_alpha,
+        neg_beta=neg_beta,
+        neg_mask_lower=neg_mask_lower,
+        neg_mask_upper=neg_mask_upper,
+        shot_capacity=shot_capacity,
+        pos_shot_capacity=pos_shot_capacity,
+        neg_shot_capacity=neg_shot_capacity,
+        clip_scale=clip_scale,
+        fallback_to_clip=fallback_to_clip,
+        fallback_margin=fallback_margin,
+        device=device,
+    )
+
+    correct_count = torch.tensor(0, device=device)
+    if shuffle_stream:
+        generator = torch.Generator()
+        generator.manual_seed(int(stream_seed))
+        order = torch.randperm(total, generator=generator).to(labels.device)
+    else:
+        order = torch.arange(total, device=labels.device)
+
+    with torch.inference_mode():
+        for idx in order:
+            pred, _, _ = model.predict(image_features[idx])
+            correct_count += (pred.squeeze(0) == labels[idx]).to(correct_count.dtype)
+
+    return float(correct_count.item() / max(total, 1))
+
+
+def evaluate_clip_loaded(payload) -> float:
+    image_features = F.normalize(payload["image_features"], dim=-1)
+    text_features = F.normalize(payload["text_features"], dim=-1)
+    labels = payload["labels"]
+
+    logits = image_features @ text_features.t()
+    pred = torch.argmax(logits, dim=-1)
+    return float((pred == labels).float().mean().item())
 
 
 def _sync_if_cuda(device: torch.device) -> None:
@@ -297,9 +392,9 @@ def main() -> None:
 
     total_elapsed = time.perf_counter() - start_all
 
-    output_dir = Path("outputs")
+    output_dir = Path("outputs") / "tuning"
     output_dir.mkdir(parents=True, exist_ok=True)
-    out_path = output_dir / "tda_results.json"
+    out_path = output_dir / "best_tda_run_results.json"
 
     report = {
         "method": "TDA",

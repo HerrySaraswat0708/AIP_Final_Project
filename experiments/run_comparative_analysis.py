@@ -26,9 +26,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from experiments.evaluate_tda import load_tda_dataset
 from models.FreeTTA import FreeTTA
 from models.TDA import TDA
+from src.feature_store import load_dataset_features
 from src.imagenet_loader import ensure_imagenetv2
 from src.paper_configs import DEFAULT_FREETTA_PARAMS, PAPER_TDA_DEFAULTS
 from src.paper_setup import EXPECTED_TEST_SPLIT_SIZES
@@ -87,7 +87,44 @@ def load_best_tda_params(config_path: str | None) -> dict[str, dict]:
     if not path.exists():
         return defaults
     payload = json.loads(path.read_text(encoding="utf-8"))
-    for item in payload.get("results", []):
+    best_per_dataset = payload.get("best_per_dataset") if isinstance(payload, dict) else None
+    if isinstance(best_per_dataset, dict):
+        for dataset, row in best_per_dataset.items():
+            dataset_key = str(dataset).lower()
+            if dataset_key not in defaults or not isinstance(row, dict):
+                continue
+            params = {
+                key: row[key]
+                for key in [
+                    "cache_size",
+                    "shot_capacity",
+                    "pos_shot_capacity",
+                    "neg_shot_capacity",
+                    "k",
+                    "alpha",
+                    "beta",
+                    "low_entropy_thresh",
+                    "high_entropy_thresh",
+                    "neg_alpha",
+                    "neg_beta",
+                    "neg_mask_lower",
+                    "neg_mask_upper",
+                    "clip_scale",
+                    "fallback_to_clip",
+                    "fallback_margin",
+                ]
+                if key in row
+            }
+            if params:
+                defaults[dataset_key] = params
+        return defaults
+
+    if isinstance(payload, list):
+        items = payload
+    else:
+        items = payload.get("results", [])
+
+    for item in items:
         dataset = str(item.get("dataset", "")).lower()
         params = item.get("params")
         if dataset in defaults and isinstance(params, dict):
@@ -103,13 +140,34 @@ def load_best_freetta_params(config_path: str | None) -> dict[str, dict]:
     if not path.exists():
         return defaults
     payload = json.loads(path.read_text(encoding="utf-8"))
-    for dataset, params in payload.items():
+    best_per_dataset = payload.get("best_per_dataset") if isinstance(payload, dict) else None
+    if isinstance(best_per_dataset, dict):
+        source = best_per_dataset
+    else:
+        source = payload
+
+    for dataset, params in source.items():
         dataset_key = str(dataset).lower()
-        if dataset_key in defaults and isinstance(params, dict):
-            alpha = params.get("alpha")
-            beta = params.get("beta")
-            if alpha is not None and beta is not None:
-                defaults[dataset_key] = {"alpha": float(alpha), "beta": float(beta)}
+        if dataset_key not in defaults or not isinstance(params, dict):
+            continue
+        candidate = dict(defaults[dataset_key])
+        for key in [
+            "alpha",
+            "beta",
+            "clip_scale",
+            "normalize_mu",
+            "sigma_momentum",
+            "min_sigma",
+            # legacy params accepted but ignored by FreeTTA
+            "entropy_scale",
+            "use_paper_cov_update",
+            "use_reg_inverse",
+            "normalize_entropy",
+            "use_fused_posterior",
+        ]:
+            if key in params:
+                candidate[key] = params[key]
+        defaults[dataset_key] = candidate
     return defaults
 
 
@@ -156,12 +214,12 @@ def validate_payload_size(dataset: str, num_samples: int) -> None:
 
 
 def load_payload(dataset: str, device: torch.device, features_dir: str) -> DatasetPayload:
-    tda_payload = load_tda_dataset(dataset, device=device, features_dir=features_dir)
-    image_features = F.normalize(tda_payload["image_features"], dim=-1)
-    text_features = F.normalize(tda_payload["text_features"], dim=-1)
-    labels = tda_payload["labels"]
-    dataset_key = str(tda_payload["dataset"]).lower()
-    validate_payload_size(dataset_key, int(tda_payload["num_samples"]))
+    raw = load_dataset_features(Path(features_dir), dataset)
+    image_features = F.normalize(torch.from_numpy(raw["image_features"]).float().to(device), dim=-1)
+    text_features = F.normalize(torch.from_numpy(raw["text_features"]).float().to(device), dim=-1)
+    labels = torch.from_numpy(raw["labels"]).long().to(device)
+    dataset_key = str(raw["dataset_key"]).lower()
+    validate_payload_size(dataset_key, int(labels.shape[0]))
     raw_clip_logits = image_features @ text_features.t()
     return DatasetPayload(
         dataset=dataset_key,
@@ -320,7 +378,10 @@ def run_freetta_stream(
             clip_conf = float(torch.max(clip_probs, dim=-1).values.item())
             clip_entropy = float(entropy_from_logits(clip_logits, dim=-1).item())
             clip_margin = top2_margin(clip_logits)
-            em_weight = math.exp(-float(model.beta) * clip_entropy)
+            # Match FreeTTA's internal weight: uses scaled clip_probs + normalized entropy
+            _scaled_probs = torch.softmax(clip_logits * model.clip_scale, dim=-1)
+            _norm_entropy = float(entropy_from_probs(_scaled_probs, dim=-1).item()) / max(float(model.max_entropy), 1e-8)
+            em_weight = math.exp(-float(model.beta) * min(_norm_entropy, 1.0))
             mu_before = model.mu.detach().clone()
 
             pred, final_probs = model.predict(x, clip_logits)
@@ -340,7 +401,8 @@ def run_freetta_stream(
             mu_drift = float(mu_drift_by_class.mean().item())
             priors = (model.Ny / (model.t + 1e-8)).clamp_min(1e-12)
             prior_entropy = float((-(priors * torch.log(priors))).sum().item())
-            sigma_trace = float(torch.trace(model.sigma).item())
+            # Report mean cosine distance from initial text-feature means (mu drift proxy)
+            sigma_trace = float(torch.sum(model.mu * model.mu0).item() / max(model.num_classes, 1))
 
             rows.append(
                 {

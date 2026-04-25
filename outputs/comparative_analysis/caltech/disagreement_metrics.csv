@@ -1,2 +1,2 @@
 dataset,disagreement_rate,tda_acc_on_disagreement,freetta_acc_on_disagreement,avg_clip_entropy_on_disagreement
-caltech,0.008519269776876268,0.47619047619047616,0.47619047619047616,4.604770387922015
+caltech,0.008113590263691683,0.45,0.5,4.604713368415832

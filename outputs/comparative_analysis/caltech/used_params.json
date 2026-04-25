@@ -21,6 +21,6 @@
   },
   "freetta_params": {
     "alpha": 0.02,
-    "beta": 0.1
+    "beta": 3.0
   }
 }
