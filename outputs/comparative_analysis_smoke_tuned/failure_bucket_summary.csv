@@ -1,6 +1,0 @@
-dataset,bucket,count,rate
-caltech,clip_wrong_tda_wrong_freetta_correct,1,0.00040567951318458417
-caltech,clip_wrong_tda_correct_freetta_wrong,9,0.0036511156186612576
-caltech,clip_correct_tda_wrong_freetta_correct,9,0.0036511156186612576
-caltech,clip_correct_tda_correct_freetta_wrong,1,0.00040567951318458417
-caltech,all_wrong,148,0.06004056795131846
