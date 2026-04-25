@@ -1,2 +1,2 @@
 dataset,window,tda_break_even_vs_clip,freetta_break_even_vs_clip,freetta_break_even_vs_tda,tda_break_even_ratio,freetta_break_even_ratio,freetta_vs_tda_break_even_ratio
-imagenet,50,178,,440,0.0178,,0.044
+imagenet,50,363,2,2,0.0363,0.0002,0.0002

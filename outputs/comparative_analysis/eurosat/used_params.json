@@ -20,7 +20,7 @@
     "fallback_margin": 0.0
   },
   "freetta_params": {
-    "alpha": 0.6,
-    "beta": 5.0
+    "alpha": 0.8,
+    "beta": 3.0
   }
 }

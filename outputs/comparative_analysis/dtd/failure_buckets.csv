@@ -1,6 +1,6 @@
 bucket,count,rate
-clip_wrong_tda_wrong_freetta_correct,52,0.027659574468085105
-clip_wrong_tda_correct_freetta_wrong,32,0.01702127659574468
-clip_correct_tda_wrong_freetta_correct,23,0.01223404255319149
-clip_correct_tda_correct_freetta_wrong,21,0.011170212765957447
-all_wrong,948,0.5042553191489362
+clip_wrong_tda_wrong_freetta_correct,55,0.02925531914893617
+clip_wrong_tda_correct_freetta_wrong,20,0.010638297872340425
+clip_correct_tda_wrong_freetta_correct,15,0.007978723404255319
+clip_correct_tda_correct_freetta_wrong,24,0.01276595744680851
+all_wrong,942,0.5010638297872341

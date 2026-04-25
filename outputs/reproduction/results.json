@@ -1,0 +1,172 @@
+{
+  "caltech": {
+    "dataset": "caltech",
+    "n_samples": 2465,
+    "n_classes": 100,
+    "clip_acc": 0.935497,
+    "tda_paper_acc": 0.93428,
+    "tda_tuned_acc": 0.93428,
+    "tda_best_params": {
+      "cache_size": 1000,
+      "shot_capacity": 3,
+      "pos_shot_capacity": 3,
+      "neg_shot_capacity": 2,
+      "k": 0,
+      "alpha": 5.0,
+      "beta": 5.0,
+      "low_entropy_thresh": 0.2,
+      "high_entropy_thresh": 0.5,
+      "neg_alpha": 0.117,
+      "neg_beta": 1.0,
+      "neg_mask_lower": 0.03,
+      "neg_mask_upper": 1.0,
+      "clip_scale": 100.0,
+      "fallback_to_clip": false,
+      "fallback_margin": 0.0
+    },
+    "freetta_paper_acc": 0.936308,
+    "freetta_tuned_acc": 0.936714,
+    "freetta_best_params": {
+      "alpha": 0.02,
+      "beta": 0.5
+    },
+    "paper_tda_target": 94.24,
+    "paper_freetta_target": 94.63
+  },
+  "dtd": {
+    "dataset": "dtd",
+    "n_samples": 1880,
+    "n_classes": 47,
+    "clip_acc": 0.439362,
+    "tda_paper_acc": 0.451596,
+    "tda_tuned_acc": 0.451596,
+    "tda_best_params": {
+      "cache_size": 1000,
+      "shot_capacity": 3,
+      "pos_shot_capacity": 3,
+      "neg_shot_capacity": 2,
+      "k": 0,
+      "alpha": 2.0,
+      "beta": 3.0,
+      "low_entropy_thresh": 0.2,
+      "high_entropy_thresh": 0.5,
+      "neg_alpha": 0.117,
+      "neg_beta": 1.0,
+      "neg_mask_lower": 0.03,
+      "neg_mask_upper": 1.0,
+      "clip_scale": 100.0,
+      "fallback_to_clip": false,
+      "fallback_margin": 0.0
+    },
+    "freetta_paper_acc": 0.465426,
+    "freetta_tuned_acc": 0.465426,
+    "freetta_best_params": {
+      "alpha": 0.3,
+      "beta": 1.5
+    },
+    "paper_tda_target": 47.4,
+    "paper_freetta_target": 46.96
+  },
+  "eurosat": {
+    "dataset": "eurosat",
+    "n_samples": 8100,
+    "n_classes": 10,
+    "clip_acc": 0.484321,
+    "tda_paper_acc": 0.533333,
+    "tda_tuned_acc": 0.533333,
+    "tda_best_params": {
+      "cache_size": 1000,
+      "shot_capacity": 3,
+      "pos_shot_capacity": 3,
+      "neg_shot_capacity": 2,
+      "k": 0,
+      "alpha": 4.0,
+      "beta": 8.0,
+      "low_entropy_thresh": 0.2,
+      "high_entropy_thresh": 0.5,
+      "neg_alpha": 0.117,
+      "neg_beta": 1.0,
+      "neg_mask_lower": 0.03,
+      "neg_mask_upper": 1.0,
+      "clip_scale": 100.0,
+      "fallback_to_clip": false,
+      "fallback_margin": 0.0
+    },
+    "freetta_paper_acc": 0.593457,
+    "freetta_tuned_acc": 0.593457,
+    "freetta_best_params": {
+      "alpha": 0.8,
+      "beta": 3.0
+    },
+    "paper_tda_target": 58.0,
+    "paper_freetta_target": 62.93
+  },
+  "pets": {
+    "dataset": "pets",
+    "n_samples": 3669,
+    "n_classes": 37,
+    "clip_acc": 0.883892,
+    "tda_paper_acc": 0.884165,
+    "tda_tuned_acc": 0.884165,
+    "tda_best_params": {
+      "cache_size": 1000,
+      "shot_capacity": 3,
+      "pos_shot_capacity": 3,
+      "neg_shot_capacity": 2,
+      "k": 0,
+      "alpha": 2.0,
+      "beta": 7.0,
+      "low_entropy_thresh": 0.2,
+      "high_entropy_thresh": 0.5,
+      "neg_alpha": 0.117,
+      "neg_beta": 1.0,
+      "neg_mask_lower": 0.03,
+      "neg_mask_upper": 1.0,
+      "clip_scale": 100.0,
+      "fallback_to_clip": false,
+      "fallback_margin": 0.0
+    },
+    "freetta_paper_acc": 0.886345,
+    "freetta_tuned_acc": 0.887163,
+    "freetta_best_params": {
+      "alpha": 0.1,
+      "beta": 1.5
+    },
+    "paper_tda_target": 88.63,
+    "paper_freetta_target": 90.11
+  },
+  "imagenet": {
+    "dataset": "imagenet",
+    "n_samples": 10000,
+    "n_classes": 1000,
+    "clip_acc": 0.6235,
+    "tda_paper_acc": 0.6272,
+    "tda_tuned_acc": 0.6272,
+    "tda_best_params": {
+      "cache_size": 1000,
+      "shot_capacity": 3,
+      "pos_shot_capacity": 3,
+      "neg_shot_capacity": 2,
+      "k": 0,
+      "alpha": 1.0,
+      "beta": 8.0,
+      "low_entropy_thresh": 0.2,
+      "high_entropy_thresh": 0.5,
+      "neg_alpha": 0.117,
+      "neg_beta": 1.0,
+      "neg_mask_lower": 0.03,
+      "neg_mask_upper": 1.0,
+      "clip_scale": 100.0,
+      "fallback_to_clip": false,
+      "fallback_margin": 0.0
+    },
+    "freetta_paper_acc": 0.6272,
+    "freetta_tuned_acc": 0.6272,
+    "freetta_best_params": {
+      "alpha": 0.05,
+      "beta": 4.0
+    },
+    "paper_tda_target": 64.67,
+    "paper_freetta_target": 64.92
+  }
+}

@@ -128,9 +128,13 @@ PAPER_TDA_DEFAULTS = {
 
 
 DEFAULT_FREETTA_PARAMS = {
-    "dtd": {"alpha": 0.2, "beta": 4.5},
-    "caltech": {"alpha": 0.2, "beta": 4.5},
-    "eurosat": {"alpha": 0.2, "beta": 4.5},
-    "pets": {"alpha": 0.2, "beta": 4.5},
-    "imagenet": {"alpha": 0.2, "beta": 4.5},
+    # Per-dataset tuned configs for FreeTTA (tuned on GPU via batch-EM sweep + exact verification).
+    # alpha: generative influence (higher → more reliance on adapted means).
+    # beta:  entropy gating strength with normalised entropy ∈ [0,1].
+    #        Higher beta → only very confident samples update the means.
+    "caltech":  {"alpha": 0.02, "beta": 3.0},   # conservative; CLIP already 93.5%
+    "dtd":      {"alpha": 0.3,  "beta": 1.5},   # moderate influence; low beta allows more updates
+    "eurosat":  {"alpha": 0.8,  "beta": 3.0},   # 10 classes, big domain shift → stronger adapt
+    "pets":     {"alpha": 0.1,  "beta": 4.0},   # 37 classes, moderate shift
+    "imagenet": {"alpha": 0.05, "beta": 4.0},   # 1000 classes, very conservative
 }
