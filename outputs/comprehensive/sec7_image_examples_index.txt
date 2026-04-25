@@ -1,0 +1,27 @@
+# Failure Case Image Examples
+# Contact sheets with 5–10 example images per failure category are located at:
+Caltech-101 | CLIP✗ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/caltech/failure_cases/clip_wrong_tda_wrong_freetta_correct/contact_sheet.png
+Caltech-101 | CLIP✗ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/caltech/failure_cases/clip_wrong_tda_correct_freetta_wrong/contact_sheet.png
+Caltech-101 | CLIP✓ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/caltech/failure_cases/clip_correct_tda_wrong_freetta_correct/contact_sheet.png
+Caltech-101 | CLIP✓ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/caltech/failure_cases/clip_correct_tda_correct_freetta_wrong/contact_sheet.png
+Caltech-101 | All ✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/caltech/failure_cases/all_wrong/contact_sheet.png
+DTD | CLIP✗ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/dtd/failure_cases/clip_wrong_tda_wrong_freetta_correct/contact_sheet.png
+DTD | CLIP✗ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/dtd/failure_cases/clip_wrong_tda_correct_freetta_wrong/contact_sheet.png
+DTD | CLIP✓ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/dtd/failure_cases/clip_correct_tda_wrong_freetta_correct/contact_sheet.png
+DTD | CLIP✓ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/dtd/failure_cases/clip_correct_tda_correct_freetta_wrong/contact_sheet.png
+DTD | All ✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/dtd/failure_cases/all_wrong/contact_sheet.png
+EuroSAT | CLIP✗ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/eurosat/failure_cases/clip_wrong_tda_wrong_freetta_correct/contact_sheet.png
+EuroSAT | CLIP✗ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/eurosat/failure_cases/clip_wrong_tda_correct_freetta_wrong/contact_sheet.png
+EuroSAT | CLIP✓ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/eurosat/failure_cases/clip_correct_tda_wrong_freetta_correct/contact_sheet.png
+EuroSAT | CLIP✓ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/eurosat/failure_cases/clip_correct_tda_correct_freetta_wrong/contact_sheet.png
+EuroSAT | All ✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/eurosat/failure_cases/all_wrong/contact_sheet.png
+Oxford Pets | CLIP✗ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/pets/failure_cases/clip_wrong_tda_wrong_freetta_correct/contact_sheet.png
+Oxford Pets | CLIP✗ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/pets/failure_cases/clip_wrong_tda_correct_freetta_wrong/contact_sheet.png
+Oxford Pets | CLIP✓ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/pets/failure_cases/clip_correct_tda_wrong_freetta_correct/contact_sheet.png
+Oxford Pets | CLIP✓ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/pets/failure_cases/clip_correct_tda_correct_freetta_wrong/contact_sheet.png
+Oxford Pets | All ✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/pets/failure_cases/all_wrong/contact_sheet.png
+ImageNetV2 | CLIP✗ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/imagenet/failure_cases/clip_wrong_tda_wrong_freetta_correct/contact_sheet.png
+ImageNetV2 | CLIP✗ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/imagenet/failure_cases/clip_wrong_tda_correct_freetta_wrong/contact_sheet.png
+ImageNetV2 | CLIP✓ TDA✗ FT✓: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/imagenet/failure_cases/clip_correct_tda_wrong_freetta_correct/contact_sheet.png
+ImageNetV2 | CLIP✓ TDA✓ FT✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/imagenet/failure_cases/clip_correct_tda_correct_freetta_wrong/contact_sheet.png
+ImageNetV2 | All ✗: /home/herrys/projects/AIP-Final-project/outputs/comparative_analysis/imagenet/failure_cases/all_wrong/contact_sheet.png

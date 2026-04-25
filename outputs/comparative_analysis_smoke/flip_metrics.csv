@@ -1,3 +1,0 @@
-dataset,method,samples,unchanged_correct_count,unchanged_wrong_count,beneficial_flip_count,harmful_flip_count,other_changed_wrong_count,unchanged_correct_rate,unchanged_wrong_rate,change_rate,beneficial_flip_precision,harmful_flip_rate_on_clip_correct,net_correction_score,net_correction_rate,avg_entropy_after_beneficial_flip,avg_entropy_after_harmful_flip
-caltech,tda,2465,2289,147,11,17,1,0.9286004056795132,0.05963488843813387,0.011764705882352941,0.3793103448275862,0.007372072853425846,-6,-0.002434077079107505,0.799890783700076,0.795635445153012
-caltech,freetta,2465,2306,159,0,0,0,0.9354969574036511,0.06450304259634888,0.0,0.0,0.0,0,0.0,,
