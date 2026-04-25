@@ -1,33 +1,40 @@
 % ============================================================
 %  AIP Final Project – 15-Slide Beamer Presentation
-%  Topic: FreeTTA (Extension) vs TDA (Baseline) with CLIP ViT-B/16
-%  Compile: pdflatex slides.tex  (twice for references)
+%  Topic: FreeTTA (Extension) vs TDA (Baseline) on CLIP ViT-B/16
+%
+%  Compile on Overleaf or locally:
+%     pdflatex slides.tex
+%     pdflatex slides.tex   (second pass for cross-refs)
+%
+%  Required packages (all available on Overleaf / TeX Live 2022+):
+%    beamer, amsmath, booktabs, multirow, graphicx, xcolor,
+%    tikz, pgfplots, array, colortbl
 % ============================================================
-\documentclass[aspectratio=169,12pt]{beamer}
+\documentclass[aspectratio=169,11pt]{beamer}
 
-% ── Theme & Colors ────────────────────────────────────────────────────────────
+% ── Theme ─────────────────────────────────────────────────────────────────────
 \usetheme{Madrid}
 \usecolortheme{default}
 
-\definecolor{primary}{RGB}{31,119,180}    % TDA blue
-\definecolor{accent}{RGB}{214,39,40}      % FreeTTA red
-\definecolor{darkgray}{RGB}{60,60,60}
-\definecolor{lightbg}{RGB}{245,248,252}
-\definecolor{green2}{RGB}{44,162,95}
-\definecolor{gold}{RGB}{220,170,30}
+\definecolor{mblue}{RGB}{31,119,180}
+\definecolor{mred}{RGB}{214,39,40}
+\definecolor{mgray}{RGB}{60,60,60}
+\definecolor{lbg}{RGB}{245,248,252}
+\definecolor{mgreen}{RGB}{44,162,95}
+\definecolor{mgold}{RGB}{200,150,20}
+\definecolor{mltblue}{RGB}{174,214,241}
 
-\setbeamercolor{palette primary}{bg=primary, fg=white}
-\setbeamercolor{palette secondary}{bg=primary!80, fg=white}
-\setbeamercolor{palette tertiary}{bg=primary!60, fg=white}
-\setbeamercolor{frametitle}{bg=primary, fg=white}
-\setbeamercolor{title}{fg=white}
-\setbeamercolor{structure}{fg=primary}
-\setbeamercolor{block title}{bg=primary!15, fg=primary}
-\setbeamercolor{block body}{bg=lightbg}
-\setbeamercolor{alertblock title}{bg=accent!20, fg=accent!80!black}
-\setbeamercolor{alertblock body}{bg=accent!5}
-\setbeamercolor{exampleblock title}{bg=green2!20, fg=green2!70!black}
-\setbeamercolor{exampleblock body}{bg=green2!5}
+\setbeamercolor{palette primary}{bg=mblue,fg=white}
+\setbeamercolor{palette secondary}{bg=mblue!80,fg=white}
+\setbeamercolor{palette tertiary}{bg=mblue!60,fg=white}
+\setbeamercolor{frametitle}{bg=mblue,fg=white}
+\setbeamercolor{structure}{fg=mblue}
+\setbeamercolor{block title}{bg=mblue!15,fg=mblue!80!black}
+\setbeamercolor{block body}{bg=lbg}
+\setbeamercolor{alertblock title}{bg=mred!20,fg=mred!80!black}
+\setbeamercolor{alertblock body}{bg=mred!5}
+\setbeamercolor{exampleblock title}{bg=mgreen!20,fg=mgreen!70!black}
+\setbeamercolor{exampleblock body}{bg=mgreen!5}
 
 % ── Packages ──────────────────────────────────────────────────────────────────
 \usepackage{amsmath,amssymb,bm}
@@ -35,860 +42,812 @@
 \usepackage{multirow}
 \usepackage{graphicx}
 \usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{array}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric,backgrounds}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,backgrounds,fit}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
-\usepackage{array}
-\usepackage{colortbl}
-\usepackage{fontawesome5}
-\usepackage{listings}
-\lstset{
-  basicstyle=\ttfamily\tiny,
-  backgroundcolor=\color{lightbg},
-  frame=single,
-  breaklines=true,
-  keywordstyle=\color{primary},
-}
 
 % ── Helpers ───────────────────────────────────────────────────────────────────
-\newcommand{\highlight}[1]{\textcolor{accent}{\textbf{#1}}}
-\newcommand{\blue}[1]{\textcolor{primary}{\textbf{#1}}}
-\newcommand{\green}[1]{\textcolor{green2}{\textbf{#1}}}
-\newcommand{\tick}{\textcolor{green2}{\faCheck}}
-\newcommand{\cross}{\textcolor{accent}{\faTimes}}
-\newcommand{\mub}{\boldsymbol{\mu}}
-\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\HL}[1]{{\color{mred}\textbf{#1}}}
+\newcommand{\BL}[1]{{\color{mblue}\textbf{#1}}}
+\newcommand{\GR}[1]{{\color{mgreen}\textbf{#1}}}
+\newcommand{\tick}{{\color{mgreen}$\checkmark$}}
+\newcommand{\cross}{{\color{mred}$\times$}}
 
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{footline}{%
   \leavevmode
-  \hbox{\begin{beamercolorbox}[wd=.33\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
-    \usebeamerfont{author in head/foot}\insertshortauthor
-  \end{beamercolorbox}%
-  \begin{beamercolorbox}[wd=.34\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
-    \usebeamerfont{title in head/foot}\insertshorttitle
-  \end{beamercolorbox}%
-  \begin{beamercolorbox}[wd=.33\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
-    \usebeamerfont{date in head/foot}\insertframenumber{} / \inserttotalframenumber\hspace{2pt}
-  \end{beamercolorbox}}%
+  \hbox{%
+    \begin{beamercolorbox}[wd=.33\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+      \usebeamerfont{author in head/foot}AIP Final Project
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.34\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+      \usebeamerfont{title in head/foot}FreeTTA vs TDA
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.33\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+      \usebeamerfont{date in head/foot}Slide \insertframenumber/\inserttotalframenumber\hspace{4pt}
+    \end{beamercolorbox}%
+  }%
 }
 
-% ── Meta ──────────────────────────────────────────────────────────────────────
-\title[FreeTTA vs TDA]{Test-Time Adaptation with CLIP:\\
-\large FreeTTA (Online EM) vs.\ TDA (Cache-Based) --- A Deep Comparative Analysis}
-\author[AIP Project]{Advanced Intelligent Programming $\cdot$ Final Project}
-\institute{CLIP ViT-B/16 $\cdot$ 5 Benchmark Datasets}
+% ── Title info ────────────────────────────────────────────────────────────────
+\title[FreeTTA vs TDA]{%
+  Test-Time Adaptation with CLIP\\[4pt]
+  \large\normalfont FreeTTA (Online EM) vs.\ TDA (Cache-Based)\\
+  A Deep Comparative Analysis
+}
+\author[AIP Project]{Advanced Intelligent Programming --- Final Project}
+\institute{Backbone: CLIP ViT-B/16 $\;\cdot\;$ 5 Benchmark Datasets $\;\cdot\;$ GPU: RTX A6000}
 \date{April 2026}
 
 % ══════════════════════════════════════════════════════════════════════════════
 \begin{document}
 % ══════════════════════════════════════════════════════════════════════════════
 
-% ── Slide 1: Title ────────────────────────────────────────────────────────────
+%% ── SLIDE 1: Title ───────────────────────────────────────────────────────────
 {
 \setbeamertemplate{footline}{}
 \begin{frame}[plain]
-\begin{tikzpicture}[remember picture,overlay]
-  \fill[primary] (current page.north west) rectangle
-    ([yshift=-0.38\paperheight]current page.north east);
-  \fill[accent!80!black] ([yshift=-0.38\paperheight]current page.north west)
-    rectangle ([yshift=-0.41\paperheight]current page.north east);
-\end{tikzpicture}
-\vspace{0.6cm}
-\begin{center}
-  {\color{white}\Large\textbf{Test-Time Adaptation with CLIP}}\\[4pt]
-  {\color{white!90}\large FreeTTA (Online EM) vs.\ TDA (Cache-Based)}\\[3pt]
-  {\color{accent!40!white}\rule{0.6\textwidth}{1pt}}\\[6pt]
-  {\color{white!80}\normalsize A Deep Comparative Analysis on 5 Benchmarks}
-\end{center}
-\vspace{0.5cm}
+\titlepage
+\vspace{-8pt}
 \begin{columns}[c]
 \column{0.5\textwidth}
-  \centering
-  \begin{block}{}
-    \centering
-    \textbf{Backbone:} CLIP ViT-B/16 (frozen)\\
-    \textbf{Datasets:} 5 benchmarks, 26,114 test samples\\
-    \textbf{GPU:} NVIDIA RTX A6000
-  \end{block}
+\centering
+\begin{block}{}
+\centering
+\small\textbf{Datasets:} Caltech-101 / DTD / EuroSAT / Oxford Pets / ImageNetV2\\
+\textbf{Total test samples:} 26,114
+\end{block}
 \column{0.5\textwidth}
-  \centering
-  \begin{alertblock}{}
-    \centering
-    \textbf{Key Result:}\\
-    FreeTTA outperforms TDA on \textbf{3/5} datasets\\
-    Average advantage: \highlight{+1.48\%}
-  \end{alertblock}
+\centering
+\begin{alertblock}{}
+\centering
+\small\textbf{Key Result:} FreeTTA outperforms TDA on \textbf{3/5} datasets\\
+Average accuracy advantage: \HL{+1.48 pp}
+\end{alertblock}
 \end{columns}
 \end{frame}
 }
 
-% ── Slide 2: Motivation ───────────────────────────────────────────────────────
+%% ── SLIDE 2: Motivation ──────────────────────────────────────────────────────
 \begin{frame}{Motivation \& Problem Statement}
 \begin{columns}[T]
-\column{0.52\textwidth}
-  \begin{block}{The Core Problem}
-    CLIP is powerful at zero-shot recognition but suffers from \textbf{domain shift}:
-    text embeddings $\bm{t}_c$ do not align perfectly with the visual distribution
-    of a \emph{specific} test domain.
-    \[
-      \delta_c = 1 - \cos(\bm{\mu}^{\text{text}}_c,\; \bm{\mu}^{\text{img}}_c)
-    \]
-    We measured $\delta \approx 63$--$69\%$ across all 5 datasets.
-  \end{block}
-  \vspace{4pt}
-  \begin{exampleblock}{Research Questions}
-    \begin{enumerate}
-      \item Can we adapt CLIP \emph{at test time} without labels?
-      \item Which adaptation strategy is more effective?
-      \item \textbf{Why} does one outperform the other?
-    \end{enumerate}
-  \end{exampleblock}
+\column{0.53\textwidth}
+\begin{block}{The Core Problem: Domain Shift in CLIP}
+CLIP is powerful for zero-shot recognition, but suffers when the visual
+distribution of a test dataset drifts from the text-embedding space:
+\[
+  \delta_c = 1 - \cos\!\bigl(\boldsymbol{\mu}_c^{\text{text}},\;
+                              \boldsymbol{\mu}_c^{\text{img}}\bigr)
+\]
+We measured $\delta \approx 63$--$69\%$ across all 5 datasets.
+\end{block}
+\vspace{4pt}
+\begin{exampleblock}{Research Questions}
+\begin{enumerate}
+  \item Can we adapt CLIP \emph{at test time} with no labels?
+  \item \textbf{TDA} (cache-based) vs \textbf{FreeTTA} (online EM) --- which is better?
+  \item \emph{Why}? Under what conditions does each method win?
+\end{enumerate}
+\end{exampleblock}
+\begin{alertblock}{}
+\small
+\textbf{Our contribution:} 8 novel analyses (not in either paper) that
+mathematically characterise the advantage.
+\end{alertblock}
 
-\column{0.46\textwidth}
-  \begin{tikzpicture}[scale=0.75]
-    % Text space
-    \draw[primary, thick, dashed] (0,0) ellipse (1.8cm and 1cm);
-    \node[primary] at (0,0.3) {\footnotesize Text space};
-    \node[primary!60] at (0,-0.2) {\footnotesize $\bm{t}_c$ (CLIP text)};
-    % Image space
-    \draw[accent, thick, dashed] (1.2,-1.2) ellipse (1.8cm and 1cm);
-    \node[accent] at (1.2,-0.9) {\footnotesize Image space};
-    \node[accent!70] at (1.2,-1.4) {\footnotesize $\bm{x}$ (visual)};
-    % Arrow
-    \draw[->, very thick, darkgray] (0.6,-0.4) -- (0.8,-0.8)
-      node[midway, right, darkgray, font=\tiny] {$\delta_c$ shift};
-    % TTA arrow
-    \draw[->, green2, very thick, bend right=20]
-      (2.2,-0.8) to node[right, font=\tiny, green2] {TTA closes gap} (1.0,0.2);
-  \end{tikzpicture}
-  \vspace{6pt}
-  \begin{block}{\small Our Study}
-    \small
-    \blue{TDA}: cache-based prototype retrieval\\
-    \highlight{FreeTTA}: online EM generative model\\
-    \textbf{8 novel analyses} not in either paper
-  \end{block}
+\column{0.45\textwidth}
+\begin{tikzpicture}[font=\small, scale=0.9]
+  \draw[mblue, thick, dashed, fill=mblue!8]
+    (0,0) ellipse (1.7cm and 0.9cm);
+  \node[mblue] at (0,0.25) {Text space};
+  \node[mblue!70, font=\footnotesize] at (0,-0.25) {$\bm{t}_c$ (CLIP prompts)};
+
+  \draw[mred, thick, dashed, fill=mred!8]
+    (1.4,-1.4) ellipse (1.7cm and 0.9cm);
+  \node[mred] at (1.4,-1.15) {Image space};
+  \node[mred!70, font=\footnotesize] at (1.4,-1.65) {$\bm{x}$ (visual feats)};
+
+  \draw[->, very thick, mgray, shorten >=2pt]
+    (0.6,-0.45) -- (1.0,-1.0)
+    node[midway, right, font=\footnotesize] {$\delta_c$};
+
+  \draw[->, mgreen, very thick, bend right=30]
+    (2.5,-1.0) to node[right, font=\footnotesize, mgreen]
+    {\shortstack{TTA\\closes\\gap}} (0.8,0.1);
+\end{tikzpicture}
+
+\vspace{6pt}
+\begin{block}{\small Why TTA is non-trivial}
+\small CLIP assigns \emph{near-uniform} probabilities ($H_\text{norm}\!\approx\!1$)
+on uncertain domains --- adaptation signal is extremely weak.
+\end{block}
 \end{columns}
 \end{frame}
 
-% ── Slide 3: Background ───────────────────────────────────────────────────────
+%% ── SLIDE 3: Background ──────────────────────────────────────────────────────
 \begin{frame}{Background: CLIP and Test-Time Adaptation}
 \begin{columns}[T]
-\column{0.56\textwidth}
-  \begin{block}{CLIP Zero-Shot Classification}
-    \[
-      \hat{y}_{\text{clip}} = \arg\max_c\;
-        \frac{\bm{x} \cdot \bm{t}_c}{\|\bm{x}\|\|\bm{t}_c\|} \cdot \frac{1}{\tau}
-    \]
-    \begin{itemize}
-      \item $\bm{x} \in \mathbb{R}^{512}$: ViT-B/16 image feature
-      \item $\bm{t}_c$: text embedding of \texttt{"a photo of a \{class\}"}
-      \item $\tau$: learned temperature
-    \end{itemize}
-  \end{block}
-  \vspace{4pt}
-  \begin{alertblock}{Why Zero-Shot Fails Under Distribution Shift}
-    CLIP assigns \textbf{near-uniform} probabilities on uncertain domains:
-    \[
-      \bar{H}_{\text{norm}} = \frac{H}{\log C} \approx 1.0 \quad
-      \text{(measured on all 5 datasets)}
-    \]
-    Confidence $\approx 1/C$, so adaptation is hard but necessary.
-  \end{alertblock}
+\column{0.55\textwidth}
+\begin{block}{CLIP Zero-Shot Prediction}
+\[
+  \hat{y}_{\text{clip}} = \arg\max_c\;
+    \underbrace{\bm{x} \cdot \bm{t}_c}_{\text{cosine sim}} \cdot \tfrac{1}{\tau}
+  \qquad \bm{x},\bm{t}_c \in \mathbb{R}^{512}
+\]
+\begin{itemize}
+  \item $\bm{x}$: ViT-B/16 image feature (frozen)
+  \item $\bm{t}_c$: text embedding of ``a photo of a \{class\}''
+  \item $\tau$: learned temperature
+\end{itemize}
+\end{block}
+\vspace{4pt}
+\begin{alertblock}{Why Zero-Shot Fails Under Domain Shift}
+CLIP outputs near-\textbf{uniform} softmax on all 5 test datasets:
+\[
+  \bar{H}_{\text{norm}} = \frac{-\sum_c p_c\log p_c}{\log C} \approx 1.0
+\]
+Confidence $\approx 1/C$ --- adaptation is both necessary and hard.
+\end{alertblock}
 
-\column{0.42\textwidth}
-  \begin{block}{Test-Time Adaptation (TTA)}
-    \textbf{Goal:} Improve predictions \emph{on-the-fly}, one test sample at a time,
-    with no access to labels.
-    \vspace{4pt}
-    \begin{itemize}
-      \item No training data reused
-      \item No label supervision
-      \item Model backbone frozen
-      \item Must be online (streaming)
-    \end{itemize}
-  \end{block}
-  \vspace{6pt}
-  \begin{table}
-    \small
-    \begin{tabular}{lcc}
-    \toprule
-    Dataset & $C$ & $N_{\text{test}}$\\
-    \midrule
-    Caltech-101   & 101 & 2{,}465\\
-    DTD           & 47  & 1{,}880\\
-    EuroSAT       & 10  & 8{,}100\\
-    Oxford Pets   & 37  & 3{,}669\\
-    ImageNetV2    & 1000 & 10{,}000\\
-    \bottomrule
-    \end{tabular}
-  \end{table}
+\column{0.43\textwidth}
+\begin{block}{Test-Time Adaptation (TTA) Setup}
+\begin{itemize}
+  \item No training data or labels
+  \item Backbone frozen
+  \item Online streaming: one sample at a time
+  \item Update auxiliary parameters only
+\end{itemize}
+\end{block}
+\vspace{4pt}
+\begin{table}
+\small\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Dataset} & $C$ & $N_{\text{test}}$ & CLIP\\
+\midrule
+Caltech-101  & 101  & 2,465  & 93.55\%\\
+DTD          & 47   & 1,880  & 43.94\%\\
+EuroSAT      & 10   & 8,100  & 48.43\%\\
+Oxford Pets  & 37   & 3,669  & 88.39\%\\
+ImageNetV2   & 1000 & 10,000 & 62.35\%\\
+\bottomrule
+\end{tabular}
+\end{table}
 \end{columns}
 \end{frame}
 
-% ── Slide 4: TDA Algorithm ────────────────────────────────────────────────────
-\begin{frame}{Baseline Method: TDA (Test-Time Dynamic Adapter)}
+%% ── SLIDE 4: TDA ─────────────────────────────────────────────────────────────
+\begin{frame}{Baseline: TDA --- Test-Time Dynamic Adapter}
 \begin{columns}[T]
-\column{0.52\textwidth}
-  \begin{block}{Core Idea}
-    Build an online \textbf{feature cache} from the test stream and add
-    cache-affinity terms to CLIP logits.
-  \end{block}
-  \vspace{4pt}
-  \textbf{Cache construction} (per test sample $\bm{x}_i$):
-  \begin{enumerate}\small
-    \item Compute $H_{\text{norm},i} = -\sum_c p_c \log p_c \,/\, \log C$
-    \item \blue{Positive cache}: always insert $(\bm{x}_i, \hat{y}_i)$;
-          evict highest-$H$ entry if full (cap $= 3$/class)
-    \item \highlight{Negative cache}: insert only if $0.2 < H_{\text{norm}} < 0.5$
-  \end{enumerate}
-  \vspace{4pt}
-  \textbf{Prediction:}
-  \[
-    \bm{f} = \underbrace{\bm{\ell}_{\text{clip}}}_{\text{base}}
-           + \alpha \underbrace{\sum_k e^{\beta \cos(\bm{x},\bm{c}^+_k)}}_{\text{pos. affinity}}
-           - \alpha \underbrace{\sum_k e^{\beta \cos(\bm{x},\bm{c}^-_k)}}_{\text{neg. affinity}}
-  \]
+\column{0.54\textwidth}
+\begin{block}{Core Idea}
+Build an online \textbf{feature cache} from the test stream and add
+cache-affinity terms to CLIP logits.
+\end{block}
+\vspace{4pt}
+\textbf{Cache construction} (per sample $\bm{x}_i$):
+\begin{enumerate}\small
+  \item Compute $H_{\text{norm},i} = -\sum_c p_c\log p_c\,/\,\log C$
+  \item \BL{Positive cache}: always insert $(\bm{x}_i, \hat{y}_i)$;
+        evict highest-$H$ entry if at capacity (cap $= 3$/class)
+  \item \HL{Negative cache}: insert \emph{only} if $0.2 < H_{\text{norm}} < 0.5$
+\end{enumerate}
+\vspace{4pt}
+\textbf{Fused prediction:}
+\[
+  \bm{f} = \bm{\ell}_{\text{clip}}
+         + \alpha \underbrace{\textstyle\sum_k e^{\beta\cos(\bm{x},\bm{c}^+_k)}}_{\text{pos. affinity}}
+         - \alpha \underbrace{\textstyle\sum_k e^{\beta\cos(\bm{x},\bm{c}^-_k)}}_{\text{neg. affinity}}
+\]
 
-\column{0.46\textwidth}
-  \begin{tikzpicture}[scale=0.82,
-    box/.style={rounded corners=3pt, draw, thick, minimum width=2.2cm,
-                minimum height=0.55cm, align=center, font=\footnotesize}]
-    \node[box, fill=primary!15] (clip) at (0,3) {CLIP logits $\bm{\ell}$};
-    \node[box, fill=green2!20]  (pos)  at (-1.3,1.6) {Pos cache};
-    \node[box, fill=accent!20]  (neg)  at (1.3,1.6)  {Neg cache};
-    \node[box, fill=gold!30]    (gate) at (1.3,2.5)  {Gate: $0.2\!<\!H\!<\!0.5$};
-    \node[box, fill=primary!25] (out)  at (0,0.3) {Final logits $\bm{f}$};
-    \draw[->] (clip) -- (out);
-    \draw[->] (pos)  -- node[left,  font=\tiny]{$+\alpha$} (out);
-    \draw[->] (neg)  -- node[right, font=\tiny]{$-\alpha$} (out);
-    \draw[->] (gate) -- (neg);
-  \end{tikzpicture}
-  \vspace{6pt}
-  \begin{alertblock}{Key Weakness Discovered}
-    \small When $H_{\text{norm}} \approx 1.0$ (high CLIP uncertainty),
-    the negative-cache gate admits \textbf{0\% of samples} $\Rightarrow$
-    negative cache empty throughout test.
-  \end{alertblock}
+\column{0.44\textwidth}
+\begin{tikzpicture}[font=\small, scale=0.85,
+  box/.style={rounded corners=3pt, draw, thick, minimum width=2.1cm,
+              minimum height=0.6cm, align=center, font=\footnotesize}]
+  \node[box,fill=mblue!15]  (cl) at (0,3.5)  {CLIP logits $\bm{\ell}$};
+  \node[box,fill=mgreen!20] (pc) at (-1.2,2) {Pos.\ cache\\ (always)};
+  \node[box,fill=mred!20]   (nc) at (1.2,2)  {Neg.\ cache};
+  \node[box,fill=mgold!30]  (gt) at (1.2,3)  {\footnotesize Gate\\$0.2\!<\!H\!<\!0.5$};
+  \node[box,fill=mblue!25]  (ou) at (0,0.8)  {Final logits $\bm{f}$};
+  \draw[->] (cl) -- (ou);
+  \draw[->, mgreen!70!black, thick] (pc) -- node[left,font=\tiny]{$+\alpha$} (ou);
+  \draw[->, mred!70!black,   thick] (nc) -- node[right,font=\tiny]{$-\alpha$} (ou);
+  \draw[->] (gt) -- (nc);
+\end{tikzpicture}
+\vspace{4pt}
+\begin{alertblock}{Critical Weakness Found}
+\small When $H_{\text{norm}} \approx 1.0$ (all 5 datasets), the negative-cache
+gate \textbf{never fires} $\Rightarrow$ negative cache stays \textbf{empty}.
+Positive cache saturates at $C\!\times\!3$ slots, then \textbf{frozen}.
+\end{alertblock}
 \end{columns}
 \end{frame}
 
-% ── Slide 5: FreeTTA Algorithm ────────────────────────────────────────────────
-\begin{frame}{Extension Method: FreeTTA (Online EM Adaptation)}
+%% ── SLIDE 5: FreeTTA ─────────────────────────────────────────────────────────
+\begin{frame}{Extension: FreeTTA --- Free Online EM Adaptation}
 \begin{columns}[T]
-\column{0.52\textwidth}
-  \begin{block}{Core Idea}
-    Model image features as class-conditional Gaussians
-    $p(\bm{x}|y{=}c) = \mathcal{N}(\bm{x};\,\bm{\mu}_c,\sigma^2\mathbf{I})$
-    and estimate $\bm{\mu}_c$ via soft online EM.
-  \end{block}
-  \vspace{4pt}
-  \textbf{E-step (predict):}
-  \[
-    \bm{\ell}^{\text{gen}}_c = -\frac{\|\bm{x}-\bm{\mu}_c\|^2}{2\sigma^2},\quad
-    \bm{f} = \bm{\ell}_{\text{clip}} + \alpha\,\bm{\ell}^{\text{gen}}
-  \]
-  \textbf{M-step (update) — soft gate:}
-  \[
-    w_i = e^{-\beta H_{\text{norm},i}} \in (0,1]
-  \]
-  \[
-    N_{y,c} \mathrel{+}= w_i\,\hat{p}_{ic},\quad
-    \bm{\mu}_c \mathrel{+}= \frac{w_i\,\hat{p}_{ic}}{N_{y,c}}(\bm{x}_i - \bm{\mu}_c)
-  \]
-  \vspace{2pt}
-  \small Init: $\bm{\mu}_c(0) = \bm{t}_c$ (CLIP text prototype)
+\column{0.53\textwidth}
+\begin{block}{Core Idea}
+Model features as class-conditional Gaussians
+$p(\bm{x}|y{=}c) = \mathcal{N}(\bm{\mu}_c, \sigma^2 I)$
+and estimate $\bm{\mu}_c$ via \emph{soft online EM}.
+\end{block}
+\vspace{4pt}
+\textbf{E-step (predict):}
+\[
+  \ell^{\text{gen}}_c = -\tfrac{\|\bm{x}-\bm{\mu}_c\|^2}{2\sigma^2},\quad
+  \hat{\bm{p}} = \text{softmax}\!\bigl(\bm{\ell}_{\text{clip}} + \alpha\bm{\ell}^{\text{gen}}\bigr)
+\]
+\textbf{M-step (update) with soft gate:}
+\[
+  w_i = e^{-\beta H_{\text{norm},i}} \in (0,1]
+  \quad\text{(\emph{always} positive!)}
+\]
+\[
+  N_{y,c} \mathrel{+}= w_i\hat{p}_{ic},\qquad
+  \bm{\mu}_c \mathrel{+}= \frac{w_i\hat{p}_{ic}}{N_{y,c}}(\bm{x}_i - \bm{\mu}_c)
+\]
+Initialise: $\bm{\mu}_c(0) = \bm{t}_c$ (CLIP text prototype)
 
-\column{0.46\textwidth}
-  \begin{tikzpicture}[scale=0.82,
-    box/.style={rounded corners=3pt, draw, thick, minimum width=2.2cm,
-                minimum height=0.55cm, align=center, font=\footnotesize}]
-    \node[box, fill=primary!15]  (clip) at (0,3.5)  {CLIP logits $\bm{\ell}$};
-    \node[box, fill=accent!15]   (gen)  at (0,2.5)  {Gen logits $\bm{\ell}^{\text{gen}}$};
-    \node[box, fill=green2!20]   (mu)   at (-1.4,1.5){Class means $\bm{\mu}_c$};
-    \node[box, fill=gold!30]     (gate) at (1.4,1.5) {Soft gate $w = e^{-\beta H}$};
-    \node[box, fill=primary!25]  (out)  at (0,0.3)  {Fused predict};
-    \node[box, fill=accent!25]   (upd)  at (0,-0.7) {M-step: update $\bm{\mu}_c$};
-    \draw[->] (clip) -- (gen);
-    \draw[->] (gen)  -- (out);
-    \draw[->] (mu)   -- (gen);
-    \draw[->] (out)  -- (upd);
-    \draw[->] (gate) -- (upd);
-    \draw[->, dashed, green2] (upd.west) to[bend right=50] (mu.south);
-  \end{tikzpicture}
-  \vspace{4pt}
-  \begin{exampleblock}{Key Advantage}
-    \small Soft gate $w > 0$ \textbf{always} — even maximally uncertain
-    samples contribute $\approx e^{-3} \approx 5\%$ signal.
-    No saturation. No empty cache.
-  \end{exampleblock}
+\column{0.45\textwidth}
+\begin{tikzpicture}[font=\small, scale=0.85,
+  box/.style={rounded corners=3pt, draw, thick, minimum width=2.2cm,
+              minimum height=0.6cm, align=center, font=\footnotesize}]
+  \node[box,fill=mblue!15]  (cl) at (0,3.8) {CLIP logits $\bm{\ell}$};
+  \node[box,fill=mred!15]   (ge) at (0,2.8) {Gen.\ logits $\bm{\ell}^{\text{gen}}$};
+  \node[box,fill=mgreen!20] (mu) at (-1.3,1.7){Class means $\bm{\mu}_c$};
+  \node[box,fill=mgold!30]  (wt) at (1.3,1.7){Soft gate $w\!=\!e^{-\beta H}$};
+  \node[box,fill=mblue!25]  (pr) at (0,0.6) {Fused predict $\hat{\bm{p}}$};
+  \node[box,fill=mred!25]   (up) at (0,-0.5){M-step: update $\bm{\mu}_c$};
+  \draw[->] (cl) -- (ge);
+  \draw[->] (ge) -- (pr);
+  \draw[->] (mu) -- (ge);
+  \draw[->] (pr) -- (up);
+  \draw[->] (wt) -- (up);
+  \draw[->, dashed, mgreen!70!black, thick]
+    (up.west) to[bend right=50] (mu.south);
+\end{tikzpicture}
+\vspace{4pt}
+\begin{exampleblock}{Key Advantage}
+\small $w_i > 0$ \textbf{always}. Even maximally uncertain samples
+contribute $e^{-3} \approx 5\%$ signal. No saturation. No empty cache.
+\end{exampleblock}
 \end{columns}
 \end{frame}
 
-% ── Slide 6: Our Contributions ────────────────────────────────────────────────
+%% ── SLIDE 6: Contributions ───────────────────────────────────────────────────
 \begin{frame}{Our Contributions}
 \begin{columns}[T]
 \column{0.5\textwidth}
-  \begin{block}{\faCode\ Code (Written from Scratch)}
-    \begin{itemize}
-      \item \texttt{models/TDA.py} — full TDA implementation with positive/negative
-            cache, eviction policy, vectorised affinity
-      \item \texttt{models/FreeTTA.py} — online EM with batch-EM speedup
-            ($\sim\!10\times$ GPU acceleration), soft gate
-      \item \texttt{experiments/reproduce\_results.py} — GPU tuning pipeline
-      \item \texttt{experiments/run\_comparative\_analysis.py} — 1500-line
-            per-sample streaming analysis
-      \item \texttt{experiments/deep\_analysis.py} — 6 novel analyses (A1–A6)
-      \item \texttt{experiments/comprehensive\_pipeline.py} — 8-section report
-    \end{itemize}
-  \end{block}
+\begin{block}{Code Written from Scratch}
+\begin{itemize}\small
+  \item \texttt{models/TDA.py}: full TDA with pos/neg cache, eviction, vectorised affinity
+  \item \texttt{models/FreeTTA.py}: online EM + \textbf{batch-EM} speedup ($\sim$10$\times$ GPU)
+  \item \texttt{experiments/reproduce\_results.py}: GPU hyperparameter tuning pipeline
+  \item \texttt{experiments/run\_comparative\_analysis.py}: 1500-line per-sample streaming analysis
+  \item \texttt{experiments/deep\_analysis.py}: 6 novel analyses (A1--A6)
+  \item \texttt{experiments/comprehensive\_pipeline.py}: 8-section cross-dataset pipeline
+\end{itemize}
+\end{block}
 
 \column{0.48\textwidth}
-  \begin{alertblock}{\faFlask\ Novel Analyses (Not in Papers)}
-    \begin{enumerate}\small
-      \item \textbf{A1} Domain shift correlation with accuracy gain
-      \item \textbf{A2} Cache saturation threshold analysis
-      \item \textbf{A3} Flip precision by CLIP confidence tier
-      \item \textbf{A4} Class-frequency imbalance effect
-      \item \textbf{A5} Entropy gate efficiency (soft vs.\ hard)
-      \item \textbf{A6} Stream-phase decomposition (Q1--Q4)
-      \item \textbf{§1--§8} Prediction change, trajectory, internal
-            statistics, disagreement, failure buckets
-    \end{enumerate}
-  \end{alertblock}
-  \vspace{3pt}
-  \begin{exampleblock}{\faCog\ Engineering Contributions}
-    \small Batch-EM approximation; \texttt{predict()} streaming API;
-    per-class $\mu$, $\sigma$ tracking; GPU-tuned hyperparameters
-  \end{exampleblock}
+\begin{alertblock}{Novel Analyses (Not in Either Paper)}
+\begin{enumerate}\small
+  \item \textbf{A1} Domain shift $\leftrightarrow$ accuracy gap correlation
+  \item \textbf{A2} Cache saturation threshold analysis
+  \item \textbf{A3} Flip precision by CLIP confidence tier
+  \item \textbf{A4} Class-frequency imbalance effect
+  \item \textbf{A5} Entropy gate: soft vs.\ hard efficiency
+  \item \textbf{A6} Stream-phase decomposition (Q1--Q4)
+  \item \textbf{\S1--\S8} Prediction change, trajectory, internal stats, disagreement, failure buckets
+\end{enumerate}
+\end{alertblock}
+\vspace{3pt}
+\begin{exampleblock}{Engineering}
+\small Batch-EM approximation; \texttt{predict()} streaming API;
+per-class $\bm{\mu}$/$\sigma$ tracking; GPU-tuned hyperparameters
+\end{exampleblock}
 \end{columns}
 \end{frame}
 
-% ── Slide 7: Experimental Setup ───────────────────────────────────────────────
+%% ── SLIDE 7: Experimental Setup ──────────────────────────────────────────────
 \begin{frame}{Experimental Setup}
 \begin{columns}[T]
-\column{0.5\textwidth}
-  \begin{block}{Datasets \& Features}
-    \begin{itemize}
-      \item Pre-extracted CLIP ViT-B/16 features (\texttt{.npy})
-      \item Unshuffled (natural class ordering) test streams
-    \end{itemize}
-    \begin{table}
-      \small
-      \begin{tabular}{lccc}
-      \toprule
-      Dataset & $C$ & $N$ & CLIP Acc\\
-      \midrule
-      Caltech-101 & 101 & 2,465 & 93.55\%\\
-      DTD         & 47  & 1,880 & 43.94\%\\
-      EuroSAT     & 10  & 8,100 & 48.43\%\\
-      Oxford Pets & 37  & 3,669 & 88.39\%\\
-      ImageNetV2  & 1000 & 10,000 & 62.35\%\\
-      \bottomrule
-      \end{tabular}
-    \end{table}
-  \end{block}
-
-\column{0.48\textwidth}
-  \begin{block}{Hyperparameter Tuning}
-    \textbf{FreeTTA} — GPU grid search (batch-EM, 42 trials/dataset):
-    \begin{table}
-      \small
-      \begin{tabular}{lcc}
-      \toprule
-      Dataset & $\alpha$ & $\beta$\\
-      \midrule
-      Caltech & 0.02 & 3.0\\
-      DTD     & 0.30 & 1.5\\
-      EuroSAT & 0.80 & 3.0\\
-      Pets    & 0.10 & 4.0\\
-      ImageNet& 0.05 & 4.0\\
-      \bottomrule
-      \end{tabular}
-    \end{table}
-    \textbf{TDA} — paper defaults (optimal; tuning gains $<\!0.3\%$)
-  \end{block}
-  \vspace{4pt}
-  \begin{exampleblock}{Hardware}
-    \small NVIDIA RTX A6000 $\cdot$ CUDA 12 $\cdot$ PyTorch 2.x\\
-    TF32 enabled $\cdot$ Batch-EM: $\sim\!10\times$ speedup
-  \end{exampleblock}
-\end{columns}
-\end{frame}
-
-% ── Slide 8: Main Results ─────────────────────────────────────────────────────
-\begin{frame}{Main Results: Accuracy Comparison}
-\begin{columns}[T]
-\column{0.55\textwidth}
-  \begin{table}
-    \small\centering
-    \setlength{\tabcolsep}{5pt}
-    \begin{tabular}{lccc>{\columncolor{green2!15}}c}
-    \toprule
-    \textbf{Dataset} & \textbf{CLIP} & \textbf{TDA} & \textbf{FreeTTA} & \textbf{FT$-$TDA}\\
-    \midrule
-    Caltech-101 & 93.55 & 93.59 & 93.63 & \textcolor{green2}{+0.04}\\
-    DTD         & 43.94 & 45.16 & 46.54 & \textcolor{green2}{+1.38}\\
-    \rowcolor{accent!10}
-    EuroSAT     & 48.43 & 53.33 & 59.35 & \textcolor{accent}{\textbf{+6.01}}\\
-    Oxford Pets & 88.39 & 88.69 & 88.63 & \textcolor{accent}{$-$0.05}\\
-    ImageNetV2  & 62.35 & 62.72 & 62.72 & 0.00\\
-    \midrule
-    \textbf{Average} & --- & \textbf{68.70} & \textbf{70.17} & \textbf{\textcolor{green2}{+1.48}}\\
-    \bottomrule
-    \end{tabular}
-  \end{table}
-  \vspace{6pt}
-  \begin{block}{Summary}
-    \begin{itemize}
-      \item FreeTTA wins \textbf{3/5} datasets
-      \item Average advantage: \highlight{+1.48 pp}
-      \item EuroSAT: massive gain \highlight{+6.01 pp}
-      \item Pets/ImageNet: effectively tied
-    \end{itemize}
-  \end{block}
-
-\column{0.43\textwidth}
-  \begin{tikzpicture}
-  \begin{axis}[
-    width=6.2cm, height=5.5cm,
-    xbar,
-    symbolic y coords={ImageNetV2, Oxford Pets, EuroSAT, DTD, Caltech-101},
-    ytick=data,
-    yticklabel style={font=\tiny},
-    xlabel={\footnotesize Accuracy Difference FreeTTA$-$TDA (\%)},
-    xlabel style={font=\tiny},
-    xmin=-1.5, xmax=7.5,
-    xtick={-1,0,1,2,3,4,5,6,7},
-    xticklabel style={font=\tiny},
-    nodes near coords,
-    nodes near coords style={font=\tiny},
-    every node near coord/.append style={
-      /pgf/number format/.cd, fixed, precision=2,
-    },
-    bar width=5pt,
-    axis x line=bottom,
-    axis y line=left,
-    grid=major, grid style={dotted, gray!40},
-  ]
-  \addplot[
-    fill=green2, fill opacity=0.7,
-    draw=green2!70!black,
-  ] coordinates {
-    (0.00, ImageNetV2)
-    (-0.05, Oxford Pets)
-    (6.01, EuroSAT)
-    (1.38, DTD)
-    (0.04, Caltech-101)
-  };
-  \addplot[xbar, draw=black, fill=none, very thick, dashed] coordinates {(0,ImageNetV2)(0,Oxford Pets)(0,EuroSAT)(0,DTD)(0,Caltech-101)};
-  \end{axis}
-  \end{tikzpicture}
-\end{columns}
-\end{frame}
-
-% ── Slide 9: Prediction Change Analysis ──────────────────────────────────────
-\begin{frame}{Section 1 — Prediction Change Analysis}
-\begin{columns}[T]
-\column{0.48\textwidth}
-  \begin{block}{Methodology}
-    For each method $m \in \{\text{TDA, FreeTTA}\}$ and test sample $i$:
-    \[
-      \text{BF}_i = \mathbb{1}[\hat{y}_{\text{clip}}\!\ne\! y,\; \hat{y}_m\!=\! y]
-    \]
-    \[
-      \text{HF}_i = \mathbb{1}[\hat{y}_{\text{clip}}\!= y,\; \hat{y}_m\!\ne\! y]
-    \]
-    \[
-      \text{Flip Precision} = \frac{\text{BF}}{\text{BF}+\text{HF}}
-    \]
-  \end{block}
-  \vspace{4pt}
-  \begin{table}
-    \tiny\centering
-    \begin{tabular}{llccccc}
-    \toprule
-    Dataset & M & Change & BF & HF & Net & Prec\\
-    \midrule
-    EuroSAT & TDA & 41.9\% & 1125 & 728 & +397 & 0.61\\
-    \rowcolor{green2!15}
-    EuroSAT & FT  & 30.9\% & 1258 & 374 & +884 & \textbf{0.77}\\
-    DTD & TDA & 11.9\% & 57 & 34 & +23 & 0.63\\
-    \rowcolor{green2!15}
-    DTD & FT  & 16.3\% & 92 & 43 & +49 & \textbf{0.68}\\
-    \bottomrule
-    \end{tabular}
-  \end{table}
-
-\column{0.5\textwidth}
-  \begin{exampleblock}{Key Finding}
-    \small FreeTTA overrides CLIP \textbf{more selectively}:
-    fewer changes but higher precision.
-    On EuroSAT, FreeTTA makes 30.9\% changes
-    with \textbf{77.1\%} flip precision vs.\ TDA's
-    60.7\% over 41.9\% changes.
-  \end{exampleblock}
-  \vspace{6pt}
-  \begin{tikzpicture}
-  \begin{axis}[
-    width=6.5cm, height=4.5cm,
-    xlabel={\tiny Harmful Flips},
-    ylabel={\tiny Beneficial Flips},
-    xlabel style={font=\tiny},
-    ylabel style={font=\tiny},
-    xticklabel style={font=\tiny},
-    yticklabel style={font=\tiny},
-    grid=major, grid style={dotted,gray!40},
-    xmin=0, xmax=800, ymin=0, ymax=1400,
-  ]
-  % y=x reference line
-  \addplot[gray, dashed, thick, domain=0:800]{x};
-  % TDA points
-  \addplot[only marks, mark=square*, mark size=3pt,
-           fill=primary, draw=primary!80!black]
-    coordinates {(9,10)(34,57)(728,1125)(10,21)(78,115)};
-  % FreeTTA points
-  \addplot[only marks, mark=*, mark size=3pt,
-           fill=accent, draw=accent!80!black]
-    coordinates {(4,6)(43,92)(374,1258)(14,23)(79,116)};
-  \legend{\tiny TDA, \tiny FreeTTA}
-  \node[font=\tiny, accent] at (axis cs:374,1258) [above right] {EuroSAT};
-  \end{axis}
-  \end{tikzpicture}
-  \vspace{2pt}
-  \tiny\textit{Above diagonal = net improvement. FreeTTA (red) sits higher.}
-\end{columns}
-\end{frame}
-
-% ── Slide 10: Entropy Analysis ────────────────────────────────────────────────
-\begin{frame}{Section 2 \& 5 — Entropy Analysis \& TDA Cache Gate}
-\begin{columns}[T]
-\column{0.5\textwidth}
-  \begin{alertblock}{Critical Discovery: CLIP is Near-Maximally Uncertain}
-    \[
-      \bar{H}_{\text{norm}} = \frac{-\sum_c p_c \log p_c}{\log C} \approx 1.0
-    \]
-    on \textbf{all 5 datasets}. CLIP assigns $\approx 1/C$ probability to every class.
-  \end{alertblock}
-  \vspace{4pt}
-  \begin{block}{Consequences for TDA vs FreeTTA}
-    \begin{tabular}{lc}
-    \toprule
-    Signal Type & Effective Rate\\
-    \midrule
-    TDA neg-cache gate & $P(0.2 < H < 0.5) = \mathbf{0\%}$\\
-    FreeTTA soft gate & $e^{-\beta \cdot 1.0} = e^{-3} \approx \mathbf{5\%}$\\
-    \bottomrule
-    \end{tabular}
-    \vspace{4pt}
-    \small TDA's negative cache \textbf{stays empty} throughout the entire test stream.
-    FreeTTA still extracts 5\% signal per sample.
-  \end{block}
-
-\column{0.48\textwidth}
-  \begin{block}{Post-Adaptation Entropy (Correct vs.\ Wrong)}
-    \vspace{4pt}
-    \begin{tikzpicture}
-    \begin{axis}[
-      width=6.2cm, height=4.5cm,
-      ybar,
-      bar width=7pt,
-      symbolic x coords={CLIP, TDA, FreeTTA},
-      xtick=data,
-      xticklabel style={font=\small},
-      ylabel={\footnotesize Mean $H_{\text{norm}}$},
-      ylabel style={font=\tiny},
-      yticklabel style={font=\tiny},
-      ymin=0, ymax=1.1,
-      legend style={font=\tiny, at={(0.98,0.98)}, anchor=north east},
-      grid=y, grid style={dotted,gray!40},
-      title={\footnotesize Caltech-101 (representative)},
-      title style={font=\footnotesize},
-    ]
-    \addplot[fill=green2, fill opacity=0.7, draw=green2!70!black]
-      coordinates {(CLIP,0.9998)(TDA,0.129)(FreeTTA,0.293)};
-    \addplot[fill=accent, fill opacity=0.7, draw=accent!70!black]
-      coordinates {(CLIP,0.9997)(TDA,0.724)(FreeTTA,1.071)};
-    \legend{Correct, Wrong}
-    \end{axis}
-    \end{tikzpicture}
-  \end{block}
-  \vspace{2pt}
-  \begin{exampleblock}{\small Interpretation}
-    \small Both methods sharply reduce entropy on correct predictions.
-    Wrong predictions remain high-entropy — models \emph{know} when uncertain.
-    FreeTTA wrong-pred entropy is highest, suggesting it makes riskier but
-    more targeted corrections.
-  \end{exampleblock}
-\end{columns}
-\end{frame}
-
-% ── Slide 11: Trajectory Analysis ────────────────────────────────────────────
-\begin{frame}{Section 3 — Trajectory Analysis (Rolling Window = 50)}
-\begin{columns}[T]
-\column{0.5\textwidth}
-  \begin{block}{Rolling Accuracy over Test Stream}
-    \begin{tikzpicture}
-    \begin{axis}[
-      width=7cm, height=4.8cm,
-      xlabel={\footnotesize Stream Progress (\%)},
-      ylabel={\footnotesize Rolling Accuracy (\%)},
-      xlabel style={font=\tiny},
-      ylabel style={font=\tiny},
-      xticklabel style={font=\tiny},
-      yticklabel style={font=\tiny},
-      ymin=20, ymax=85,
-      xmin=0, xmax=100,
-      legend style={font=\tiny, at={(0.02,0.98)}, anchor=north west},
-      grid=major, grid style={dotted,gray!40},
-      title={\footnotesize EuroSAT (biggest gap)},
-      title style={font=\footnotesize},
-    ]
-    % Approximate rolling curves from actual data
-    \addplot[color=darkgray, thick, smooth]
-      coordinates {(0,48)(10,44)(20,42)(30,40)(40,45)
-                   (50,48)(60,52)(70,55)(80,56)(90,56)(100,54)};
-    \addplot[color=primary, thick, smooth]
-      coordinates {(0,48)(5,35)(15,38)(25,36)(30,38)
-                   (40,52)(50,54)(60,57)(70,58)(80,59)(100,58)};
-    \addplot[color=accent, very thick, smooth]
-      coordinates {(0,50)(5,46)(15,50)(25,54)(30,56)
-                   (40,60)(50,61)(60,63)(70,64)(80,65)(100,63)};
-    % saturation line
-    \addplot[dashed, gray, thick]
-      coordinates {(22.6,20)(22.6,85)};
-    \node[font=\tiny, gray] at (axis cs:28,25) {TDA sat.};
-    \legend{CLIP, TDA, FreeTTA}
-    \end{axis}
-    \end{tikzpicture}
-  \end{block}
-
-\column{0.48\textwidth}
-  \begin{block}{Stream-Phase Analysis (averaged)}
-    \begin{table}
-      \small\centering
-      \begin{tabular}{lrrr}
-      \toprule
-      Phase & FT$-$TDA & TDA/CLIP & FT/CLIP\\
-      \midrule
-      Q1 (0--25\%)   & +2.1\% & $-$1.7\% & +0.4\%\\
-      Q2 (25--50\%)  & +1.6\% & $-$1.1\% & +0.5\%\\
-      Q3 (50--75\%)  & $-$1.3\% & +2.8\% & +1.5\%\\
-      \rowcolor{green2!15}
-      Q4 (75--100\%) & \textbf{+3.5\%} & +5.5\% & +9.0\%\\
-      \bottomrule
-      \end{tabular}
-    \end{table}
-  \end{block}
-  \vspace{4pt}
-  \begin{exampleblock}{Takeaway}
-    \small
-    \begin{itemize}
-      \item TDA negative gain in Q1--Q2: cache-filling overhead
-      \item FreeTTA leads from the \textbf{very first sample} on EuroSAT
-      \item FreeTTA advantage \textbf{grows with stream length}: +2.1\% early $\to$ +3.5\% late
-    \end{itemize}
-  \end{exampleblock}
-\end{columns}
-\end{frame}
-
-% ── Slide 12: Internal Statistics ─────────────────────────────────────────────
-\begin{frame}{Sections 4 \& 5 — Internal Statistics}
-\begin{columns}[T]
-\column{0.5\textwidth}
-  \begin{block}{FreeTTA Internal — Generative Model}
-    \textbf{Class-mean drift} $\|\bm{\mu}_c(t) - \bm{\mu}_c(0)\|$:
-    \begin{itemize}\small
-      \item Grows from 0, plateaus $\approx$ 1.13 (Caltech)
-      \item EuroSAT: drift larger, converges faster (10 classes)
-      \item Confirms means adapt toward image-space centroids
-    \end{itemize}
-    \vspace{4pt}
-    \textbf{EM gate weight} $w = e^{-\beta H_\text{norm}}$:
-    \begin{itemize}\small
-      \item Constant $\approx 0.05$ (CLIP entropy $\approx 1$)
-      \item But accumulates over $N$ samples: total signal $\approx 0.05N$
-    \end{itemize}
-    \vspace{4pt}
-    \textbf{Prior entropy} $H(\pi)$: decreases as dominant classes gain weight.
-  \end{block}
-
-\column{0.48\textwidth}
-  \begin{block}{TDA Internal — Cache Dynamics}
-    \begin{tikzpicture}
-    \begin{axis}[
-      width=6.5cm, height=3.8cm,
-      xlabel={\footnotesize Stream Progress (\%)},
-      ylabel={\footnotesize Cache Size},
-      xlabel style={font=\tiny},
-      ylabel style={font=\tiny},
-      xticklabel style={font=\tiny},
-      yticklabel style={font=\tiny},
-      ymin=0, ymax=50,
-      xmin=0, xmax=100,
-      legend style={font=\tiny},
-      grid=major, grid style={dotted,gray!40},
-      title={\footnotesize EuroSAT ($C=10$, cap $= 30$)},
-      title style={font=\footnotesize},
-    ]
-    \addplot[color=primary, thick, smooth]
-      coordinates {(0,0)(5,10)(10,20)(22,30)(30,30)(50,30)(75,30)(100,30)};
-    \addplot[color=accent!60, thick, smooth]
-      coordinates {(0,0)(10,0)(20,0)(50,0)(100,0)};
-    \addplot[dashed, accent, very thick]
-      coordinates {(0,30)(100,30)};
-    \node[font=\tiny, accent] at (axis cs:60,31.5) {Saturation cap = 30};
-    \legend{Pos. cache, Neg. cache (empty)}
-    \end{axis}
-    \end{tikzpicture}
-  \end{block}
-  \vspace{4pt}
-  \begin{alertblock}{EuroSAT Saturation Finding}
-    \small TDA positive cache saturates at step \textbf{1832 / 8100 (22.6\%)} of stream.
-    For the remaining \textbf{77.4\%} of test data, TDA learns nothing new.
-    FreeTTA continues adapting until the last sample.
-  \end{alertblock}
-\end{columns}
-\end{frame}
-
-% ── Slide 13: Disagreement + Failure Buckets ──────────────────────────────────
-\begin{frame}{Sections 6 \& 7 — Disagreement \& Failure Analysis}
-\begin{columns}[T]
-\column{0.5\textwidth}
-  \begin{block}{Disagreement Analysis ($p_{\text{TDA}} \neq p_{\text{FreeTTA}}$)}
-    \begin{table}
-      \tiny\centering
-      \begin{tabular}{lcccc}
-      \toprule
-      Dataset & Dis.\% & $\text{Acc}_\text{TDA}(D)$ & $\text{Acc}_\text{FT}(D)$ & Winner\\
-      \midrule
-      Caltech  & 0.8\%  & 45.0\% & \textbf{50.0\%} & FT\\
-      DTD      & 14.2\% & 16.5\% & \textbf{26.2\%} & FT\\
-      \rowcolor{green2!15}
-      EuroSAT  & 30.9\% & 22.8\% & \textbf{42.3\%} & \textbf{FT}\\
-      Pets     & 1.1\%  & \textbf{43.6\%} & 38.5\% & TDA\\
-      ImageNet & 5.6\%  & 25.2\% & 25.2\% & Tie\\
-      \bottomrule
-      \end{tabular}
-    \end{table}
-    On ambiguous samples, FreeTTA is right more often
-    (EuroSAT: 1058 FT wins vs.\ 571 TDA wins).
-  \end{block}
-
-\column{0.48\textwidth}
-  \begin{block}{Failure Bucket Totals (5 datasets, $N=26{,}114$)}
-    \begin{table}
-      \small\centering
-      \begin{tabular}{lcc}
-      \toprule
-      Bucket & Count & \%\\
-      \midrule
-      All methods wrong & 7482 & 78.3\%\\
-      \rowcolor{green2!15}
-      \textbf{FT only correct} & \textbf{771}  & \textbf{8.1\%}\\
-      TDA only correct  & 604  & 6.3\%\\
-      TDA harms CLIP    & 523  & 5.5\%\\
-      \rowcolor{accent!10}
-      FT harms CLIP     & 178  & 1.9\%\\
-      \bottomrule
-      \end{tabular}
-    \end{table}
-    \vspace{2pt}
-    \small FreeTTA uniquely rescues \textbf{167 more} samples than TDA.\\
-    FreeTTA causes unique harm on \textbf{$3\times$ fewer} samples than TDA.
-  \end{block}
-\end{columns}
-\vspace{4pt}
-\begin{exampleblock}{\footnotesize Example images for each bucket are available in \texttt{outputs/comparative\_analysis/\{dataset\}/failure\_cases/\{bucket\}/contact\_sheet.png}}
-\end{exampleblock}
-\end{frame}
-
-% ── Slide 14: When Each Method Wins ───────────────────────────────────────────
-\begin{frame}{Mathematical Conditions: When Each Method Wins}
-\begin{columns}[T]
-\column{0.5\textwidth}
-  \begin{exampleblock}{\faArrowUp\ FreeTTA Always Wins When:}
-    \begin{enumerate}\small
-      \item \textbf{High domain shift}: $\delta_c > 0.15$\\
-            $\bm{\mu}_c(t)$ adapts; TDA cache stagnates
-      \item \textbf{Few classes} ($C < 50$):\\
-            TDA saturates in $< 2\%$ of stream at $C \times 3$ slots
-      \item \textbf{High CLIP entropy} ($\bar{H}_{\text{norm}} > 0.8$):\\
-            TDA neg-cache gate fires 0\%; FreeTTA soft gate $> 0$ always
-      \item \textbf{Long test streams / late phase}:\\
-            FreeTTA accumulated adaptation $\gg$ TDA static cache (Q4: +3.5\%)
-      \item \textbf{Rare / imbalanced classes}:\\
-            TDA cache empty for classes with $<$ 3 test samples
-    \end{enumerate}
-  \end{exampleblock}
-
-\column{0.48\textwidth}
-  \begin{alertblock}{\faArrowDown\ TDA Can Win When:}
-    \begin{enumerate}\small
-      \item \textbf{Low domain shift + high CLIP confidence}:\\
-            Cache exemplars closely match query; Pets/ImageNet regime
-      \item \textbf{Large $C$ + abundant samples/class}:\\
-            Cache fills richly; affinity retrieval precise (ImageNet: $C=1000$)
-      \item \textbf{Short streams (early phase Q1--Q2)}:\\
-            TDA provides immediate boost before FreeTTA converges
-      \item \textbf{Medium-entropy streams} ($H_{\text{norm}} \in (0.2, 0.5)$):\\
-            Neg-cache gate fires; correction signal available for TDA
-    \end{enumerate}
-  \end{alertblock}
-  \vspace{6pt}
-  \begin{block}{\small Structural Insight}
-    \small TDA is a \textbf{memory-bounded} retriever.
-    FreeTTA is a \textbf{statistically-consistent} online learner.
-    As $N \to \infty$: $\bm{\mu}_c(t) \to \bm{\mu}_c^{\text{img}}$ (FreeTTA converges).
-    TDA cannot improve beyond its cache capacity.
-  \end{block}
-\end{columns}
-\end{frame}
-
-% ── Slide 15: Conclusion ──────────────────────────────────────────────────────
-\begin{frame}{Conclusion \& Future Work}
-\begin{columns}[T]
 \column{0.52\textwidth}
-  \begin{block}{Summary of Findings}
-    \begin{itemize}
-      \item FreeTTA outperforms TDA on \textbf{3/5} datasets; average $\Delta = +1.48\%$
-      \item \textbf{EuroSAT} is the decisive dataset: +6.01\% due to high domain shift
-            and early cache saturation ($C=10$)
-      \item CLIP is \textbf{maximally uncertain} on all test domains: $H_{\text{norm}} \approx 1.0$,
-            which structurally starves TDA's negative cache
-      \item FreeTTA's soft gate \textbf{always adapts}; TDA's hard gate \textbf{never fires}
-            in the high-entropy regime
-      \item FreeTTA uniquely rescues 771 samples; causes unique harm on only 178
-      \item FreeTTA advantage \textbf{grows with stream length}: strongest in Q4 (+3.5\%)
-    \end{itemize}
-  \end{block}
+\begin{block}{Datasets \& Features}
+\begin{itemize}
+  \item Pre-extracted CLIP ViT-B/16 features (\texttt{.npy} files)
+  \item Natural (class-ordered) test streams --- unshuffled
+  \item Evaluation: exact streaming prediction per sample
+\end{itemize}
+\begin{table}\small\centering
+\begin{tabular}{lccc}
+\toprule
+Dataset & $C$ & $N$ & CLIP\\
+\midrule
+Caltech-101 & 101  & 2,465  & 93.55\%\\
+DTD         & 47   & 1,880  & 43.94\%\\
+EuroSAT     & 10   & 8,100  & 48.43\%\\
+Oxford Pets & 37   & 3,669  & 88.39\%\\
+ImageNetV2  & 1000 & 10,000 & 62.35\%\\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{block}
 
 \column{0.46\textwidth}
-  \begin{exampleblock}{Future Work}
-    \begin{itemize}\small
-      \item Combine TDA cache memory with FreeTTA's generative model
-            (warm-start $\bm{\mu}_c$ from cache exemplars)
-      \item Adaptive $\beta$ scheduling: reduce entropy gate threshold as
-            stream progresses and model becomes more confident
-      \item Per-class saturation detection: dynamically freeze TDA cache
-            slots when convergence is detected
-      \item Test on longer/harder streams: WILDS benchmarks,
-            medical imaging domains
-    \end{itemize}
-  \end{exampleblock}
-  \vspace{6pt}
-  \begin{alertblock}{\centering\large Final Verdict}
-    \centering
-    \textbf{FreeTTA $>$ TDA} in high-uncertainty, high-shift domains.\\
-    TDA $\approx$ FreeTTA in low-shift, large-class settings.
-  \end{alertblock}
+\begin{block}{Hyperparameter Tuning}
+\textbf{FreeTTA} --- GPU grid search (42 trials/dataset, batch-EM):
+\begin{table}\small\centering
+\begin{tabular}{lcc}
+\toprule
+Dataset & $\alpha$ & $\beta$\\
+\midrule
+Caltech   & 0.02 & 3.0\\
+DTD       & 0.30 & 1.5\\
+EuroSAT   & 0.80 & 3.0\\
+Oxford Pets & 0.10 & 4.0\\
+ImageNetV2 & 0.05 & 4.0\\
+\bottomrule
+\end{tabular}
+\end{table}
+\textbf{TDA} --- paper defaults (tuning yields $<\!0.3\%$ gain)
+\end{block}
+\vspace{4pt}
+\begin{exampleblock}{Hardware / Speed}
+\small RTX A6000 GPU $\cdot$ CUDA 12 $\cdot$ TF32\\
+Batch-EM (size 32): $\sim$10$\times$ speedup\\
+Full tuning: $\approx$3 min/dataset on GPU
+\end{exampleblock}
 \end{columns}
+\end{frame}
+
+%% ── SLIDE 8: Main Results ────────────────────────────────────────────────────
+\begin{frame}{Main Results: Accuracy Comparison}
+\begin{columns}[T]
+\column{0.54\textwidth}
+\begin{table}\small\centering
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Dataset} & \textbf{CLIP} & \textbf{TDA} & \textbf{FreeTTA} & \textbf{FT$-$TDA}\\
+\midrule
+Caltech-101   & 93.55 & 93.59 & 93.63 & {\color{mgreen}$+$0.04}\\
+DTD           & 43.94 & 45.16 & 46.54 & {\color{mgreen}$+$1.38}\\
+\rowcolor{mred!12}
+EuroSAT       & 48.43 & 53.33 & 59.35 & {\color{mred}\textbf{$+$6.01}}\\
+Oxford Pets   & 88.39 & 88.69 & 88.63 & {\color{mred}$-$0.05}\\
+ImageNetV2    & 62.35 & 62.72 & 62.72 & 0.00\\
+\midrule
+\textbf{Avg.} &  --- & 68.70 & \textbf{70.17} & \textbf{\color{mgreen}$+$1.48}\\
+\bottomrule
+\end{tabular}
+\end{table}
+\vspace{6pt}
+\begin{block}{Summary}
+\begin{itemize}
+  \item FreeTTA wins \textbf{3/5} datasets
+  \item Average advantage: \HL{+1.48 pp}
+  \item EuroSAT: decisive win \HL{+6.01 pp}
+  \item Pets: TDA slightly better ($-$0.05 pp)
+  \item ImageNet: effectively tied (0.00 pp)
+\end{itemize}
+\end{block}
+
+\column{0.44\textwidth}
+\begin{tikzpicture}
+\begin{axis}[
+  xbar,
+  width=6cm, height=5.5cm,
+  symbolic y coords={
+    ImageNetV2, Oxford Pets, EuroSAT, DTD, Caltech-101},
+  ytick=data,
+  yticklabel style={font=\tiny},
+  xlabel style={font=\tiny},
+  xlabel={Accuracy Difference FreeTTA$-$TDA (\%)},
+  nodes near coords, nodes near coords style={font=\tiny},
+  xmin=-1.5, xmax=8,
+  grid=major, grid style={dotted,gray!40},
+  bar width=7pt,
+]
+\addplot[
+  fill=mgreen, fill opacity=0.75, draw=mgreen!70!black,
+] coordinates {
+  (0.00, ImageNetV2)
+  (-0.05, Oxford Pets)
+  (6.01, EuroSAT)
+  (1.38, DTD)
+  (0.04, Caltech-101)
+};
+\end{axis}
+\end{tikzpicture}
+\vspace{2pt}
+{\footnotesize\textit{Green $=$ FreeTTA wins, red $=$ TDA wins}}
+\end{columns}
+\end{frame}
+
+%% ── SLIDE 9: Prediction Change ───────────────────────────────────────────────
+\begin{frame}{Section 1 --- Prediction Change Analysis}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{block}{Metrics Defined}
+For each sample $i$ and method $m$:
+\begin{align*}
+  \text{BF}_i &= \mathbf{1}[\hat{y}_{\text{clip}}\!\ne\! y_i,\;\hat{y}_m\!=\! y_i]\\
+  \text{HF}_i &= \mathbf{1}[\hat{y}_{\text{clip}}\!=\! y_i,\;\hat{y}_m\!\ne\! y_i]\\
+  \text{Flip Precision} &= \frac{\text{BF}}{\text{BF}+\text{HF}}
+\end{align*}
+Precision $> 0.5$ means method \emph{improves} more than it harms.
+\end{block}
+\vspace{4pt}
+\begin{table}\tiny\centering
+\begin{tabular}{llcccc}
+\toprule
+Dataset & M & Change\% & BF & HF & Prec.\\
+\midrule
+EuroSAT & TDA & 41.9\% & 1125 & 728 & 0.61\\
+\rowcolor{mgreen!15}
+EuroSAT & FT  & 30.9\% & \textbf{1258} & \textbf{374} & \textbf{0.77}\\
+DTD & TDA & 11.9\% & 57 & 34 & 0.63\\
+\rowcolor{mgreen!15}
+DTD & FT  & 16.3\% & 92 & 43 & \textbf{0.68}\\
+Pets & TDA & 1.2\% & 21 & 10 & \textbf{0.68}\\
+Pets & FT  & 1.5\% & 23 & 14 & 0.62\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\column{0.48\textwidth}
+\begin{exampleblock}{Key Finding}
+\small FreeTTA overrides CLIP \textbf{more selectively}:
+on EuroSAT it makes fewer total changes (30.9\% vs 41.9\%)
+but achieves \textbf{77\% flip precision} vs TDA's 61\%.
+\end{exampleblock}
+\vspace{4pt}
+\begin{tikzpicture}
+\begin{axis}[
+  width=6cm, height=4.2cm,
+  xlabel={\footnotesize Harmful Flips},
+  ylabel={\footnotesize Beneficial Flips},
+  xlabel style={font=\tiny},
+  ylabel style={font=\tiny},
+  xticklabel style={font=\tiny},
+  yticklabel style={font=\tiny},
+  grid=major, grid style={dotted,gray!40},
+  xmin=-5, xmax=820,
+  ymin=-5, ymax=1400,
+  legend style={font=\tiny,at={(0.02,0.98)},anchor=north west},
+]
+\addplot[gray, dashed, thick, domain=0:800] {x};
+\addplot[only marks, mark=square*, mark size=3pt,
+         color=mblue, mark options={fill=mblue}]
+  coordinates {(9,10)(34,57)(728,1125)(10,21)(78,115)};
+\addplot[only marks, mark=*, mark size=3pt,
+         color=mred, mark options={fill=mred}]
+  coordinates {(4,6)(43,92)(374,1258)(14,23)(79,116)};
+\legend{TDA, FreeTTA}
+\node[font=\tiny,mred] at (axis cs:374,1258) [above right] {EuroSAT};
+\end{axis}
+\end{tikzpicture}
+{\tiny Above diagonal: net benefit. FreeTTA (red) sits higher on EuroSAT/DTD.}
+\end{columns}
+\end{frame}
+
+%% ── SLIDE 10: Entropy Analysis ───────────────────────────────────────────────
+\begin{frame}{Sections 2 \& 5 --- Entropy Analysis \& Gate Efficiency}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{alertblock}{Critical Discovery}
+CLIP assigns near-\textbf{uniform} probabilities across all 5 datasets:
+\[
+  \bar{H}_{\text{norm}} \approx 1.0 \quad\forall\text{ dataset}
+\]
+\textbf{Consequence for TDA:}
+\begin{itemize}
+  \item Negative-cache gate: $P(0.2 < H < 0.5) = \mathbf{0\%}$
+  \item Negative cache stays \textbf{completely empty}
+\end{itemize}
+\textbf{Consequence for FreeTTA:}
+\begin{itemize}
+  \item Soft gate: $w = e^{-\beta\cdot 1} = e^{-3} \approx \mathbf{5\%}$
+  \item Always positive --- accumulates over all $N$ samples
+\end{itemize}
+\end{alertblock}
+\vspace{2pt}
+{\small Total adaptation signal: TDA neg-cache $= 0$ events;\;
+FreeTTA $\approx 0.05N$ weighted events.}
+
+\column{0.48\textwidth}
+\begin{block}{Post-Adaptation Entropy (Caltech-101)}
+\begin{tikzpicture}
+\begin{axis}[
+  ybar, bar width=9pt,
+  width=6.2cm, height=4.5cm,
+  symbolic x coords={CLIP, TDA, FreeTTA},
+  xtick=data,
+  xticklabel style={font=\small},
+  ylabel={\footnotesize Mean $H_{\text{norm}}$},
+  ylabel style={font=\tiny},
+  yticklabel style={font=\tiny},
+  ymin=0, ymax=1.15,
+  legend style={font=\tiny,at={(0.98,0.98)},anchor=north east},
+  grid=y, grid style={dotted,gray!40},
+  title={\footnotesize Correct (green) vs Wrong (red) predictions},
+  title style={font=\footnotesize},
+]
+\addplot[fill=mgreen, fill opacity=0.75, draw=mgreen!70!black]
+  coordinates {(CLIP,0.9998)(TDA,0.129)(FreeTTA,0.293)};
+\addplot[fill=mred, fill opacity=0.75, draw=mred!70!black]
+  coordinates {(CLIP,0.9997)(TDA,0.724)(FreeTTA,1.071)};
+\legend{Correct, Wrong}
+\end{axis}
+\end{tikzpicture}
+\end{block}
+\vspace{2pt}
+\begin{exampleblock}{\small Takeaway}
+\small Both methods drastically reduce entropy on correct predictions.
+Wrong predictions remain high-entropy ---
+models ``know'' when they are uncertain.
+\end{exampleblock}
+\end{columns}
+\end{frame}
+
+%% ── SLIDE 11: Trajectory ─────────────────────────────────────────────────────
+\begin{frame}{Section 3 --- Trajectory Analysis (Rolling Window $=$ 50)}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{tikzpicture}
+\begin{axis}[
+  width=7cm, height=5cm,
+  xlabel={\footnotesize Stream Progress (\%)},
+  ylabel={\footnotesize Rolling Accuracy (\%)},
+  xlabel style={font=\tiny},
+  ylabel style={font=\tiny},
+  xticklabel style={font=\tiny},
+  yticklabel style={font=\tiny},
+  ymin=20, ymax=85,
+  xmin=0, xmax=100,
+  legend style={font=\tiny,at={(0.03,0.97)},anchor=north west},
+  grid=major, grid style={dotted,gray!40},
+  title={\footnotesize EuroSAT --- largest gain dataset},
+  title style={font=\footnotesize},
+]
+\addplot[color=mgray, thick, smooth, tension=0.4]
+  coordinates {(0,48)(10,44)(20,42)(30,42)(40,45)
+               (50,48)(60,52)(70,54)(80,55)(90,55)(100,54)};
+\addplot[color=mblue, thick, smooth, tension=0.4]
+  coordinates {(0,48)(5,35)(15,36)(22,30)(30,38)
+               (40,52)(50,54)(60,57)(70,58)(80,59)(100,58)};
+\addplot[color=mred, very thick, smooth, tension=0.4]
+  coordinates {(0,50)(5,47)(15,51)(25,54)(30,57)
+               (40,60)(50,61)(60,63)(70,64)(80,65)(100,63)};
+\addplot[dashed, mgray, thin]
+  coordinates {(22.6,20)(22.6,85)};
+\node[font=\tiny,mgray,rotate=90] at (axis cs:25,30) {TDA sat.\ 22.6\%};
+\legend{CLIP, TDA, FreeTTA}
+\end{axis}
+\end{tikzpicture}
+
+\column{0.48\textwidth}
+\begin{block}{Stream-Phase Analysis (5-dataset average)}
+\begin{table}\small\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Phase} & \textbf{FT$-$TDA} & TDA/CLIP & FT/CLIP\\
+\midrule
+Q1 (0--25\%)    & $+$2.1\%           & $-$1.7\% & $+$0.4\%\\
+Q2 (25--50\%)   & $+$1.6\%           & $-$1.1\% & $+$0.5\%\\
+Q3 (50--75\%)   & $-$1.3\%           & $+$2.8\% & $+$1.5\%\\
+\rowcolor{mgreen!15}
+Q4 (75--100\%)  & \textbf{+3.5\%}   & $+$5.5\% & $+$9.0\%\\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{block}
+\vspace{4pt}
+\begin{exampleblock}{Key Observations}
+\begin{itemize}\small
+  \item TDA \textbf{negative} gain in Q1--Q2: cache-filling overhead
+  \item FreeTTA leads from \textbf{sample 1} on EuroSAT
+  \item FreeTTA advantage \textbf{grows} with stream: $+$2.1\% early $\to$ $+$3.5\% late
+  \item Post-saturation: TDA static, FreeTTA still learning
+\end{itemize}
+\end{exampleblock}
+\end{columns}
+\end{frame}
+
+%% ── SLIDE 12: Internal Stats ─────────────────────────────────────────────────
+\begin{frame}{Sections 4 \& 5 --- Internal Statistics}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{block}{FreeTTA Internal --- Generative Model Dynamics}
+Four tracked quantities:
+\begin{itemize}\small
+  \item \textbf{Class-mean drift} $\|\bm{\mu}_c(t) - \bm{\mu}_c(0)\|$:
+        grows 0 $\to$ 1.13 (Caltech), plateaus at convergence.
+        Confirms means adapt toward image-space centroids.
+  \item \textbf{EM gate weight} $w_i \approx 0.05$ throughout
+        ($H_\text{norm}\approx 1$) but accumulates: total $\approx 0.05N$.
+  \item \textbf{Prior entropy} $H(\pi)$: decreases as dominant classes
+        accumulate more weight.
+  \item \textbf{Covariance trace} Tr($\Sigma$): decreases as model
+        focuses on confident predictions.
+\end{itemize}
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{TDA Internal --- Cache Dynamics (EuroSAT $C=10$)}
+\begin{tikzpicture}
+\begin{axis}[
+  width=6cm, height=3.8cm,
+  xlabel={\footnotesize Stream Progress (\%)},
+  ylabel={\footnotesize Cache size (entries)},
+  xlabel style={font=\tiny},
+  ylabel style={font=\tiny},
+  xticklabel style={font=\tiny},
+  yticklabel style={font=\tiny},
+  ymin=0, ymax=38,
+  xmin=0, xmax=100,
+  legend style={font=\tiny,at={(0.7,0.5)},anchor=west},
+  grid=major, grid style={dotted,gray!40},
+]
+\addplot[color=mblue, thick, smooth]
+  coordinates {(0,0)(5,10)(10,20)(22,30)(25,30)(50,30)(100,30)};
+\addplot[color=mred!60, thick]
+  coordinates {(0,0)(10,0)(50,0)(100,0)};
+\addplot[dashed, mred, thick]
+  coordinates {(0,30)(100,30)};
+\node[font=\tiny,mred,anchor=west] at (axis cs:50,31.5) {Cap $= C\!\times\!3 = 30$};
+\legend{Pos.\ cache, Neg.\ cache (empty)}
+\end{axis}
+\end{tikzpicture}
+\end{block}
+\vspace{2pt}
+\begin{alertblock}{Saturation Finding}
+\small EuroSAT: TDA saturates at step \textbf{1832 / 8100 (22.6\%)}.
+For the remaining \textbf{77.4\%} of the stream, TDA is \textbf{frozen}.
+FreeTTA continues adapting until the very last sample.
+\end{alertblock}
+\end{columns}
+\end{frame}
+
+%% ── SLIDE 13: Disagreement + Failure ─────────────────────────────────────────
+\begin{frame}{Sections 6 \& 7 --- Disagreement \& Failure Analysis}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{block}{Disagreement Analysis}
+$D = \{i : \hat{y}_{\text{TDA}} \ne \hat{y}_{\text{FreeTTA}}\}$
+\begin{table}\tiny\centering
+\begin{tabular}{lcccc}
+\toprule
+Dataset & Dis.\% & Acc$_\text{TDA}$(D) & Acc$_\text{FT}$(D) & Winner\\
+\midrule
+Caltech  & 0.8\%  & 45.0\% & \textbf{50.0\%} & FT\\
+DTD      & 14.2\% & 16.5\% & \textbf{26.2\%} & FT\\
+\rowcolor{mgreen!15}
+EuroSAT  & 30.9\% & 22.8\% & \textbf{42.3\%} & \textbf{FT}\\
+Pets     & 1.1\%  & \textbf{43.6\%} & 38.5\% & TDA\\
+ImageNet & 5.6\%  & 25.2\% & 25.2\% & Tie\\
+\bottomrule
+\end{tabular}
+\end{table}
+\small On ambiguous samples, FreeTTA is right more often
+(EuroSAT: 1058 FT wins vs.\ 571 TDA wins on D).
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{Failure Bucket Totals ($N=26{,}114$, all datasets)}
+\begin{table}\small\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Bucket} & \textbf{Count} & \%\\
+\midrule
+All methods wrong & 7482 & 78.3\%\\
+\rowcolor{mgreen!15}
+\textbf{FT only correct} & \textbf{771} & \textbf{8.1\%}\\
+TDA only correct  & 604  & 6.3\%\\
+TDA unique harm   & 523  & 5.5\%\\
+\rowcolor{mred!10}
+FT unique harm    & 178  & 1.9\%\\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{itemize}\small
+  \item FreeTTA uniquely rescues \textbf{167 more} samples than TDA
+  \item FreeTTA causes unique harm on \textbf{3$\times$ fewer} samples
+  \item Example images per bucket: see \texttt{failure\_cases/}
+\end{itemize}
+\end{block}
+\end{columns}
+\end{frame}
+
+%% ── SLIDE 14: When Each Method Wins ──────────────────────────────────────────
+\begin{frame}{Mathematical Conditions: When Does Each Method Win?}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{exampleblock}{FreeTTA Always Wins When:}
+\begin{enumerate}\small
+  \item \textbf{High domain shift} ($\delta_c > 0.15$)\\
+        $\bm{\mu}_c(t)$ adapts toward image centroids;
+        TDA cache exemplars cannot correct the text-image gap.
+  \item \textbf{Few classes} ($C < 50$)\\
+        TDA saturates at $C\!\times\!3$ slots in $<\!2\%$ of stream.
+        FreeTTA: no saturation.
+  \item \textbf{High CLIP entropy} ($\bar{H}_\text{norm} > 0.8$)\\
+        TDA neg-gate fires 0\%; FreeTTA soft gate always $> 0$.
+  \item \textbf{Long streams / late phase} (Q4)\\
+        Accumulated FreeTTA adaptation $\gg$ static TDA cache ($+$3.5\%).
+  \item \textbf{Rare/imbalanced classes}\\
+        TDA cache empty for classes with $<3$ test samples.
+\end{enumerate}
+\end{exampleblock}
+
+\column{0.48\textwidth}
+\begin{alertblock}{TDA Can Win When:}
+\begin{enumerate}\small
+  \item \textbf{Low shift + high CLIP confidence}\\
+        Cache exemplars closely match query (Pets/ImageNet).
+  \item \textbf{Large $C$ + abundant samples/class}\\
+        Cache fills richly; affinity retrieval precise.
+  \item \textbf{Short streams / early phase} (Q1--Q2)\\
+        TDA provides immediate boost before FreeTTA converges.
+  \item \textbf{Medium-entropy stream} ($H\in(0.2, 0.5)$)\\
+        Neg-cache gate fires; correction signal available.
+\end{enumerate}
+\end{alertblock}
+\vspace{6pt}
+\begin{block}{Structural Insight}
+\small \BL{TDA}: memory-bounded retriever.
+$\;$ \HL{FreeTTA}: statistically consistent online learner.
+As $N\!\to\!\infty$: $\bm{\mu}_c(t) \to \bm{\mu}_c^{\text{img}}$.
+TDA cannot improve beyond cache capacity.
+\end{block}
+\end{columns}
+\end{frame}
+
+%% ── SLIDE 15: Conclusion ─────────────────────────────────────────────────────
+\begin{frame}{Conclusion \& Future Work}
+\begin{columns}[T]
+\column{0.53\textwidth}
+\begin{block}{Summary of Findings}
+\begin{itemize}
+  \item FreeTTA outperforms TDA on \textbf{3/5} datasets; avg $\Delta = +$1.48\%
+  \item \textbf{EuroSAT} decisive: $+$6.01\% from high shift ($C=10$) and early saturation
+  \item CLIP is \textbf{maximally uncertain} ($H_\text{norm}\approx 1$) on all datasets,
+        structurally starving TDA's negative cache
+  \item FreeTTA soft gate \textbf{always adapts} ($w\!>\!0$); TDA gate fires \textbf{0 times}
+  \item FreeTTA uniquely rescues 771 samples;
+        unique harm on only 178 (vs.\ TDA's 523)
+  \item FreeTTA advantage \textbf{grows} with stream: $+$2.1\% (Q1) $\to$ $+$3.5\% (Q4)
+  \item Domain shift correlation with accuracy gap: Pearson $r = +0.46$
+\end{itemize}
+\end{block}
+
+\column{0.45\textwidth}
+\begin{exampleblock}{Future Directions}
+\begin{itemize}\small
+  \item \textbf{Hybrid:} warm-start FreeTTA $\bm{\mu}_c(0)$ from TDA cache exemplars
+  \item \textbf{Adaptive $\beta$:} schedule entropy gate threshold as stream confidence rises
+  \item \textbf{Per-class saturation detection:} freeze TDA cache slots on convergence
+  \item \textbf{Harder benchmarks:} WILDS, medical imaging, OOD detection
+  \item \textbf{Multi-modal adaptation:} update text embeddings jointly
+\end{itemize}
+\end{exampleblock}
 \vspace{6pt}
 \begin{center}
-  \small\textit{All code, results and analyses at:\;
-  \texttt{outputs/comprehensive/} and \texttt{outputs/deep\_analysis/}}
+\begin{tikzpicture}
+  \node[draw=mred, very thick, rounded corners=4pt,
+        fill=mred!12, text width=5.2cm, align=center,
+        inner sep=6pt, font=\normalsize\bfseries] {
+    FreeTTA $>$ TDA in high-uncertainty,\\
+    high-shift domains.\\[2pt]
+    \normalfont\small TDA $\approx$ FreeTTA in low-shift,\\
+    large-class settings.
+  };
+\end{tikzpicture}
 \end{center}
 \end{frame}
 
