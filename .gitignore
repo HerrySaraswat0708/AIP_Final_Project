@@ -5,3 +5,5 @@ __pycache__/
 research_pipeline/
 outputs/
 outputs/research_pipeline/imagenet/prob_arrays.npz
+outputs/research_pipeline/imagenet/prob_arrays.npz
+outputs/
