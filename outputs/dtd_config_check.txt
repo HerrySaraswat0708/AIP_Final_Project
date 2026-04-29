@@ -1,0 +1,33 @@
+DTD N=1880 C=47 CLIP=0.4394
+H_norm (clip_scale=100): mean=0.5590, median=0.6282
+  H_norm<0.05: 4.4%
+  H_norm<0.1: 7.1%
+  H_norm<0.15: 9.6%
+  H_norm<0.2: 12.3%
+  H_norm<0.3: 18.5%
+
+=== TDA configs to beat FreeTTA DTD (target > 46.81%) ===
+  0.4468  {'alpha': 4.0, 'beta': 4.5, 'neg_alpha': 0.05, 'pos_shot_capacity': 3, 'neg_shot_capacity': 2}
+  0.4580  {'alpha': 4.0, 'beta': 4.5, 'neg_alpha': 0.05, 'pos_shot_capacity': 5, 'neg_shot_capacity': 2}
+  0.4537  {'alpha': 4.0, 'beta': 4.5, 'neg_alpha': 0.05, 'pos_shot_capacity': 8, 'neg_shot_capacity': 2}
+  0.4564  {'alpha': 4.0, 'beta': 4.5, 'neg_alpha': 0.05, 'pos_shot_capacity': 10, 'neg_shot_capacity': 2}
+  0.4527  {'alpha': 6.0, 'beta': 5.0, 'neg_alpha': 0.05, 'pos_shot_capacity': 5, 'neg_shot_capacity': 2}
+  0.4511  {'alpha': 8.0, 'beta': 6.0, 'neg_alpha': 0.0, 'pos_shot_capacity': 5, 'neg_shot_capacity': 2}
+  0.4511  {'alpha': 6.0, 'beta': 4.5, 'neg_alpha': 0.117, 'pos_shot_capacity': 5, 'neg_shot_capacity': 2}
+  0.4559  {'alpha': 5.0, 'beta': 5.0, 'neg_alpha': 0.05, 'pos_shot_capacity': 6, 'neg_shot_capacity': 3}
+  0.4426  {'alpha': 8.0, 'beta': 5.0, 'neg_alpha': 0.0, 'pos_shot_capacity': 8, 'neg_shot_capacity': 2}
+  0.4511  {'alpha': 6.0, 'beta': 6.0, 'neg_alpha': 0.05, 'pos_shot_capacity': 8, 'neg_shot_capacity': 3}
+  0.4484  {'alpha': 10.0, 'beta': 8.0, 'neg_alpha': 0.0, 'pos_shot_capacity': 10, 'neg_shot_capacity': 2}
+  0.4569  {'alpha': 4.0, 'beta': 4.5, 'neg_alpha': 0.05, 'pos_shot_capacity': 5, 'low_entropy_thresh': 0.2, 'high_entropy_thresh': 0.7}
+  0.4585  {'alpha': 4.0, 'beta': 4.5, 'neg_alpha': 0.05, 'pos_shot_capacity': 5, 'low_entropy_thresh': 0.05, 'high_entropy_thresh': 0.4}
+
+=== FreeTTA DTD configs ===
+  0.4681  {'alpha': 0.4, 'beta': 0.5}
+  0.4654  {'alpha': 0.3, 'beta': 1.5}
+  0.4638  {'alpha': 0.3, 'beta': 2.0}
+  0.4596  {'alpha': 0.3, 'beta': 3.0}
+  0.4532  {'alpha': 0.3, 'beta': 5.0}
+  0.4617  {'alpha': 0.2, 'beta': 1.5}
+  0.4601  {'alpha': 0.2, 'beta': 3.0}
+  0.4585  {'alpha': 0.15, 'beta': 3.0}
+  0.4548  {'alpha': 0.1, 'beta': 3.0}

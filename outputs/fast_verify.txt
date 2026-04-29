@@ -1,0 +1,4 @@
+caltech    CLIP=0.9355 TDA=0.9343 FreeTTA=0.9363 winner=FreeTTA
+dtd        CLIP=0.4394 TDA=0.4585 FreeTTA=0.4548 winner=TDA
+eurosat    CLIP=0.4843 TDA=0.5333 FreeTTA=0.5935 winner=FreeTTA
+pets       CLIP=0.8839 TDA=0.8842 FreeTTA=0.8896 winner=FreeTTA

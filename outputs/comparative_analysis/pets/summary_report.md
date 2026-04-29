@@ -3,7 +3,7 @@
 ## Accuracy Table
 |   clip_acc |   tda_acc |   freetta_acc |   tda_gain_vs_clip |   freetta_gain_vs_clip |   freetta_minus_tda |
 |-----------:|----------:|--------------:|-------------------:|-----------------------:|--------------------:|
-|   0.883892 |   0.88689 |      0.886345 |         0.00299809 |             0.00245298 |        -0.000545108 |
+|   0.883892 |  0.884165 |      0.889616 |        0.000272554 |             0.00572363 |          0.00545108 |
 
 ## Geometry Probe
 | dataset   |   oracle_centroid_acc |   oracle_1nn_acc |   geometry_alignment_score |
@@ -13,31 +13,31 @@
 ## Prediction Change Metrics
 | dataset   | method   |   samples |   unchanged_correct_count |   unchanged_wrong_count |   beneficial_flip_count |   harmful_flip_count |   other_changed_wrong_count |   unchanged_correct_rate |   unchanged_wrong_rate |   change_rate |   beneficial_flip_precision |   harmful_flip_rate_on_clip_correct |   net_correction_score |   net_correction_rate |   avg_entropy_after_beneficial_flip |   avg_entropy_after_harmful_flip |
 |:----------|:---------|----------:|--------------------------:|------------------------:|------------------------:|---------------------:|----------------------------:|-------------------------:|-----------------------:|--------------:|----------------------------:|------------------------------------:|-----------------------:|----------------------:|------------------------------------:|---------------------------------:|
-| pets      | tda      |      3669 |                      3233 |                     393 |                      21 |                   10 |                          12 |                 0.881167 |               0.107114 |     0.0117198 |                    0.488372 |                          0.00308356 |                     11 |            0.00299809 |                             1.09188 |                          1.36329 |
-| pets      | freetta  |      3669 |                      3229 |                     386 |                      23 |                   14 |                          17 |                 0.880076 |               0.105206 |     0.0147179 |                    0.425926 |                          0.00431699 |                      9 |            0.00245298 |                             1.13817 |                          1.25943 |
+| pets      | tda      |      3669 |                      3192 |                     354 |                      52 |                   51 |                          20 |                 0.869992 |              0.0964841 |     0.0335241 |                    0.422764 |                           0.0157262 |                      1 |           0.000272554 |                             1.08937 |                          1.06186 |
+| pets      | freetta  |      3669 |                      3208 |                     348 |                      56 |                   35 |                          22 |                 0.874353 |              0.0948487 |     0.0307986 |                    0.495575 |                           0.0107925 |                     21 |           0.00572363  |                             1.0737  |                          1.12585 |
 
 ## Entropy / Confidence Metrics
 | dataset   | method   | subset   |   samples |   mean_entropy |   median_entropy |   std_entropy |   mean_confidence |   median_confidence |   std_confidence |
 |:----------|:---------|:---------|----------:|---------------:|-----------------:|--------------:|------------------:|--------------------:|-----------------:|
-| pets      | clip     | all      |      3669 |       3.60982  |         3.6099   |   0.000411193 |         0.0304082 |           0.0303879 |      0.000700282 |
-| pets      | clip     | correct  |      3243 |       3.60983  |         3.60991  |   0.000411691 |         0.0304729 |           0.0304406 |      0.000678452 |
-| pets      | clip     | wrong    |       426 |       3.60979  |         3.60987  |   0.000406148 |         0.0299154 |           0.0298972 |      0.000666934 |
-| pets      | tda      | all      |      3669 |       0.445549 |         0.264855 |   0.453328    |         0.851182  |           0.943176  |      0.184435    |
-| pets      | tda      | correct  |      3254 |       0.36266  |         0.211097 |   0.382618    |         0.88756   |           0.960421  |      0.151197    |
-| pets      | tda      | wrong    |       415 |       1.09547  |         1.02867  |   0.438993    |         0.565939  |           0.550608  |      0.172474    |
-| pets      | freetta  | all      |      3669 |       0.433582 |         0.259241 |   0.445526    |         0.85135   |           0.945433  |      0.185961    |
-| pets      | freetta  | correct  |      3252 |       0.351707 |         0.197185 |   0.376492    |         0.887989  |           0.961934  |      0.152788    |
-| pets      | freetta  | wrong    |       417 |       1.07208  |         1.01708  |   0.425529    |         0.565622  |           0.547355  |      0.173521    |
+| pets      | clip     | all      |      3669 |       3.60982  |         3.6099   |   0.000411194 |         0.0304082 |           0.0303879 |      0.000700282 |
+| pets      | clip     | correct  |      3243 |       3.60983  |         3.60991  |   0.000411695 |         0.0304729 |           0.0304406 |      0.000678452 |
+| pets      | clip     | wrong    |       426 |       3.60979  |         3.60987  |   0.000406133 |         0.0299154 |           0.0298972 |      0.000666934 |
+| pets      | tda      | all      |      3669 |       0.363868 |         0.170958 |   0.424431    |         0.878743  |           0.967931  |      0.170331    |
+| pets      | tda      | correct  |      3244 |       0.288528 |         0.130774 |   0.356745    |         0.910948  |           0.977199  |      0.137803    |
+| pets      | tda      | wrong    |       425 |       0.938935 |         0.905549 |   0.457933    |         0.632922  |           0.606162  |      0.192804    |
+| pets      | freetta  | all      |      3669 |       0.379217 |         0.189102 |   0.421708    |         0.866074  |           0.961682  |      0.179425    |
+| pets      | freetta  | correct  |      3264 |       0.301969 |         0.144179 |   0.354198    |         0.900347  |           0.973106  |      0.148016    |
+| pets      | freetta  | wrong    |       405 |       1.00178  |         0.967645 |   0.405367    |         0.589852  |           0.571022  |      0.171216    |
 
 ## Disagreement Metrics
 | dataset   |   disagreement_rate |   tda_acc_on_disagreement |   freetta_acc_on_disagreement |   avg_clip_entropy_on_disagreement |
 |:----------|--------------------:|--------------------------:|------------------------------:|-----------------------------------:|
-| pets      |           0.0106296 |                  0.435897 |                      0.384615 |                            3.60995 |
+| pets      |            0.032979 |                  0.355372 |                      0.520661 |                            3.60983 |
 
 ## Latency Metrics
 | dataset   |   window |   tda_break_even_vs_clip |   freetta_break_even_vs_clip |   freetta_break_even_vs_tda |   tda_break_even_ratio |   freetta_break_even_ratio |   freetta_vs_tda_break_even_ratio |
 |:----------|---------:|-------------------------:|-----------------------------:|----------------------------:|-----------------------:|---------------------------:|----------------------------------:|
-| pets      |       50 |                        5 |                            5 |                         101 |             0.00136277 |                 0.00136277 |                         0.0275279 |
+| pets      |       50 |                      229 |                            5 |                           5 |              0.0624148 |                 0.00136277 |                        0.00136277 |
 
 ## Internal Metrics
 | dataset   |   tda_mean_positive_cache_size |   tda_mean_negative_cache_size |   tda_negative_gate_rate |   tda_cache_pressure_ratio |   freetta_mean_em_weight |   freetta_mean_mu_update_norm |   freetta_final_mu_drift |   freetta_final_prior_entropy |   freetta_final_sigma_trace |   geometry_alignment_score |   oracle_centroid_acc |   oracle_1nn_acc |

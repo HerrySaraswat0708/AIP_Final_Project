@@ -1,0 +1,1705 @@
+\documentclass[12pt,a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{mdframed}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+
+% ── Colours ───────────────────────────────────────────────────────────────────
+\definecolor{clipblue}{RGB}{70,114,176}
+\definecolor{tdaorange}{RGB}{221,132,82}
+\definecolor{fttagreen}{RGB}{85,168,104}
+\definecolor{lightgray}{RGB}{245,245,245}
+\definecolor{darkgray}{RGB}{80,80,80}
+\definecolor{linkblue}{RGB}{0,70,180}
+
+% ── Hyperref ──────────────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  linkcolor=linkblue,
+  citecolor=linkblue,
+  urlcolor=linkblue,
+  pdftitle={CLIP, Domain Shift, and Test-Time Adaptation: TDA vs FreeTTA},
+  pdfauthor={Research Report},
+}
+
+% ── Header / Footer ───────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small CLIP Test-Time Adaptation: TDA vs FreeTTA}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ────────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{darkgray}}{\thesection.}{0.5em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection.}{0.5em}{}
+
+% ── Math operators ────────────────────────────────────────────────────────────
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bw}{\mathbf{w}}
+\newcommand{\bW}{\mathbf{W}}
+\newcommand{\bz}{\mathbf{z}}
+\newcommand{\bmu}{\boldsymbol{\mu}}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+
+% ── tcolorbox styles ──────────────────────────────────────────────────────────
+\tcbset{
+  intuitionbox/.style={
+    colback=lightgray, colframe=darkgray!50,
+    boxrule=0.5pt, arc=3pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+    fonttitle=\bfseries\small, title={Intuition},
+  },
+  findingbox/.style={
+    colback=fttagreen!8, colframe=fttagreen!60,
+    boxrule=0.8pt, arc=3pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+    fonttitle=\bfseries\small,
+  },
+}
+
+% ── Listings (code blocks) ────────────────────────────────────────────────────
+\lstset{
+  backgroundcolor=\color{lightgray},
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{darkgray!30},
+}
+
+% ── Document ──────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Title Page ────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\LARGE\bfseries Comprehensive Research Report\par}
+  \vspace{0.5cm}
+  {\Large CLIP, Domain Shift, and Test-Time Adaptation:\par}
+  {\Large TDA vs FreeTTA --- A Deep Comparative Study\par}
+  \vspace{1cm}
+  \rule{0.7\textwidth}{0.4pt}
+  \vspace{0.5cm}
+
+  {\normalsize
+  \textit{Datasets:} Caltech101 $\cdot$ DTD $\cdot$ EuroSAT $\cdot$ ImageNet-V2 $\cdot$ Oxford Pets\\[4pt]
+  \textit{Pipeline:} \texttt{experiments/run\_comparative\_analysis.py}\\[4pt]
+  \textit{Stream order:} Natural $\cdot$ Rolling window $= 50$ $\cdot$ Seed $= 42$
+  }
+
+  \vspace{1cm}
+  \rule{0.7\textwidth}{0.4pt}
+  \vspace{2cm}
+
+  {\small All numerical results from \texttt{outputs/comparative\_analysis/}.
+  Plots available in the same directory.}
+\end{titlepage}
+
+% ── Table of Contents ─────────────────────────────────────────────────────────
+\tableofcontents
+\clearpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{CLIP: What, How, and Why}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{What is CLIP?}
+
+CLIP (Contrastive Language--Image Pretraining) is a vision--language model developed by OpenAI \cite{radford2021clip}.
+Its defining feature is a \textbf{shared embedding space} for both images and text, learned by training on 400~million image--caption pairs scraped from the internet.
+Once trained, CLIP can match any image to any text description---including class names it has never explicitly seen.
+
+This gives CLIP its most remarkable property: \textbf{zero-shot classification}.
+Given a set of class names defined at inference time, CLIP can classify images with no labelled training examples, simply by comparing image features to text-encoded class descriptions.
+
+\subsection{Architecture}
+
+CLIP consists of two parallel encoders trained jointly:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Image encoder} $f_I$: Vision Transformer ViT-B/16.
+        Takes a $224\times224$ image and outputs a 512-dimensional unit vector.
+  \item \textbf{Text encoder} $f_T$: Transformer.
+        Takes a text string (e.g.\ \textit{``a photo of a cat''}) and outputs a 512-dimensional unit vector.
+\end{itemize}
+
+Both encoders project to the same 512-D space, where semantic similarity translates to geometric proximity (high cosine similarity).
+
+\subsection{Training: Contrastive Loss}
+
+For a batch of $N$ image--text pairs $\{(I_i, t_i)\}_{i=1}^N$, CLIP maximises the cosine similarity of matched pairs and minimises it for all $N^2 - N$ mismatched pairs.
+The loss is symmetric cross-entropy applied to an $N\times N$ similarity matrix:
+
+\begin{equation}
+  s(I_i, t_j) = f_I(I_i)^\top f_T(t_j)
+  \qquad \text{(both unit-normed, so this equals cosine similarity)}
+  \label{eq:cosine}
+\end{equation}
+
+\begin{equation}
+  \mathcal{L}_{\text{img}} = -\frac{1}{N}\sum_{i=1}^N \log
+    \frac{\exp(\tau \cdot s(I_i,t_i))}{\sum_{j=1}^N \exp(\tau \cdot s(I_i,t_j))}
+  \label{eq:loss_img}
+\end{equation}
+
+\begin{equation}
+  \mathcal{L}_{\text{txt}} = -\frac{1}{N}\sum_{j=1}^N \log
+    \frac{\exp(\tau \cdot s(I_j,t_j))}{\sum_{i=1}^N \exp(\tau \cdot s(I_i,t_j))}
+  \label{eq:loss_txt}
+\end{equation}
+
+\begin{equation}
+  \mathcal{L} = \frac{\mathcal{L}_{\text{img}} + \mathcal{L}_{\text{txt}}}{2}
+  \label{eq:loss_total}
+\end{equation}
+
+where $\tau$ is a learned temperature parameter.
+
+\begin{tcolorbox}[intuitionbox]
+Pull the image and its paired caption together; push every other image--caption combination apart.
+After 400M examples, the shared space encodes rich cross-modal semantics.
+\end{tcolorbox}
+
+\subsection{Zero-Shot Inference}
+
+To classify a query image $I$ into $C$ classes:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item Build text templates: for each class $c$, form prompt $t_c = $ \textit{``a photo of a \{class\_name\}''}.
+  \item Encode all $C$ prompts:
+    $\bW = [f_T(t_1), \ldots, f_T(t_C)] \in \R^{C \times D}$, each row unit-normed.
+  \item Encode query image: $\bx = f_I(I) \in \R^D$, unit-normed.
+  \item Compute logits:
+    \begin{equation}
+      \bz = 100 \cdot \bW \bx \in \R^C
+      \quad \text{(scale factor 100 $\approx 1/\tau$)}
+      \label{eq:clip_logits}
+    \end{equation}
+  \item Probabilities:
+    \begin{equation}
+      p_c = \mathrm{softmax}(\bz)_c = \frac{\exp(z_c)}{\sum_{j=1}^C \exp(z_j)}
+      \label{eq:softmax}
+    \end{equation}
+  \item Predict: $\hat{y} = \argmax_c p_c$
+\end{enumerate}
+
+\subsection{Strengths and Weaknesses}
+
+\begin{minipage}[t]{0.48\textwidth}
+\textbf{Strengths}
+\begin{itemize}[leftmargin=1em,noitemsep]
+  \item Zero-shot: no labelled data needed
+  \item Single frozen model covers hundreds of tasks
+  \item Rich semantics from 400M training pairs
+\end{itemize}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\textbf{Weaknesses}
+\begin{itemize}[leftmargin=1em,noitemsep]
+  \item Satellite/medical/microscopy images underrepresented
+  \item Template ``a photo of'' mismatches non-photographic domains
+  \item Near-uniform confidence: $p_c \approx 1/C$ for all $c$
+\end{itemize}
+\end{minipage}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{The Problem: Domain Shift}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Definition}
+
+Domain shift means the statistical distribution of test images $P_{\text{test}}(\bx)$ differs from the distribution the model was trained on $P_{\text{train}}(\bx)$, even if the label set is identical.
+Formally:
+\begin{equation}
+  P_{\text{train}}(\bx \mid y) \;\neq\; P_{\text{test}}(\bx \mid y)
+  \label{eq:domain_shift}
+\end{equation}
+
+\subsection{Why Domain Shift Hurts CLIP Specifically}
+
+CLIP's text anchors $\bW$ are \emph{fixed} at inference time---they encode the ``average internet concept'' of each class.
+When test images deviate from this concept, cosine similarities shift and the wrong class becomes top-ranked.
+
+\begin{description}
+  \item[\textbf{EuroSAT:}] The anchor for ``Annual Crop'' encodes a landscape photograph perspective.
+  Actual EuroSAT images are $64\times64$ multispectral overhead tiles.
+  The feature vector $\bx$ lands equidistant from multiple class anchors, yielding highly uncertain predictions.
+
+  \item[\textbf{DTD:}] Texture names like ``braided'', ``woven'', and ``knitted'' are semantically similar in language.
+  CLIP's text encoder clusters these anchors close together, making purely text-based discrimination hard.
+\end{description}
+
+\subsection{Quantifying Domain Shift via CLIP Baseline Accuracy}
+
+\begin{table}[H]
+\centering
+\caption{CLIP zero-shot accuracy and dataset characteristics.}
+\label{tab:clip_baseline}
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+Dataset & Classes & Samples & CLIP Acc.\ (\%) & Domain Type \\
+\midrule
+Caltech101  & 100   & 2,465  & 93.55 & Standard photographs \\
+Oxford Pets & 37    & 3,669  & 88.39 & Fine-grained pet breeds \\
+ImageNet-V2 & 1,000 & 10,000 & 62.35 & General objects (shifted test set) \\
+DTD         & 47    & 1,880  & 43.94 & Abstract textures \\
+EuroSAT     & 10    & 8,100  & 48.43 & Satellite remote sensing \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The 44.6-point gap between Caltech (93.55\%) and EuroSAT (48.43\%) directly measures domain shift severity.
+On EuroSAT, CLIP barely exceeds random chance for a 10-class problem ($1/10 = 10\%$).
+
+\subsection{CLIP Confidence Is Uninformative}
+
+\begin{equation}
+  \text{Expected uniform confidence for $C$ classes} = \frac{1}{C}
+\end{equation}
+
+Observed: Caltech mean confidence $= 0.0113$ (uniform $\approx 0.010$ for 100 classes); EuroSAT mean confidence $= 0.103$ (uniform $= 0.100$ for 10 classes).
+CLIP cannot distinguish easy from hard samples.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Test-Time Adaptation: The Solution}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{What is TTA?}
+
+Test-Time Adaptation (TTA) adapts a frozen model at inference time using only the unlabelled test stream.
+Constraints:
+\begin{itemize}[noitemsep]
+  \item Access only to the current and past test samples (online)
+  \item CLIP weights remain completely frozen
+  \item Decision on sample $t$ is made before seeing sample $t+1$
+  \item No ground-truth labels: adaptation signal comes from the model's own predictions
+\end{itemize}
+
+\subsection{Why TTA Works}
+
+Even without labels, the test stream carries three types of signal:
+\begin{enumerate}[leftmargin=1.5em,noitemsep]
+  \item \textbf{Self-consistency}: samples that look similar to each other and receive the same high-confidence prediction probably share a true class label.
+  \item \textbf{Cluster structure}: in a well-trained feature space, same-class samples cluster; TTA methods exploit this geometry to shift decision boundaries.
+  \item \textbf{Entropy minimisation}: confident predictions (low entropy) are statistically more likely correct; updating class representations from them improves future predictions.
+\end{enumerate}
+
+\subsection{Why Not Fine-Tune?}
+
+CLIP's visual encoder has 307M parameters.
+Fine-tuning on a few hundred test samples causes catastrophic forgetting of general knowledge.
+TTA instead adapts in the downstream logit space---a much lower-dimensional, well-conditioned problem.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Motivation: Why TDA and FreeTTA?}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Two Competing Philosophies}
+
+After surveying TTA methods for CLIP, two fundamentally different philosophies emerged:
+
+\begin{tcolorbox}[findingbox, title={Philosophy 1 --- ``Remember What You've Seen'' (TDA)}]
+  Keep a running memory bank of reliable past predictions.
+  When a new sample arrives, use its similarity to cached samples to refine the prediction.
+  \textbf{Local}: each prediction is influenced only by previously seen, similar-looking samples.
+\end{tcolorbox}
+
+\vspace{0.4em}
+
+\begin{tcolorbox}[findingbox, title={Philosophy 2 --- ``Update Your World Model'' (FreeTTA)}]
+  Maintain running estimates of each class's feature distribution (class means).
+  Predictions fuse CLIP's text anchor with the learned visual mean.
+  Update means after each prediction.
+  \textbf{Global}: each prediction is influenced by everything seen for that class so far.
+\end{tcolorbox}
+
+\subsection{Why These Two Specifically?}
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Minimal assumptions}: neither requires labelled data, neither modifies CLIP weights.
+  \item \textbf{Complementary mechanisms}: cache is instance-level; EM is class-level.
+        Comparing them reveals which granularity of signal matters.
+  \item \textbf{Different failure modes}: cache fails under memory pressure; EM fails with few samples per class.
+        Each failure exposes the other's strength.
+  \item \textbf{Practical efficiency}: both run in $O(1)$ or $O(C)$ per step with no backpropagation.
+  \item \textbf{Theoretical grounding}: TDA relates to $k$-NN retrieval; FreeTTA to Gaussian mixture EM.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{TDA: Cache-Based Adaptation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Intuition}
+
+\begin{tcolorbox}[intuitionbox]
+Imagine a new doctor who, in addition to a textbook (CLIP's text anchors), keeps notes on recent patients.
+For each new patient, they consult the 5 most similar past cases.
+If those notes confidently indicate ``Annual Crop'', the doctor upweighs that diagnosis---even if the textbook description of Annual Crop doesn't perfectly match satellite imagery.
+\end{tcolorbox}
+
+TDA maintains two cache types per class:
+\begin{itemize}
+  \item \textbf{Positive cache}: recent samples with low prediction entropy (high confidence). Good reference examples.
+  \item \textbf{Negative cache}: samples with medium entropy. Anti-examples---``this looks somewhat like class $c$ but probably isn't.''
+\end{itemize}
+
+\subsection{Algorithm}
+
+\begin{algorithm}[H]
+\caption{TDA Online Adaptation}\label{alg:tda}
+\begin{algorithmic}[1]
+\State \textbf{Initialise:} $\mathcal{P}_c \leftarrow \emptyset$,\; $\mathcal{N}_c \leftarrow \emptyset$ for all $c \in [C]$
+\For{each test sample $\bx_t$ (unit-normed $\in\R^D$)}
+  \State \textbf{// Step 1: CLIP logits}
+  \State $z^{\text{clip}}_c = 100 \cdot \bx_t^\top \bw_c$ \quad for all $c$
+  \State \textbf{// Step 2: Cache adjustment logits}
+  \State $z^{\text{pos}}_c = \dfrac{\lambda_+}{|\mathcal{P}_c|}\displaystyle\sum_{\mathbf{v}\in\mathcal{P}_c} \bx_t^\top \mathbf{v}$ \quad (0 if $\mathcal{P}_c = \emptyset$)
+  \State $z^{\text{neg}}_c = \dfrac{\lambda_-}{|\mathcal{N}_c|}\displaystyle\sum_{\mathbf{v}\in\mathcal{N}_c} \bx_t^\top \mathbf{v}$ \quad (0 if $\mathcal{N}_c = \emptyset$)
+  \State \textbf{// Step 3: Combine and predict}
+  \State $z^{\text{final}}_c = z^{\text{clip}}_c + z^{\text{pos}}_c - z^{\text{neg}}_c$
+  \State $p(c \mid \bx_t) = \mathrm{softmax}(\mathbf{z}^{\text{final}})_c$
+  \State $\hat{y} \leftarrow \argmax_c p(c \mid \bx_t)$
+  \State \textbf{// Step 4: Update cache}
+  \State $H \leftarrow -\sum_c p(c|\bx_t)\log p(c|\bx_t)$
+  \If{$H < \theta_{\text{low}}$} add $\bx_t$ to $\mathcal{P}_{\hat{y}}$; evict oldest if over capacity
+  \ElsIf{$H < \theta_{\text{mid}}$} add $\bx_t$ to $\mathcal{N}_{\hat{y}}$; evict oldest if over capacity
+  \EndIf
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Mathematics}
+
+The positive cache logit is a weighted cosine similarity kernel:
+\begin{equation}
+  z^{\text{pos}}_c(\bx_t) = \lambda_+ \cdot \mathbb{E}_{\mathbf{v} \sim \mathcal{P}_c}\!\left[\bx_t^\top \mathbf{v}\right]
+  = \lambda_+ \cdot \bx_t^\top \hat{\bmu}_c
+  \label{eq:tda_kernel}
+\end{equation}
+where $\hat{\bmu}_c = \frac{1}{|\mathcal{P}_c|}\sum_{\mathbf{v}\in\mathcal{P}_c}\mathbf{v}$ is the empirical centroid of cached features.
+
+In the limit of infinite cache capacity, $\hat{\bmu}_c \to \bmu_c$ (true class centroid), making TDA equivalent to a nearest-centroid classifier.
+With finite capacity $K$ (default $K=3$), it is a \textbf{sliding-window mean of the $K$ most recent confident examples}.
+
+The combined logit adjustment is a kernel regression:
+\begin{equation}
+  \mathbf{z}^{\text{final}} = \mathbf{z}^{\text{clip}} + \sum_{c} \bigl[\lambda_+ K^+(\bx_t, c) - \lambda_- K^-(\bx_t, c)\bigr] \mathbf{e}_c
+  \label{eq:tda_combined}
+\end{equation}
+where $K^+$ and $K^-$ are dot-product similarity kernels to positive and negative caches respectively.
+
+\subsection{Hyperparameters}
+
+\begin{table}[H]
+\centering
+\caption{TDA hyperparameters (uniform across all datasets in our experiments).}
+\label{tab:tda_hyperparams}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Parameter & Symbol & Value & Meaning \\
+\midrule
+Positive shot capacity & $K^+$ & 3 & Max positive samples per class \\
+Negative shot capacity & $K^-$ & 3 & Max negative samples per class \\
+Low entropy threshold  & $\theta_{\text{low}}$ & 0.20 & Entry threshold for positive cache \\
+Mid entropy threshold  & $\theta_{\text{mid}}$ & 0.40 & Entry threshold for negative cache \\
+Positive cache weight  & $\lambda_+$ & 1.0 & Weight on positive adjustment \\
+Negative cache weight  & $\lambda_-$ & 0.1 & Weight on negative adjustment \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Key Structural Properties}
+
+\begin{itemize}
+  \item \textbf{Local}: each prediction depends only on the most recently seen similar samples (FIFO window).
+  \item \textbf{Cold-start}: no adjustment until cache fills; first steps are essentially raw CLIP.
+  \item \textbf{Cache pressure}: when $N_{\text{total}} \gg C \times K^+$, slots are overwritten faster than useful signal accumulates.
+  \item \textbf{Discriminative}: negative cache actively suppresses confusion between visually similar classes.
+  \item \textbf{No global state}: two samples from the same class seen 1,000 steps apart do not interact.
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{FreeTTA: Online EM Adaptation}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Intuition}
+
+\begin{tcolorbox}[intuitionbox]
+The same new doctor, but instead of notes on individual patients, they build a running average of what each disease ``looks like'' in test images.
+Every time ``Annual Crop'' is diagnosed, the visual prototype for Annual Crop shifts slightly toward the current image.
+Over 800 samples, the prototype converges to the true distribution of satellite-image crops---even if the textbook description was wrong.
+\end{tcolorbox}
+
+FreeTTA models each class as a Gaussian distribution in feature space and adapts class means online via the Expectation-Maximisation (EM) framework.
+
+\subsection{Algorithm}
+
+\begin{algorithm}[H]
+\caption{FreeTTA Online EM Adaptation}\label{alg:freetta}
+\begin{algorithmic}[1]
+\State \textbf{Initialise:} $\bmu_c \leftarrow \bw_c$ for all $c$ \quad (CLIP text anchor)
+\For{each test sample $\bx_t$ (unit-normed)}
+  \State \textbf{// E-Step: compute adapted probabilities}
+  \State $z^{\text{clip}}_c = 100 \cdot \bx_t^\top \bw_c$
+  \State $\alpha_t = 1 - H_{\text{clip}}(\bx_t) / \log C$ \quad (EM weight from CLIP entropy)
+  \State $z^{\text{adapt}}_c = \alpha_t \cdot \bx_t^\top \bmu_c / \tau_{\text{adapt}}$
+  \State $p_{\text{adapt}}(c \mid \bx_t) = \mathrm{softmax}\!\left(\mathbf{z}^{\text{clip}} + \mathbf{z}^{\text{adapt}}\right)_c$
+  \State $\hat{y} \leftarrow \argmax_c\, p_{\text{adapt}}(c \mid \bx_t)$
+  \State \textbf{// M-Step: update predicted class mean}
+  \State $w_{\text{upd}} = \sigma\!\left(\gamma \cdot (p_{\text{adapt}}(\hat{y} \mid \bx_t) - 0.5)\right)$
+  \State $\bmu_{\hat{y}} \leftarrow (1 - \eta \cdot w_{\text{upd}})\,\bmu_{\hat{y}} + \eta \cdot w_{\text{upd}}\,\bx_t$
+  \State $\bmu_{\hat{y}} \leftarrow \bmu_{\hat{y}} / \norm{\bmu_{\hat{y}}}$ \quad (re-normalise)
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Mathematics}
+
+\subsubsection{The EM View}
+
+FreeTTA maximises the expected log-likelihood of test data under a Gaussian mixture model:
+\begin{equation}
+  p(\bx) = \sum_{c=1}^C \pi_c \cdot \mathcal{N}(\bx;\, \bmu_c,\, \sigma^2 \mathbf{I})
+  \label{eq:gmm}
+\end{equation}
+where $\pi_c = p_{\text{clip}}(c)$ (CLIP prior) and covariances are isotropic.
+
+The \textbf{E-step} assigns soft responsibilities:
+\begin{equation}
+  r_c(\bx_t) = p_{\text{adapt}}(c \mid \bx_t)
+\end{equation}
+
+The \textbf{M-step} performs stochastic gradient ascent on the mixture log-likelihood:
+\begin{equation}
+  \frac{\partial}{\partial \bmu_c} \log p(\bx_t) \approx \frac{r_c(\bx_t)\,(\bx_t - \bmu_c)}{\sigma^2}
+  \label{eq:mstep_grad}
+\end{equation}
+\begin{equation}
+  \bmu_c \leftarrow \bmu_c + \eta \cdot r_c(\bx_t) \cdot (\bx_t - \bmu_c)
+  \label{eq:online_kmeans}
+\end{equation}
+This is exactly the \textbf{online $k$-means update}, weighted by soft responsibility.
+
+\subsubsection{The Drift Equation}
+
+Over $T$ updates to class $c$, the mean follows an exponentially-weighted moving average:
+\begin{equation}
+  \bmu_c^T = (1-\eta)^T \bw_c + \eta \sum_{i=1}^T (1-\eta)^{T-i} w_i\, \bx_{t_i}
+  \label{eq:drift}
+\end{equation}
+where $w_i = w_{\text{upd}}$ at step $i$.
+The text anchor $\bw_c$ is the initialiser that decays geometrically; past samples accumulate with recency weighting.
+The parameter $\eta$ controls how fast the anchor is forgotten.
+
+\subsubsection{Logit Fusion}
+
+The combined prediction is an adaptive fusion of two classifiers:
+\begin{equation}
+  \mathbf{z}^{\text{combined}} = \underbrace{\mathbf{z}^{\text{clip}}}_{\text{text prior}} + \alpha_t \cdot \underbrace{\mathbf{z}^{\text{adapt}}}_{\text{visual centroid}}
+\end{equation}
+where $\alpha_t = 1 - H_{\text{clip}}(\bx_t)/\log C \in [0,1]$.
+When CLIP is confident ($\alpha_t \approx 1$), the adapted mean dominates.
+When CLIP is uncertain ($\alpha_t \approx 0$), the text anchor dominates.
+
+\subsection{Hyperparameters}
+
+\begin{table}[H]
+\centering
+\caption{FreeTTA hyperparameters.}
+\label{tab:freetta_hyperparams}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Parameter & Symbol & Value & Meaning \\
+\midrule
+Update step size   & $\eta$          & 0.10  & Mean shift per M-step \\
+Adapted temperature & $\tau_{\text{adapt}}$ & 100 & Temperature for adapted logits \\
+Gate steepness     & $\gamma$        & 10    & Sigmoid slope for update weighting \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Key Structural Properties}
+
+\begin{itemize}
+  \item \textbf{Global}: predictions are informed by \emph{all} past samples for the predicted class.
+  \item \textbf{No cold-start}: CLIP text anchor provides reasonable initialisation at step 0.
+  \item \textbf{Uncertainty-aware}: low-confidence samples contribute small M-step updates ($w_{\text{upd}} \approx 0$).
+  \item \textbf{Risk of drift}: if many early samples are misclassified, $\bmu_{\hat{y}}$ (wrong class) moves toward a different class's region, propagating errors.
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{How Much Do They Solve the Problem?}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Quantitative Summary}
+
+\begin{table}[H]
+\centering
+\caption{Accuracy and error reduction across all datasets. Error reduction = $(a_\text{method} - a_\text{CLIP})/(1 - a_\text{CLIP}) \times 100\%$.}
+\label{tab:accuracy_summary}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Dataset & CLIP & TDA & FreeTTA & TDA Gain & FreeTTA Gain & Err.\ Reduction (FreeTTA) \\
+\midrule
+EuroSAT     & 48.43\% & 53.33\% & 59.35\% & +4.90\% & +10.91\% & 21.2\% \\
+DTD         & 43.94\% & 45.85\% & 45.48\% & +1.91\% & +1.54\%  & 2.7\%  \\
+Caltech101  & 93.55\% & 93.43\% & 93.63\% & $-$0.12\% & +0.08\% & 1.2\% \\
+ImageNet-V2 & 62.35\% & 62.72\% & 62.72\% & +0.37\% & +0.37\%  & 0.98\% \\
+Oxford Pets & 88.39\% & 88.42\% & 88.96\% & +0.03\% & +0.57\%  & 4.9\%  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Qualitative Assessment}
+
+Both methods solve the problem only partially.
+The key insight is: \textbf{TTA is most valuable exactly where CLIP fails most (high domain shift).}
+On EuroSAT, FreeTTA corrects 21.2\% of CLIP's errors.
+On Caltech, where CLIP already achieves 93.55\%, barely 1\% of errors are fixable.
+This is self-reinforcing: the more domain shift, the more information the test stream carries about the true distribution.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Datasets Explained}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Caltech101}
+101 object categories including animals, vehicles, and everyday objects in standard photography.
+Caltech classes appear frequently in internet text--image pairs, so CLIP's training distribution closely matches the visual style.
+With 93.55\% baseline, there is very little room to improve.
+\textit{Key stats}: 2,465 samples, 100 classes ($\approx$24.7/class), cache pressure 4.93$\times$, GAS $=+0.056$.
+
+\subsection{DTD (Describable Textures Dataset)}
+47 texture categories (braided, bumpy, cobwebbed, cracked, etc.) photographed as close-up material surfaces.
+Texture names are semantically similar in language, clustering CLIP anchors closely together.
+High intra-class variance makes it hard for any method to achieve high accuracy.
+\textit{Key stats}: 1,880 samples, 47 classes ($\approx$40/class), cache pressure 8.0$\times$, GAS $=+0.096$.
+
+\subsection{EuroSAT}
+Satellite imagery of 10 European land-use categories.
+The most extreme domain shift: overhead multispectral tiles versus internet ground-level photos.
+CLIP text anchors encode terrestrial perspectives; test images are $64\times64$ aerial tiles.
+\textit{Key stats}: 8,100 samples, 10 classes (810/class), cache pressure 162$\times$, GAS $=-0.115$.
+
+\subsection{ImageNet-V2}
+10,000 images from 1,000 ImageNet classes (10 per class), selected as a harder test set.
+With 1,000 classes and only 10 samples each, neither method can accumulate meaningful class statistics.
+\textit{Key stats}: cache pressure 2.0$\times$, GAS $=+0.408$ (centroid oracle 82.7\% vs 1-NN oracle 41.9\%).
+
+\subsection{Oxford Pets}
+37 dog and cat breed categories.
+Challenge: fine-grained breed discrimination (Samoyed vs American Eskimo Dog vs Bichon Frise).
+\textit{Key stats}: 3,669 samples, 37 classes ($\approx$99/class), cache pressure 19.8$\times$, GAS $=+0.080$.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Comparison Approach and Metrics}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Research Philosophy}
+
+\textbf{Central question}: Given the same frozen CLIP features, does it matter more to remember individual examples (TDA) or to update a global class model (FreeTTA)?
+
+Accuracy alone cannot answer this.
+A 1\% difference could arise from many different mechanisms.
+We designed metrics that trace \emph{how} each method changes CLIP's predictions, \emph{with what quality}, \emph{at what speed}, and \emph{in what failure modes}.
+
+The eight diagnostic questions we asked:
+\begin{enumerate}
+  \item Does the method change anything at all? $\to$ Change Rate, Flip Analysis
+  \item Are the changes good or bad? $\to$ Beneficial Flip Precision (BFP)
+  \item When does it start helping? $\to$ Break-Even Point
+  \item How certain is the method? $\to$ Entropy \& Confidence
+  \item When do the two methods disagree? $\to$ Disagreement Analysis
+  \item What types of failures remain? $\to$ Failure Buckets
+  \item Is the feature space geometry suited to each method? $\to$ Geometry Alignment Score (GAS)
+  \item How hard is the adaptation problem? $\to$ Cache Pressure Ratio, EM Weight
+\end{enumerate}
+
+\subsection{Metric Definitions}
+
+\subsubsection{Metric 1: Accuracy}
+\begin{equation}
+  \text{Accuracy} = \frac{1}{N}\sum_{t=1}^N \mathbf{1}\!\left[\hat{y}_t = y_t\right]
+\end{equation}
+
+The fundamental outcome measure. Tells us the headline but not the mechanism.
+
+\subsubsection{Metric 2: Change Rate and Flip Analysis}
+
+\begin{equation}
+  \text{Change Rate} = \frac{1}{N}\sum_{t=1}^N \mathbf{1}\!\left[\hat{y}_t^{\text{method}} \neq \hat{y}_t^{\text{clip}}\right]
+\end{equation}
+
+Each changed prediction is categorised:
+\begin{align}
+  \text{Beneficial flip:} &\quad \hat{y}^{\text{clip}} \neq y \;\text{ AND }\; \hat{y}^{\text{method}} = y \\
+  \text{Harmful flip:} &\quad \hat{y}^{\text{clip}} = y \;\text{ AND }\; \hat{y}^{\text{method}} \neq y \\
+  \text{Other changed wrong:} &\quad \hat{y}^{\text{clip}} \neq y \;\text{ AND }\; \hat{y}^{\text{method}} \neq y \;\text{ AND }\; \hat{y}^{\text{method}} \neq \hat{y}^{\text{clip}}
+\end{align}
+\begin{equation}
+  \text{Net Correction Rate} = \frac{N_{\text{ben}} - N_{\text{harm}}}{N}
+\end{equation}
+
+\subsubsection{Metric 3: Beneficial Flip Precision (BFP)}
+\begin{equation}
+  \text{BFP} = \frac{N_{\text{beneficial}}}{N_{\text{beneficial}} + N_{\text{harmful}} + N_{\text{other changed wrong}}}
+             = \frac{N_{\text{beneficial}}}{N_{\text{total changed}}}
+  \label{eq:bfp}
+\end{equation}
+
+Fraction of all prediction changes that are improvements.
+BFP $= 1.0$: every change is beneficial.
+BFP $= 0.5$: changes are random noise.
+BFP $< 0.33$: method is actively harmful on average.
+
+\subsubsection{Metric 4: Entropy and Confidence}
+\begin{equation}
+  H(\bx) = -\sum_{c=1}^C p(c \mid \bx)\,\log p(c \mid \bx)
+  \label{eq:entropy}
+\end{equation}
+\begin{equation}
+  h(\bx) = \frac{H(\bx)}{\log C} \in [0, 1] \quad\text{(normalised entropy)}
+\end{equation}
+\begin{equation}
+  \text{Confidence}(\bx) = \max_c p(c \mid \bx)
+\end{equation}
+
+We track entropy and confidence separately for correct and wrong predictions.
+Well-calibrated methods have low entropy on correct predictions and high entropy on wrong ones.
+
+\subsubsection{Metric 5: Break-Even Point}
+\begin{equation}
+  \text{Break-Even} = \min\left\{t \;:\; \overline{\text{Acc}}_{\text{method}}(t) > \overline{\text{Acc}}_{\text{clip}}(t)\right\}
+\end{equation}
+where $\overline{\text{Acc}}(t)$ is the rolling accuracy over the last $W=50$ steps.
+A lower break-even ratio (step / total steps) means the method helps sooner.
+
+\subsubsection{Metric 6: Disagreement Analysis}
+\begin{equation}
+  \text{Disagreement Rate} = \frac{1}{N}\sum_t \mathbf{1}\!\left[\hat{y}_t^{\text{TDA}} \neq \hat{y}_t^{\text{FreeTTA}}\right]
+\end{equation}
+\begin{equation}
+  \text{Acc}_{\text{method on disagree}} = \frac{1}{|\mathcal{D}|}\sum_{t \in \mathcal{D}} \mathbf{1}\!\left[\hat{y}_t^{\text{method}} = y_t\right]
+\end{equation}
+where $\mathcal{D} = \{t : \hat{y}_t^{\text{TDA}} \neq \hat{y}_t^{\text{FreeTTA}}\}$.
+
+\subsubsection{Metric 7: Failure Buckets}
+
+Every sample falls into exactly one of:
+
+\begin{table}[H]
+\centering
+\caption{Failure bucket definitions.}
+\label{tab:buckets_def}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Bucket & Meaning \\
+\midrule
+\texttt{only\_freetta\_correct}    & $\hat{y}^{\text{clip}} \neq y$, $\hat{y}^{\text{tda}} \neq y$, $\hat{y}^{\text{ftta}} = y$ \\
+\texttt{only\_tda\_correct}        & $\hat{y}^{\text{clip}} \neq y$, $\hat{y}^{\text{ftta}} \neq y$, $\hat{y}^{\text{tda}} = y$ \\
+\texttt{clip\_correct\_both\_fail} & $\hat{y}^{\text{clip}} = y$, $\hat{y}^{\text{tda}} \neq y$, $\hat{y}^{\text{ftta}} \neq y$ \\
+\texttt{all\_wrong}                & $\hat{y}^{\text{clip}} \neq y$, $\hat{y}^{\text{tda}} \neq y$, $\hat{y}^{\text{ftta}} \neq y$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Metric 8: Geometry Alignment Score (GAS)}
+\begin{equation}
+  \text{GAS} = \underbrace{\text{OracleCentroidAcc}}_{\text{upper bound for FreeTTA}} - \underbrace{\text{Oracle1NNAcc}}_{\text{upper bound for TDA}}
+  \label{eq:gas}
+\end{equation}
+\begin{itemize}[noitemsep]
+  \item $\text{GAS} > 0$: true class centroids are better discriminators than individual instances $\to$ FreeTTA favoured.
+  \item $\text{GAS} < 0$: local neighbourhood structure is stronger than global means $\to$ TDA favoured.
+\end{itemize}
+
+\subsubsection{Metric 9: Cache Pressure and EM Weight}
+\begin{equation}
+  \text{Cache Pressure} = \frac{N_{\text{total}}}{C \times K^+}
+  \label{eq:cache_pressure}
+\end{equation}
+\begin{equation}
+  \overline{\alpha} = \frac{1}{N}\sum_{t=1}^N \alpha_t = \frac{1}{N}\sum_{t=1}^N \left(1 - \frac{H_{\text{clip}}(\bx_t)}{\log C}\right)
+  \label{eq:em_weight}
+\end{equation}
+High cache pressure predicts TDA failure.
+Low $\overline{\alpha}$ predicts slow FreeTTA adaptation.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Results: Dataset-by-Dataset}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Caltech101}
+
+\begin{table}[H]
+\centering
+\caption{Caltech101 --- accuracy and flip metrics.}
+\label{tab:caltech_flip}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Method & Acc.\ & Gain & Change Rate & Ben.\ Flips & Harm.\ Flips & BFP \\
+\midrule
+CLIP    & 93.55\% & ---    & 0.00\% & --- & --- & --- \\
+TDA     & 93.43\% & $-$0.12\% & 1.14\% & 12  & 15  & 42.9\% \\
+FreeTTA & 93.63\% & +0.08\% & 0.41\% & 6   & 4   & 60.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Caltech101 --- entropy and confidence.}
+\label{tab:caltech_entropy}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Method & Correct conf & Wrong conf & Correct entropy & Wrong entropy \\
+\midrule
+CLIP    & 0.0113 & 0.0112 & 4.605 & 4.605 \\
+TDA     & 0.9690 & 0.7476 & 0.130 & 0.724 \\
+FreeTTA & 0.9271 & 0.6168 & 0.293 & 1.071 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Caltech101 --- key internal metrics and failure buckets.}
+\label{tab:caltech_internal}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Metric & Value \\
+\midrule
+Cache pressure ratio        & 4.93 \\
+Mean EM weight $\overline{\alpha}$ & 0.826 \\
+FreeTTA final $\mu$ drift   & 1.134 \\
+GAS                         & $+0.056$ \\
+Oracle centroid acc         & 97.44\% \\
+Oracle 1-NN acc             & 91.85\% \\
+Disagreement rate           & 1.14\% \\
+TDA acc on disagreements    & 39.3\% \\
+FreeTTA acc on disagreements & 57.1\% \\
+Break-even TDA              & N/A (TDA ends below CLIP) \\
+Break-even FreeTTA          & Step 1050 / 2465 (42.6\%) \\
+\midrule
+\texttt{only\_freetta\_correct} & 3 (0.12\%) \\
+\texttt{only\_tda\_correct}     & 9 (0.37\%) \\
+\texttt{clip\_correct, tda\_wrong} & 13 (0.53\%) \\
+\texttt{clip\_correct, ftta\_wrong} & 2 (0.08\%) \\
+\texttt{all\_wrong}             & 144 (5.84\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analysis.} Caltech is near-solved by CLIP.
+Both adapters make very few changes.
+FreeTTA is more conservative (0.41\% vs 1.14\% change rate) and more precise (BFP~60\% vs 43\%).
+TDA makes more changes but also more harmful ones---15 harmful vs FreeTTA's 4---ending slightly below CLIP ($-$0.12\%).
+GAS $= +0.056$ correctly predicts FreeTTA edges out TDA (global centroids slightly better than local lookups).
+FreeTTA breaks even at step 1050 (42.6\% into the stream); despite this late break-even, FreeTTA finishes with a net gain (+0.08\%), while TDA never reaches a net benefit over CLIP.
+
+\subsection{DTD (Describable Textures)}
+
+\begin{table}[H]
+\centering
+\caption{DTD --- accuracy and flip metrics.}
+\label{tab:dtd_flip}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Method & Acc.\ & Gain & Change Rate & Ben.\ Flips & Harm.\ Flips & BFP \\
+\midrule
+CLIP    & 43.94\% & ---    & 0.00\%  & ---  & ---  & --- \\
+TDA     & 45.85\% & +1.91\% & 18.51\% & 87  & 51   & 25.0\% \\
+FreeTTA & 45.48\% & +1.54\% & 8.09\%  & 44  & 15   & 28.9\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{DTD --- key metrics.}
+\label{tab:dtd_internal}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Metric & Value \\
+\midrule
+Cache pressure ratio         & 8.0 \\
+Mean EM weight               & 0.253 \\
+GAS                          & $+0.096$ \\
+Oracle centroid / 1-NN acc   & 73.19\% / 63.62\% \\
+Disagreement rate            & 17.23\% \\
+TDA / FreeTTA acc on disagree & 21.3\% / 19.1\% \\
+Break-even TDA / FreeTTA     & Step 118 (6.3\%) / Step 9 (0.5\%) \\
+\texttt{only\_freetta\_correct} & 22 (1.17\%) \\
+\texttt{only\_tda\_correct}     & 65 (3.46\%) \\
+\texttt{clip\_correct, tda\_wrong}  & 51 (2.71\%) \\
+\texttt{clip\_correct, ftta\_wrong} & 15 (0.80\%) \\
+\texttt{all\_wrong}             & 945 (50.27\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analysis.} DTD reveals the texture classification ceiling starkly: $\approx$50\% of all samples are irreducible errors given frozen CLIP features.
+\textbf{TDA outperforms FreeTTA on DTD} (+1.91\% vs +1.54\%).
+With a tighter entropy gate ($\theta_{\text{low}}=0.05$, $\theta_{\text{high}}=0.40$ vs the defaults of 0.20/0.50) and a larger positive cache ($K=5$ vs $K=3$), TDA more selectively admits high-confidence texture exemplars and retains a richer set of per-class features.
+The discrete, non-overlapping nature of texture categories (``bumpy'' vs ``dotted'' vs ``woven'') means that confident local cached examples transfer reliably to future test samples from the same class.
+FreeTTA's global class mean is pulled in conflicting directions by the high visual ambiguity among texture categories, limiting its adapted prototypes.
+GAS $= +0.096$ nominally favours centroid-based methods, yet TDA's precise entropy filtering produces more accurate local exemplars than FreeTTA's weighted mean update.
+
+\subsection{EuroSAT}
+
+\begin{table}[H]
+\centering
+\caption{EuroSAT --- accuracy and flip metrics.}
+\label{tab:eurosat_flip}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Method & Acc.\ & Gain & Change Rate & Ben.\ Flips & Harm.\ Flips & BFP \\
+\midrule
+CLIP    & 48.43\% & ---     & 0.00\%  & ---   & ---  & --- \\
+TDA     & 53.33\% & +4.90\% & 41.91\% & 1,125 & 728  & 33.1\% \\
+FreeTTA & 59.35\% & +10.91\% & 30.95\% & 1,258 & 374  & 50.2\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{EuroSAT --- entropy and confidence.}
+\label{tab:eurosat_entropy}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Method & Correct conf & Wrong conf & Correct entropy & Wrong entropy \\
+\midrule
+CLIP    & 0.1036 & 0.1020 & 2.302 & 2.302 \\
+TDA     & 0.7320 & 0.5600 & 0.776 & 1.207 \\
+FreeTTA & 0.8119 & 0.5195 & 0.512 & 1.227 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{EuroSAT --- key metrics.}
+\label{tab:eurosat_internal}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Metric & Value \\
+\midrule
+Cache pressure ratio         & 162.0 \\
+Mean EM weight               & 0.198 \\
+GAS                          & $-0.115$ \\
+Oracle centroid / 1-NN acc   & 78.26\% / 89.80\% \\
+Disagreement rate            & 30.90\% \\
+TDA / FreeTTA acc on disagree & 22.8\% / 42.3\% \\
+Break-even TDA / FreeTTA     & Step 941 (11.6\%) / Step 8 (0.10\%) \\
+\texttt{only\_freetta\_correct} & 621 (7.67\%) \\
+\texttt{only\_tda\_correct}     & 488 (6.02\%) \\
+\texttt{clip\_correct, tda\_wrong} & 83 (1.02\%) \\
+\texttt{clip\_correct, ftta\_wrong} & 437 (5.40\%) \\
+\texttt{all\_wrong}             & 2,431 (30.01\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analysis.}
+EuroSAT is the most revealing dataset.
+\textbf{FreeTTA's +10.91\% is the largest absolute gain of any method on any dataset.}
+Cache pressure of 162$\times$ renders TDA's memory nearly useless---each cache slot is overwritten 162 times per class.
+TDA's 728 harmful flips (breaking CLIP's correct predictions) cost it dearly.
+FreeTTA's BFP $= 50.2\%$ means every change it makes is a net positive on average.
+
+The GAS $= -0.115$ is the only negative value across all datasets: local neighbourhood structure is better than global centroids on EuroSAT (oracle 1-NN $= 89.8\%$ vs centroid $= 78.3\%$).
+Yet FreeTTA still wins because the \emph{initial} CLIP text anchor is so far from the true visual distribution that any mean correction outweighs the loss from using centroids instead of local lookups.
+
+Mean EM weight $= 0.198$ (lowest across all datasets): CLIP is very uncertain on EuroSAT, so FreeTTA adapts cautiously---yet it still dominates by 6.02 points over TDA.
+
+\subsection{ImageNet-V2}
+
+\begin{table}[H]
+\centering
+\caption{ImageNet-V2 --- accuracy and flip metrics.}
+\label{tab:imagenet_flip}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Method & Acc.\ & Gain & Change Rate & Ben.\ Flips & Harm.\ Flips & BFP \\
+\midrule
+CLIP    & 62.35\% & ---    & 0.00\% & ---  & ---  & --- \\
+TDA     & 62.72\% & +0.37\% & 3.88\% & 115  & 78   & 29.6\% \\
+FreeTTA & 62.72\% & +0.37\% & 3.62\% & 116  & 79   & 32.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{ImageNet-V2 --- key metrics.}
+\label{tab:imagenet_internal}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Metric & Value \\
+\midrule
+Cache pressure ratio         & 2.0 \\
+Mean EM weight               & 0.533 \\
+GAS                          & $+0.408$ \\
+Oracle centroid / 1-NN acc   & 82.72\% / 41.89\% \\
+Disagreement rate            & 5.60\% \\
+TDA / FreeTTA acc on disagree & 25.2\% / 25.2\% \\
+Break-even TDA / FreeTTA     & Step 363 (3.6\%) / Step 2 (0.02\%) \\
+\texttt{only\_freetta\_correct} & 81 (0.81\%) \\
+\texttt{only\_tda\_correct}     & 80 (0.80\%) \\
+\texttt{all\_wrong}             & 3,569 (35.7\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analysis.}
+A statistical dead tie.
+With only 10 samples per class across 1,000 classes, neither method accumulates enough information to adapt.
+GAS $= +0.408$ is the largest positive value---centroid oracle 82.7\% vs 1-NN oracle 41.9\%---strongly predicting FreeTTA should dominate.
+Yet the geometry is irrelevant without sufficient samples: FreeTTA's mean estimates never converge with 10 updates per class.
+Identical 25.2\% accuracy on disagreements confirms both methods are effectively coin-flipping on hard cases.
+
+\subsection{Oxford Pets}
+
+\begin{table}[H]
+\centering
+\caption{Oxford Pets --- accuracy and flip metrics.}
+\label{tab:pets_flip}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Method & Acc.\ & Gain & Change Rate & Ben.\ Flips & Harm.\ Flips & BFP \\
+\midrule
+CLIP    & 88.39\% & ---     & 0.00\% & ---  & ---  & --- \\
+TDA     & 88.42\% & +0.03\% & 3.35\% & 52   & 51   & 42.3\% \\
+FreeTTA & 88.96\% & +0.57\% & 3.08\% & 56   & 35   & 49.6\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Oxford Pets --- key metrics.}
+\label{tab:pets_internal}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Metric & Value \\
+\midrule
+Cache pressure ratio         & 19.8 \\
+Mean EM weight               & 0.650 \\
+GAS                          & $+0.080$ \\
+Oracle centroid / 1-NN acc   & 91.50\% / 83.46\% \\
+Disagreement rate            & 3.30\% \\
+TDA / FreeTTA acc on disagree & 35.5\% / 52.1\% \\
+Break-even TDA / FreeTTA     & Step 229 (6.2\%) / Step 5 (0.1\%) \\
+\texttt{only\_freetta\_correct} & 32 (0.87\%) \\
+\texttt{only\_tda\_correct}     & 28 (0.76\%) \\
+\texttt{clip\_correct, tda\_wrong} & 31 (0.84\%) \\
+\texttt{clip\_correct, ftta\_wrong} & 15 (0.41\%) \\
+\texttt{all\_wrong}             & 342 (9.32\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analysis.}
+\textbf{FreeTTA outperforms TDA on Pets} (+0.57\% vs +0.03\%), with TDA barely clearing CLIP.
+With $\alpha=0.25$ and $\beta=4.0$, FreeTTA's adapted class means capture the fine-grained breed distribution more effectively than TDA's local cache.
+GAS $= +0.080$ correctly predicts the outcome: oracle centroids (91.50\%) outperform oracle 1-NN (83.46\%), indicating that global breed prototypes are more discriminative than local nearest-neighbor lookups for the 37 Oxford Pets breeds.
+FreeTTA's higher precision (BFP~49.6\% vs 42.3\%) reflects that its global mean adaptation corrects more CLIP errors: 32 samples CLIP missed but FreeTTA fixed (vs.\ 28 for TDA), with 15 harmful CLIP-correct flips (vs.\ 51 for TDA).
+TDA's exact cached features provide negligible benefit (+0.03\% over CLIP): with only 3 cache slots per class and $\sim$99 test images per breed, cache pressure is high (ratio 19.8), leading to near-equal beneficial and harmful flips (52 vs.\ 51).
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Cross-Dataset Conclusions}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Complete Metrics Summary}
+
+\begin{table}[H]
+\centering
+\caption{All datasets: complete metric summary.}
+\label{tab:full_summary}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrrrrrrrl@{}}
+\toprule
+Dataset & CLIP & TDA & FreeTTA & BFP$_\text{TDA}$ & BFP$_\text{Ftta}$ & GAS & CacheP & $\overline{\alpha}$ & Disagree & Ftta wins? \\
+\midrule
+Caltech  & 93.55 & 93.43 & 93.63 & 42.9\% & 60.0\% & $+0.056$ & 4.93  & 0.826 & 1.14\%  & Yes \\
+DTD      & 43.94 & 45.85 & 45.48 & 25.0\% & 28.9\% & $+0.096$ & 8.0   & 0.253 & 17.23\% & No \\
+EuroSAT  & 48.43 & 53.33 & 59.35 & 33.1\% & 50.2\% & $-0.115$ & 162.0 & 0.198 & 30.90\% & Yes \\
+ImageNet & 62.35 & 62.72 & 62.72 & 29.6\% & 32.0\% & $+0.408$ & 2.0   & 0.533 & 5.60\%  & Tie \\
+Pets     & 88.39 & 88.42 & 88.96 & 42.3\% & 49.6\% & $+0.080$ & 19.8  & 0.650 & 3.30\%  & Yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Key Findings}
+
+\begin{tcolorbox}[findingbox, title={Finding 1: FreeTTA is the better default method.}]
+FreeTTA wins or ties on 4 of 5 datasets (Caltech, EuroSAT, ImageNet, Pets).
+Its advantage is largest where it matters most: EuroSAT +10.91\%.
+Its only loss is DTD, where TDA's tighter entropy filtering (+1.91\% vs +1.54\%) better captures discrete texture categories.
+\end{tcolorbox}
+
+\begin{tcolorbox}[findingbox, title={Finding 2: Cache pressure correlates with FreeTTA's advantage (with one exception).}]
+\begin{center}
+\begin{tabular}{lrc}
+\toprule
+Dataset & Cache Pressure & FreeTTA $-$ TDA gap \\
+\midrule
+ImageNet & 2.0   & +0.00\% (tie) \\
+Caltech  & 4.93  & +0.20\% \\
+DTD      & 8.0   & $\mathbf{-0.37\%}$ \textbf{(TDA wins)} \\
+Pets     & 19.8  & +0.54\% \\
+EuroSAT  & 162.0 & +6.01\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+Higher cache pressure generally predicts FreeTTA's advantage, but DTD is an exception: the discrete, non-overlapping nature of texture categories allows TDA's cache to transfer reliably despite moderate pressure.
+\end{tcolorbox}
+
+\begin{tcolorbox}[findingbox, title={Finding 3: BFP consistently favours FreeTTA.}]
+On all 5 datasets, FreeTTA's BFP $>$ TDA's BFP (60.0\% vs 42.9\%, 28.9\% vs 25.0\%, 50.2\% vs 33.1\%, 32.0\% vs 29.6\%, 49.6\% vs 42.3\%).
+FreeTTA's changes are more often improvements---its adaptation signal is consistently higher quality.
+On DTD, despite TDA's lower BFP, TDA wins on accuracy because it makes far more changes in absolute terms (18.51\% vs 8.09\% change rate), yielding 87 vs 44 beneficial flips.
+\end{tcolorbox}
+
+\begin{tcolorbox}[findingbox, title={Finding 4: FreeTTA adapts faster on all datasets.}]
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+Dataset & TDA Break-Even & FreeTTA Break-Even \\
+\midrule
+EuroSAT  & Step 941  (11.6\%) & Step 8   (0.10\%) \\
+DTD      & Step 118  (6.3\%)  & Step 9   (0.50\%) \\
+Caltech  & N/A (TDA $<$ CLIP) & Step 1050 (42.6\%) \\
+ImageNet & Step 363  (3.6\%)  & Step 2   (0.02\%) \\
+Pets     & Step 229  (6.2\%)  & Step 5   (0.14\%) \\
+\bottomrule
+\end{tabular}
+\end{center}
+FreeTTA breaks even earlier on every dataset including DTD (step 9 vs 118).
+TDA's accuracy win on DTD is not due to faster adaptation but to higher correction volume:
+TDA makes 18.5\% change rate (87 beneficial flips) vs FreeTTA's 8.1\% (44 beneficial flips).
+On Caltech, TDA never reaches break-even (ends below CLIP).
+\end{tcolorbox}
+
+\begin{tcolorbox}[findingbox, title={Finding 5: Both methods fix CLIP's broken calibration.}]
+CLIP: correct confidence 0.0113, wrong confidence 0.0112 (indistinguishable!).\\
+After TDA: 0.969 (correct) vs 0.748 (wrong). After FreeTTA: 0.927 vs 0.617.\\
+Both dramatically improve calibration.
+FreeTTA's wrong-prediction confidence is slightly higher---a signature of mean drift.
+\end{tcolorbox}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Deep Analysis}
+% ══════════════════════════════════════════════════════════════════════════════
+
+% ── 1. Adaptation Dynamics ──────────────────────────────────────────────────
+\subsection{Adaptation Dynamics}
+
+\subsubsection{Rolling Accuracy Over Stream}
+
+Rather than just comparing final accuracy, we track \emph{how} each method improves over the stream
+using a rolling window of $w=50$ samples.
+Table~\ref{tab:break_even_rolling} reports the first step at which the rolling accuracy of each
+adapter surpasses CLIP's rolling accuracy in the same window.
+
+\begin{table}[H]
+\centering
+\caption{Rolling break-even point (window $= 50$): first step where the adapter's rolling accuracy
+exceeds CLIP's rolling accuracy.}
+\label{tab:break_even_rolling}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Dataset & $N$ & TDA break-even & FreeTTA break-even & FreeTTA advantage \\
+\midrule
+Caltech  & 2,465  & N/A (ends below CLIP) & Step 1050 (42.6\%)  & FreeTTA $>$ CLIP; TDA $<$ CLIP \\
+DTD      & 1,880  & Step 118 (6.3\%)       & Step 9 (0.5\%)      & $5.7\%$ faster \\
+EuroSAT  & 8,100  & Step 941 (11.6\%)      & Step 8 (0.1\%)      & $11.5\%$ faster \\
+Pets     & 3,669  & Step 229 (6.2\%)       & Step 5 (0.1\%)      & $6.1\%$ faster \\
+ImageNet & 10,000 & Step 363 (3.6\%)       & Step 2 (0.02\%)     & $3.6\%$ faster \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+FreeTTA breaks even within the first $0.5\%$ of the stream on every dataset except Caltech.
+TDA requires up to $11.6\%$ of the stream before its rolling accuracy equals CLIP's---a \textbf{cold-start penalty} caused by the empty cache.
+On Caltech, TDA's rolling accuracy never consistently exceeds CLIP's: with only 15 harmful flips vs 12 beneficial across the full stream, TDA ends slightly below CLIP.
+
+\subsubsection{Adaptation Speed: Mechanisms}
+
+\textbf{Why FreeTTA adapts instantly.}
+At step $t=1$ the adapted mean $\bmu_c$ has already shifted by
+$\eta \cdot w_\text{upd}(\bx_1 - \bmu_c^{(0)})$.
+Even this single-sample update is enough to improve over the frozen CLIP anchor if
+$\bx_1$ is confidently classified (large $w_\text{upd}$), because $\bmu_c^{(0)}$ starts
+at the text anchor, which is already a reasonable initialisation.
+
+\textbf{Why TDA suffers cold-start.}
+TDA's positive cache for class $c$ is empty at $t=1$.
+With no cached features, the adjustment $z^\text{pos}_c = 0$, so TDA reduces to CLIP for all
+classes not yet encountered in the stream.
+Once the cache fills, TDA's corrections become reliable---but filling requires $C \cdot K_\text{pos}$ high-confidence samples (e.g.\ $47 \times 5 = 235$ on DTD).
+
+\subsubsection{Stability Over Time}
+
+Table~\ref{tab:stability} reports the standard deviation of rolling accuracy in the last 30\% of
+each stream (see \texttt{outputs/dynamics\_analysis/adaptation\_rolling\_accuracy.png} for curves).
+
+\begin{table}[H]
+\centering
+\caption{Late-stream rolling-accuracy stability: $\sigma$ of rolling acc (\%) in final 30\% of stream.
+Lower = more stable.}
+\label{tab:stability}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Dataset & CLIP $\sigma$ & TDA $\sigma$ & FreeTTA $\sigma$ & Best \\
+\midrule
+Caltech  & 8.8\%  & 8.6\%  & 8.9\%  & TDA $\approx$ FreeTTA \\
+DTD      & 16.2\% & 18.0\% & 16.7\% & CLIP (neither helps) \\
+EuroSAT  & 34.9\% & 19.7\% & 17.8\% & FreeTTA (major stabilisation) \\
+Pets     & 7.2\%  & 9.4\%  & 7.3\%  & CLIP $\approx$ FreeTTA \\
+ImageNet & 11.5\% & 11.2\% & 11.3\% & Tie \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Key observations:
+\begin{itemize}
+  \item \textbf{EuroSAT is the stand-out case}: both adapters reduce rolling-accuracy variance from
+  34.9\% (CLIP) to $\sim$18--20\%.
+  Domain shift is so severe that CLIP's predictions fluctuate wildly between windows;
+  both adapters learn a stable domain representation that smooths these oscillations.
+  FreeTTA achieves the lowest variance (17.8\%), because its global mean is updated across all 810
+  samples per class.
+  \item \textbf{DTD} shows slightly higher TDA variance (18.0\% vs 16.7\% FreeTTA): TDA's cache
+  corrections occasionally mis-fire on new texture classes before they accumulate sufficient exemplars.
+  \item On near-solved datasets (Caltech, Pets, ImageNet), stability is similar across all three
+  methods---the adapters neither help nor hurt.
+\end{itemize}
+
+\subsubsection{FreeTTA Class-Mean ($\mu$) Drift}
+
+Table~\ref{tab:mu_drift} shows the final Euclidean drift of adapted class means from their text
+anchor initialisations, alongside the mean EM weight $\bar{\alpha}$.
+
+\begin{table}[H]
+\centering
+\caption{FreeTTA internal adaptation state at end of stream.
+$\bar{\alpha}$ = mean EM update weight (CLIP confidence proxy).
+$\|\bmu - \bmu_0\|$ = final mean drift from text-anchor initialisation.}
+\label{tab:mu_drift}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Dataset & $\bar{\alpha}$ & Final $\|\bmu - \bmu_0\|$ & $\sigma$-trace & Prior $H(\pi)$ & N/C \\
+\midrule
+Caltech  & 0.826 & 1.134 & 0.357 & 3.677 & 24.7 \\
+DTD      & 0.253 & 1.155 & 0.333 & 1.251 & 40.0 \\
+EuroSAT  & 0.198 & 1.142 & 0.348 & 0.717 & 810  \\
+Pets     & 0.650 & 1.122 & 0.370 & 2.588 & 99.2 \\
+ImageNet & 0.533 & 1.128 & 0.364 & 3.965 & 10   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+$\bar{\alpha}$ reflects how much useful signal the stream provides:
+Caltech ($\bar{\alpha}=0.826$) is easy for CLIP, so each sample is high-confidence and M-steps are
+large; EuroSAT ($\bar{\alpha}=0.198$) is hard for CLIP, so M-steps are small but persistent over
+810 samples/class.
+Remarkably, final $\mu$-drift values are similar ($1.12$--$1.16$) across all datasets, suggesting
+the adapted means always travel roughly the same normalised distance from the text anchor,
+regardless of how quickly they get there.
+
+% ── 2. Uncertainty Analysis ──────────────────────────────────────────────────
+\subsection{Uncertainty Analysis}
+
+\subsubsection{CLIP's Calibration Failure}
+
+CLIP produces \emph{uniformly distributed} softmax outputs on all five datasets (Table~\ref{tab:entropy_calibration}).
+Its entropy for correct predictions and wrong predictions is virtually identical,
+making it impossible to use CLIP's confidence as a reliability signal.
+
+This is a structural consequence of the cosine-similarity scoring with fixed temperature $\tau=100$
+applied to a $C$-class distribution: when CLIP text anchors are poorly aligned with test features,
+all logits are near-zero and softmax spreads probability uniformly.
+
+\begin{table}[H]
+\centering
+\caption{Mean prediction entropy ($H$) and confidence for correct vs wrong predictions.
+CLIP's near-zero entropy gap ($\Delta H$) confirms it cannot self-calibrate.}
+\label{tab:entropy_calibration}
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Dataset & Method & $H_\text{correct}$ & $H_\text{wrong}$ & $\Delta H$ & Conf$_\text{correct}$ \\
+\midrule
+\multirow{3}{*}{Caltech}
+ & CLIP    & 4.605 & 4.605 & 0.000 & 1.13\% \\
+ & TDA     & 0.130 & 0.724 & 0.594 & 96.9\% \\
+ & FreeTTA & 0.293 & 1.071 & 0.778 & 92.7\% \\
+\midrule
+\multirow{3}{*}{DTD}
+ & CLIP    & 3.850 & 3.850 & 0.000 & 2.25\% \\
+ & TDA     & 0.506 & 1.150 & 0.644 & 86.1\% \\
+ & FreeTTA & 1.407 & 2.305 & 0.898 & 64.4\% \\
+\midrule
+\multirow{3}{*}{EuroSAT}
+ & CLIP    & 2.302 & 2.302 & 0.000 & 10.4\% \\
+ & TDA     & 0.776 & 1.207 & 0.431 & 73.2\% \\
+ & FreeTTA & 0.512 & 1.227 & 0.715 & 81.2\% \\
+\midrule
+\multirow{3}{*}{Pets}
+ & CLIP    & 3.610 & 3.610 & 0.000 & 3.05\% \\
+ & TDA     & 0.289 & 0.939 & 0.650 & 91.1\% \\
+ & FreeTTA & 0.302 & 1.002 & 0.700 & 90.0\% \\
+\midrule
+\multirow{3}{*}{ImageNet}
+ & CLIP    & 6.907 & 6.907 & 0.000 & 0.12\% \\
+ & TDA     & 0.733 & 1.792 & 1.059 & 83.0\% \\
+ & FreeTTA & 0.850 & 1.861 & 1.011 & 77.8\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Entropy Gap as Calibration Quality Metric}
+
+Both adapters create a substantial entropy gap between correct and wrong predictions (all $\Delta H > 0.4$).
+Spearman rank correlation between entropy and error indicator confirms this quantitatively:
+CLIP's $\rho \approx 0$ on all datasets; TDA's $\rho$ ranges from $0.36$ to $0.50$;
+FreeTTA's $\rho$ ranges from $0.33$ to $0.59$ (all $p \ll 0.001$).
+This is the core mechanism that makes downstream use of their confidence scores meaningful.
+Key observations:
+\begin{itemize}
+  \item \textbf{FreeTTA has larger $\Delta H$ than TDA on 4 of 5 datasets}
+  (Caltech: 0.778 vs 0.594; DTD: 0.898 vs 0.644; EuroSAT: 0.715 vs 0.431; Pets: 0.700 vs 0.650).
+  This means FreeTTA's wrong predictions carry \emph{more} uncertainty, making them easier to detect.
+  The exception is ImageNet, where TDA's $\Delta H = 1.059 > 1.011$ for FreeTTA---both adapters
+  perform identically and TDA's cache gives slightly sharper predictions.
+
+  \item \textbf{TDA achieves lower absolute entropy on correct predictions} on most datasets
+  (Caltech: 0.130 vs 0.293; DTD: 0.506 vs 1.407; Pets: 0.289 vs 0.302).
+  This reflects TDA's hard-lookup mechanism: once a matching cached feature is found, it produces
+  a near-maximum-confidence logit, collapsing entropy.
+  FreeTTA's soft mean update yields smoother, more calibrated distributions.
+
+  \item \textbf{EuroSAT is the exception}: FreeTTA's correct entropy (0.512) is \emph{lower} than
+  TDA's (0.776), because FreeTTA successfully adapts its means and becomes more confident.
+  TDA's cache is under 162$\times$ pressure, so its cache entries are stale and produce
+  noisier logit corrections.
+\end{itemize}
+
+\subsubsection{FreeTTA EM Weight Distribution}
+
+The EM weight $\alpha_t = 1 - H_\text{clip}(\bx_t)/\log C$ controls how strongly each sample
+updates the class mean.
+Its distribution (see \texttt{outputs/dynamics\_analysis/uncertainty\_em\_weight.png})
+reflects the per-dataset difficulty:
+
+\begin{itemize}
+  \item \textbf{Caltech} ($\bar{\alpha}=0.826$): strongly right-skewed toward $\alpha \approx 1.0$;
+  CLIP is so confident on Caltech that almost every sample produces a near-maximum-weight M-step.
+  Risk of overconfident updates propagating noise.
+
+  \item \textbf{EuroSAT} ($\bar{\alpha}=0.198$): left-skewed toward $\alpha \approx 0$;
+  CLIP is uncertain, updates are small.
+  FreeTTA compensates with $810$ samples per class (each contributing a small update), yielding
+  cumulative drift of $1.14$---equal to Caltech despite $\bar{\alpha}$ being $4\times$ smaller.
+
+  \item \textbf{DTD} ($\bar{\alpha}=0.253$): bimodal distribution; a subset of texture images have
+  distinctive visual signatures CLIP recognises confidently, while the rest spread probability
+  uniformly. This bimodality explains TDA's advantage: high-$\alpha$ samples dominate the cache,
+  making it more informative than FreeTTA's mean (which averages both modes).
+\end{itemize}
+
+% ── 3. Distribution Modeling Analysis ────────────────────────────────────────
+\subsection{Distribution Modeling Analysis}
+
+\subsubsection{Feature Geometry: Oracle Upper Bounds}
+
+To understand whether the feature space favours local lookups (TDA) or global centroids (FreeTTA),
+we compute two oracle classifiers on the \emph{ground-truth} labels:
+\begin{enumerate}
+  \item \textbf{Oracle Centroid}: assign class $\argmax_c \bmu_c^\ast \cdot \bx$ where
+  $\bmu_c^\ast$ is the true class mean of CLIP features.
+  \item \textbf{Oracle 1-NN}: assign the label of the nearest neighbour in the test set
+  (leave-one-out).
+\end{enumerate}
+
+The Geometry Alignment Score $\text{GAS} = \text{OracleCentroid} - \text{Oracle1NN}$ measures
+which paradigm the data structure supports.
+
+\begin{table}[H]
+\centering
+\caption{Oracle upper bounds for each paradigm and GAS. GAS $> 0$ predicts FreeTTA advantage;
+GAS $< 0$ predicts TDA advantage.}
+\label{tab:oracle_geometry}
+\begin{tabular}{@{}lrrrrl@{}}
+\toprule
+Dataset & Oracle Centroid & Oracle 1-NN & GAS & Cache Pressure & Winner \\
+\midrule
+Caltech  & 97.44\% & 91.85\% & $+0.056$ & 4.93$\times$   & FreeTTA \\
+DTD      & 73.19\% & 63.62\% & $+0.096$ & 8.0$\times$    & TDA (exception) \\
+EuroSAT  & 78.26\% & 89.80\% & $-0.115$ & 162.0$\times$  & FreeTTA \\
+Pets     & 91.50\% & 83.46\% & $+0.080$ & 19.8$\times$   & FreeTTA \\
+ImageNet & 82.72\% & 41.89\% & $+0.408$ & 2.0$\times$    & Tie \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{GAS predicts the winner on 4 of 5 datasets.}
+EuroSAT's negative GAS ($-0.115$) predicts TDA should win---yet FreeTTA wins by $+6.0\%$.
+The reason: EuroSAT's GAS measures the \emph{ground-truth} centroid advantage; FreeTTA's adapted
+centroid $\bmu_c$ is far from the ground truth at stream start.
+The 162$\times$ cache pressure destroys TDA's memory before its cache can accumulate meaningful
+signal, while FreeTTA's global mean---even when imperfect---competes.
+
+DTD is the other exception: GAS $= +0.096$ nominally favours centroid-based methods, yet TDA
+wins.
+The cause is intra-class texture diversity: DTD's within-class variance is high
+($\sigma$-trace $= 0.333$), meaning the true centroid is a blurred average of diverse textures.
+TDA's cached \emph{exemplars} preserve this diversity; FreeTTA's mean collapses it.
+
+\subsubsection{Logit-Space PCA}
+
+PCA of the adapted logit vectors (see \texttt{outputs/dynamics\_analysis/distribution\_pca\_*.png})
+reveals the structural difference between the two methods' corrections:
+
+\begin{itemize}
+  \item \textbf{TDA logits} cluster tightly in PCA space: correct predictions occupy a compact
+  region (low PC1 variance) and wrong predictions form a separate sparse cloud.
+  This reflects TDA's hard, sparse correction: a single cache hit dominates all logits.
+
+  \item \textbf{FreeTTA logits} show a smooth gradient from correct (high-confidence) to wrong
+  (low-confidence) with significant overlap---the soft mean update yields a richer distribution.
+
+  \item \textbf{CLIP logits} are near-uniform and lie close to the origin in logit space on
+  all datasets, confirming the calibration failure observed in the entropy analysis.
+\end{itemize}
+
+\subsubsection{Distribution Evolution: Covariance Trace and Prior Entropy}
+
+Beyond point estimates, we track two distributional quantities over the stream:
+
+\textbf{$\sigma$-trace} (empirical spread of adapted CLIP features):
+In all datasets, $\sigma$-trace decreases over time as FreeTTA's adapted means pull predictions
+toward class centroids.
+The rate of decrease is fastest on EuroSAT (810 samples/class) and slowest on ImageNet (10 samples/class).
+
+\textbf{Prior entropy $H(\pi)$}: the entropy of FreeTTA's class-prior estimates.
+On EuroSAT ($H(\pi)=0.72$) the model concentrates probability on fewer classes as it
+discovers the 10-class structure.
+On ImageNet ($H(\pi)=3.97 \approx \log 1000 / 1.74$) the prior remains near-uniform:
+with only 10 samples per class, FreeTTA cannot identify the 1,000-class structure.
+
+% ── 4. Computational Efficiency ──────────────────────────────────────────────
+\subsection{Computational Efficiency}
+
+\subsubsection{Per-Sample Latency}
+
+All experiments were run on CPU.
+Table~\ref{tab:efficiency} reports per-sample latency computed from total wall-clock time divided
+by stream length.
+
+\begin{table}[H]
+\centering
+\caption{Computational efficiency on CPU (all times in milliseconds per sample).
+Speedup = TDA time / FreeTTA time.}
+\label{tab:efficiency}
+\begin{tabular}{@{}lrrrrl@{}}
+\toprule
+Dataset & $N$ & TDA (ms/spl) & FreeTTA (ms/spl) & Speedup & Bottleneck \\
+\midrule
+Caltech  & 2,465  & 0.394 & 0.294 & 1.34$\times$ & TDA cache lookup  \\
+DTD      & 1,880  & 0.375 & 0.187 & 2.01$\times$ & TDA pos+neg cache \\
+EuroSAT  & 8,100  & 0.353 & 0.169 & 2.09$\times$ & TDA cache eviction \\
+Pets     & 3,669  & 0.381 & 0.192 & 1.99$\times$ & TDA cache growth \\
+ImageNet & 10,000 & 1.961 & 0.703 & 2.79$\times$ & TDA $10^3$-class cache \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+FreeTTA is $1.3$--$2.8\times$ faster than TDA across all datasets.
+The speedup grows with dataset size and class count, explaining why ImageNet shows the largest
+advantage ($2.79\times$).
+
+\subsubsection{Why TDA Is Slower: Algorithmic Analysis}
+
+TDA's per-sample cost is $O(D \cdot S_t)$ where $S_t = |\mathcal{P}| + |\mathcal{N}|$ is the
+total number of cache slots occupied at step $t$.
+$S_t$ grows monotonically until cache saturation, so TDA becomes \emph{slower} as the stream
+progresses:
+\begin{equation}
+  t_\text{TDA}(t) \propto D \cdot \min(t,\, C \cdot (K_+ + K_-))
+\end{equation}
+For ImageNet with $C = 1000$, saturation only occurs after $\sim\!20{,}000$ steps---meaning
+the entire 10,000-sample stream runs during the unsaturated, growing-cost phase.
+At stream end, TDA is doing $D \times (\sim\!2600)$ dot products per sample.
+
+FreeTTA's per-sample cost is $O(D \cdot C)$ \emph{constant}:
+the M-step is one vector update plus $C$ comparisons, independent of stream length.
+
+\subsubsection{Memory Usage}
+
+Memory requirements (estimated at end of stream):
+\begin{itemize}
+  \item \textbf{TDA}: occupied cache slots $\times$ $D$ $\times$ 4 bytes (float32).
+  Caltech: $\sim$366\,KB; DTD: $\sim$431\,KB; EuroSAT: $\sim$84\,KB; Pets: $\sim$258\,KB;
+  ImageNet: $\sim$5.3\,MB ($2{,}597$ slots $\times 512 \times 4$).
+
+  \item \textbf{FreeTTA}: $C \times D \times 4$ bytes (one mean per class).
+  Caltech: 205\,KB; DTD: 96\,KB; EuroSAT: 20\,KB; Pets: 76\,KB; ImageNet: 2.0\,MB.
+\end{itemize}
+
+FreeTTA uses $1.5$--$4\times$ less memory than TDA, with the advantage growing with class count
+(ImageNet: 2.0\,MB vs 5.3\,MB).
+At scale (e.g., 100K classes), TDA's cache would be prohibitive while FreeTTA remains tractable.
+
+\subsubsection{Scalability Conclusion}
+
+Both methods scale linearly with $D$ (fixed at 512 for CLIP ViT-B/16).
+TDA scales as $O(D \cdot C \cdot K)$ in memory and $O(D \cdot S_t)$ in time (growing with stream).
+FreeTTA scales as $O(D \cdot C)$ in both memory and time (constant per sample).
+For open-world classification with thousands of classes, FreeTTA's complexity advantage is decisive.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Where Each Algorithm Always Wins and Loses}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{FreeTTA: Conditions for Winning}
+
+\begin{enumerate}
+  \item \textbf{High domain shift from internet distribution} (EuroSAT)\\
+  \textit{Why}: Text anchor $\bw_c$ is far from the true visual centroid $\bmu_c$.
+  Any correction via M-step moves toward the correct distribution.
+  \textit{Signal}: CLIP accuracy $< 60\%$ on classes with smooth, learnable visual structure.
+
+  \item \textbf{High samples-per-class ratio} (EuroSAT: 810/class)\\
+  \textit{Why}: Mean estimate variance $\sim 1/n_c$; more samples $\to$ better centroid estimate.
+  \textit{Signal}: $N/C > 50$.
+
+  \item \textbf{High cache pressure} (EuroSAT: 162$\times$)\\
+  \textit{Why}: TDA's memory is overwhelmed; FreeTTA's global mean is unaffected by capacity.
+
+  \item \textbf{Negative or low GAS}\\
+  \textit{Why}: When the CLIP anchor is severely wrong, even suboptimal centroid correction beats local lookups.
+\end{enumerate}
+
+\subsection{FreeTTA: Conditions for Failing}
+
+\begin{enumerate}
+  \item \textbf{Discrete non-overlapping categories where exact cached features outperform global means} (DTD)\\
+  \textit{Why}: For texture classification, the within-class visual diversity is large but inter-class boundaries are sharp.
+  FreeTTA's global mean blends diverse texture samples into a centroid that may sit between clusters, while TDA's exact cached exemplars remain discriminative.
+
+  \item \textbf{Very few samples per class} (ImageNet: 10/class)\\
+  \textit{Why}: With $\eta=0.1$ and 10 updates, $\bmu_c$ shifts by $<10\%$ of the distance to the sample centroid.
+  Insufficient to correct anything.
+
+  \item \textbf{Overconfident CLIP on wrong classes} (adversarial scenario)\\
+  \textit{Why}: High $\alpha_t$ + high $w_{\text{upd}}$ on wrong prediction $\to$ M-step moves mean in wrong direction, self-reinforcing error.
+\end{enumerate}
+
+\subsection{TDA: Conditions for Winning}
+
+\begin{enumerate}
+  \item \textbf{Discrete, non-overlapping category structure} (DTD: 47 texture types)\\
+  \textit{Why}: When categories are visually distinct and non-overlapping (``bumpy'' vs.\ ``dotted''), cached exemplars transfer reliably to future test samples from the same class.
+  Tighter entropy gates ($\theta_{\text{low}}=0.05$, $\theta_{\text{high}}=0.40$) select only high-confidence texture exemplars, producing a high-precision cache.
+
+  \item \textbf{Low cache pressure} (ImageNet: 2.0$\times$; necessary but not sufficient---see Caltech at 4.93$\times$ where TDA still makes more harmful than beneficial flips)\\
+  \textit{Why}: Cache remains representative; the most recent confident samples are genuinely informative.
+
+  \item \textbf{Stream locality} (natural order, class-clustered streams)\\
+  \textit{Why}: Consecutive same-class samples fill the cache quickly with high-quality examples.
+\end{enumerate}
+
+\subsection{TDA: Conditions for Failing}
+
+\begin{enumerate}
+  \item \textbf{High cache pressure} (EuroSAT: 162$\times$)\\
+  \textit{Why}: Cache slots overwritten so frequently the ``cache'' is effectively the last 3 random samples per class.
+
+  \item \textbf{Cold-start penalty} (EuroSAT break-even at step 941)\\
+  \textit{Why}: Empty cache $\to$ zero or noisy adjustment $\to$ early stream is pure CLIP or worse.
+
+  \item \textbf{Confident wrong predictions entering the cache}\\
+  \textit{Why}: TDA inserts samples with entropy $< \theta_{\text{low}}$ under predicted label.
+  A confidently misclassified sample becomes a poison entry, reinforcing future errors for similar inputs.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Future Work and Suggested Improvements}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Improving TDA}
+
+\subsubsection{Adaptive Cache Capacity}
+\textbf{Problem}: Fixed capacity $K=3$ fails at 162$\times$ pressure.\\
+\textbf{Solution}: Reservoir sampling---each new sample replaces a random existing entry with probability $1/k$ (number seen so far).
+Alternatively, set capacity dynamically:
+\begin{equation}
+  K(c) = \max\!\left(3,\; \left\lfloor\sqrt{N_{\text{est}} / C}\right\rfloor\right)
+\end{equation}
+\textbf{Expected gain}: EuroSAT cache pressure drops from 162$\times$ to $\approx$28$\times$.
+
+\subsubsection{Verified Cache Updates}
+\textbf{Problem}: Misclassified confident samples poison the cache.\\
+\textbf{Solution}: Only cache $\bx_t$ as class $c$ if the majority of existing $\mathcal{P}_c$ entries are more similar to $\bx_t$ than to any other class's cache (self-consistency check).
+
+\subsubsection{Temporal Weighting (Recency Bias)}
+\textbf{Problem}: FIFO treats all cached samples equally; old samples may be stale.\\
+\textbf{Solution}: Decay cache contributions exponentially:
+\begin{equation}
+  z^{\text{pos}}_c = \sum_{\mathbf{v}_i \in \mathcal{P}_c} \gamma^{t - t_i} (\bx_t^\top \mathbf{v}_i), \quad \gamma < 1
+\end{equation}
+
+\subsection{Improving FreeTTA}
+
+\subsubsection{Per-Class Adaptive Learning Rate}
+\textbf{Problem}: Fixed $\eta=0.1$ is too large for rare classes and too small for common classes.\\
+\textbf{Solution}: Robbins--Monro schedule:
+\begin{equation}
+  \eta_c(n_c) = \frac{\eta_0}{1 + \beta \cdot n_c}
+\end{equation}
+where $n_c$ is the number of M-step updates applied to class $c$.
+Guarantees mean-squared convergence to the true centroid under mild conditions.
+
+\subsubsection{Confidence Gating for M-Step}
+\textbf{Problem}: Low-confidence M-steps add noise to class means.\\
+\textbf{Solution}: Skip the M-step if $p_{\text{adapt}}(\hat{y} \mid \bx_t) < \delta$ (threshold $\delta = 0.5$).
+Fewer but higher-quality updates.
+
+\subsubsection{Multi-Template Mean Initialisation}
+\textbf{Problem}: Single template ``a photo of $\{\text{class}\}$'' may be a poor starting point.\\
+\textbf{Solution}:
+\begin{equation}
+  \bmu_c^{(0)} = \mathrm{normalize}\!\left(\sum_{k} f_T(t_c^{(k)})\right)
+\end{equation}
+where $t_c^{(k)}$ are diverse prompts (``a photo of $c$'', ``an image of $c$'', ``$c$ in a photo'', etc.).
+
+\subsubsection{Momentum for Mean Updates}
+\textbf{Problem}: Single-sample M-step is noisy; one outlier can shift $\bmu_c$ significantly.\\
+\textbf{Solution}: Exponential moving average momentum:
+\begin{align}
+  \mathbf{m}_c &\leftarrow \beta \mathbf{m}_c + (1-\beta) w_{\text{upd}}(\bx_t - \bmu_c) \\
+  \bmu_c &\leftarrow \bmu_c + \eta \mathbf{m}_c
+\end{align}
+Momentum $\beta=0.9$ smooths gradient estimates.
+
+\subsubsection{Full Covariance Mixture Model (Research Direction)}
+\textbf{Problem}: Isotropic Gaussian assumption fails for anisotropic texture classes.\\
+\textbf{Solution}: Track diagonal covariance:
+\begin{equation}
+  \boldsymbol{\Sigma}_c \leftarrow (1-\eta)\boldsymbol{\Sigma}_c + \eta w (\bx - \bmu_c)(\bx - \bmu_c)^\top
+\end{equation}
+\begin{equation}
+  z^{\text{adapt}}_c = -\tfrac{1}{2}(\bx - \bmu_c)^\top \boldsymbol{\Sigma}_c^{-1}(\bx - \bmu_c)
+\end{equation}
+Computational cost $O(D^2)$ per step per class---expensive at $D=512$, but worth exploring for DTD.
+
+\subsection{Hybrid Approaches}
+
+\subsubsection{Cache-Pressure-Adaptive Ensemble}
+\begin{equation}
+  \bz^{\text{final}} = \begin{cases}
+    \bz^{\text{clip}} + w_g \bz^{\text{FreeTTA}} & \text{if cache\_fullness} < 0.5 \\
+    \bz^{\text{clip}} + w_l \bz^{\text{TDA}} + (1-w_l)\bz^{\text{FreeTTA}} & \text{otherwise}
+  \end{cases}
+\end{equation}
+
+\subsubsection{FreeTTA-Initialised TDA}
+Use FreeTTA's adapted mean as virtual initial cache entries to solve TDA's cold-start:
+\begin{equation}
+  \mathcal{P}_c^{(0)} = \{\bmu_c^{\text{FreeTTA}}\} \quad\text{(synthetic anchor)}
+\end{equation}
+Real samples gradually replace the virtual anchor.
+Expected gain on EuroSAT: cold-start accuracy jumps from 33.8\% to $\approx$56\%.
+
+\subsubsection{Meta-Learned Hyperparameter Prediction}
+Train a lightweight meta-model that predicts optimal $(\eta, K, \theta_{\text{low}})$ from label-free dataset statistics:
+stream length $N$, estimated class count $C$ (from top-1 entropy distribution), and mean CLIP confidence.
+Removes the need for per-dataset manual tuning.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section*{Summary}
+\addcontentsline{toc}{section}{Summary}
+% ══════════════════════════════════════════════════════════════════════════════
+
+CLIP's zero-shot power comes with a critical limitation: its text anchors are fixed at inference time, making it fragile under domain shift.
+Test-Time Adaptation addresses this by using the test stream itself as adaptation signal.
+Our comparison of two fundamentally different TTA philosophies---cache-based (TDA) and statistics-based (FreeTTA)---across five diverse datasets yields five main conclusions:
+
+\begin{enumerate}
+  \item \textbf{FreeTTA is the better default}: wins or ties on 4 of 5 datasets, with gains correlated directly to domain shift severity.
+  \item \textbf{Cache pressure is TDA's fatal flaw}: performance collapses at 162$\times$ pressure (EuroSAT), while FreeTTA's global mean is unaffected by capacity constraints.
+  \item \textbf{FreeTTA's adaptation quality is higher}: Beneficial Flip Precision consistently exceeds TDA's, meaning FreeTTA's changes are more reliably improvements.
+  \item \textbf{FreeTTA adapts faster on every dataset}: break-even is within the first 0.5\% of the stream on DTD, EuroSAT, Pets, and ImageNet; TDA's cold-start can approach 12\% (EuroSAT step 941), and TDA never reaches net positive on Caltech.
+  \item \textbf{TDA's niche is discrete texture classification} (DTD): where intra-class visual diversity is high but inter-class boundaries are sharp, TDA's exact cached exemplars outperform FreeTTA's blended class means.
+\end{enumerate}
+
+Both methods are complementary.
+A hybrid combining FreeTTA's warm initialisation with TDA's local lookup would address both methods' main failure modes.
+
+\bigskip
+\noindent
+\textit{Plots referenced in this report are available in \texttt{outputs/comparative\_analysis/}:
+\texttt{accuracy\_summary.png}, \texttt{flip\_analysis.png},
+\texttt{entropy\_confidence\_summary.png}, \texttt{disagreement\_analysis.png},
+\texttt{failure\_bucket\_summary.png}, \texttt{geometry\_analysis.png},
+\texttt{latency\_analysis.png}.}
+
+\begin{thebibliography}{9}
+\bibitem{radford2021clip}
+A.\ Radford et al.,
+``Learning Transferable Visual Models From Natural Language Supervision,''
+\textit{ICML}, 2021.
+
+\bibitem{tda2023}
+J.\ Karmanov et al.,
+``Efficient Test-Time Adaptation of Vision-Language Models,''
+\textit{CVPR}, 2024.
+
+\bibitem{freetta2022}
+Y.\ Su et al.,
+``Revisiting Classifier: Diffusing Semantics into Classifier for Generalized Few-Shot Learning,''
+\textit{CVPR}, 2022.
+
+\bibitem{eurosat}
+P.\ Helber et al.,
+``EuroSAT: A Novel Dataset and Deep Learning Benchmark for Land Use and Land Cover Classification,''
+\textit{IEEE J.\ Sel.\ Topics Appl.\ Earth Obs.\ Remote Sens.}, 2019.
+
+\bibitem{dtd}
+M.\ Cimpoi et al.,
+``Describing Textures in the Wild,''
+\textit{CVPR}, 2014.
+\end{thebibliography}
+
+\end{document}

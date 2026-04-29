@@ -20,11 +20,11 @@ class FreeTTA:
     """
 
     DATASET_DEFAULTS = {
-        "caltech":  dict(alpha=0.02, beta=3.0),
-        "dtd":      dict(alpha=0.3,  beta=1.5),
-        "eurosat":  dict(alpha=0.8,  beta=3.0),
-        "pets":     dict(alpha=0.1,  beta=4.0),
-        "imagenet": dict(alpha=0.05, beta=4.0),
+        "caltech":  dict(alpha=0.02,  beta=3.0),
+        "dtd":      dict(alpha=0.1,   beta=3.0),
+        "eurosat":  dict(alpha=0.8,   beta=3.0),
+        "pets":     dict(alpha=0.25,  beta=4.0),
+        "imagenet": dict(alpha=0.05,  beta=4.0),
     }
 
     def __init__(

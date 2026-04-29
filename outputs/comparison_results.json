@@ -14,10 +14,10 @@
       "dataset": "dtd",
       "n_samples": 1880,
       "time_freetta": 0.3515979703515768,
-      "freetta_acc": 46.54255211353302,
+      "freetta_acc": 45.47872340425532,
       "clip_acc": 43.936169147491455,
       "time_tda": 0.7051808293908834,
-      "tda_acc": 45.15957534313202
+      "tda_acc": 45.85106382978723
     },
     {
       "dataset": "eurosat",
@@ -32,10 +32,10 @@
       "dataset": "pets",
       "n_samples": 3669,
       "time_freetta": 0.7040686625987291,
-      "freetta_acc": 88.63450288772583,
+      "freetta_acc": 88.96154797494277,
       "clip_acc": 88.38920593261719,
       "time_tda": 1.3989166114479303,
-      "tda_acc": 88.41646313667297
+      "tda_acc": 88.41646225129463
     },
     {
       "dataset": "imagenet",

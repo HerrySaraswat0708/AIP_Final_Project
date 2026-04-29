@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh node1 *)",
+      "Bash(CUDA_VISIBLE_DEVICES=6 python experiments/reproduce_results.py --skip-tuning)",
+      "Bash(tee /tmp/repro_test.log)",
+      "Bash(python *)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 *)",
+      "Bash(CUDA_VISIBLE_DEVICES=6 python experiments/deep_analysis.py)",
+      "Bash(wait)",
+      "Bash(sort -k5 -n)",
+      "Read(//tmp/**)",
+      "Bash(tee outputs/dtd_config_check.txt)",
+      "Bash(tee outputs/alignment_check.txt)",
+      "Bash(tee outputs/fast_verify.txt)",
+      "Bash(echo \"=EXIT=$?\")",
+      "Bash(awk '{print $1,$2,$3,$11,$12}')"
+    ]
+  }
+}

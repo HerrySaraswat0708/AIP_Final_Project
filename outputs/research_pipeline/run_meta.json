@@ -1,0 +1,16 @@
+{
+  "datasets": [
+    "dtd",
+    "caltech",
+    "eurosat",
+    "pets",
+    "imagenet"
+  ],
+  "device": "cpu",
+  "seed": 42,
+  "rolling_window": 50,
+  "total_samples": 26114,
+  "elapsed_seconds": 201.5,
+  "features_dir": "data/processed",
+  "output_dir": "outputs/research_pipeline"
+}

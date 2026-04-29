@@ -1,0 +1,11 @@
+dataset,stream_order,method,break_even_sample,final_acc,final_clip_acc
+dtd,natural,TDA,168,0.24000000000000002,0.23
+dtd,natural,FreeTTA,190,0.23,0.23
+dtd,class_blocked,TDA,168,0.24000000000000002,0.23
+dtd,class_blocked,FreeTTA,190,0.23,0.23
+dtd,cyclic,TDA,286,0.54,0.45000000000000007
+dtd,cyclic,FreeTTA,142,0.49,0.45000000000000007
+dtd,random_42,TDA,100,0.39,0.39
+dtd,random_42,FreeTTA,127,0.41000000000000003,0.39
+dtd,random_123,TDA,280,0.52,0.5
+dtd,random_123,FreeTTA,100,0.51,0.5
