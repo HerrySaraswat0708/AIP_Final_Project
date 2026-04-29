@@ -1243,13 +1243,15 @@ regardless of how quickly they get there.
 
 \subsubsection{CLIP's Calibration Failure}
 
-CLIP produces \emph{uniformly distributed} softmax outputs on all five datasets (Table~\ref{tab:entropy_calibration}).
-Its entropy for correct predictions and wrong predictions is virtually identical,
-making it impossible to use CLIP's confidence as a reliability signal.
+CLIP produces \emph{near-uniformly distributed} softmax outputs on all five datasets (Table~\ref{tab:entropy_calibration}).
+Its mean entropy for correct predictions and wrong predictions is virtually identical ($\Delta H \approx 0$),
+making CLIP's raw confidence unreliable as a self-calibration signal for most datasets.
 
-This is a structural consequence of the cosine-similarity scoring with fixed temperature $\tau=100$
-applied to a $C$-class distribution: when CLIP text anchors are poorly aligned with test features,
-all logits are near-zero and softmax spreads probability uniformly.
+This is a structural consequence of the cosine-similarity scoring with fixed temperature $\tau=100$:
+when CLIP text anchors are poorly aligned with test features, all logits are near-zero and softmax spreads probability uniformly.
+On Caltech and Pets, CLIP is near-maximally confident but equally so for correct and wrong predictions.
+On EuroSAT and DTD, even the mean entropy gap is essentially zero despite CLIP showing moderate rank-calibration
+in Spearman terms (see Table~\ref{tab:spearman_rho})---the mean difference vanishes while within-distribution ordering remains.
 
 \begin{table}[H]
 \centering
@@ -1291,10 +1293,31 @@ Dataset & Method & $H_\text{correct}$ & $H_\text{wrong}$ & $\Delta H$ & Conf$_\t
 \subsubsection{Entropy Gap as Calibration Quality Metric}
 
 Both adapters create a substantial entropy gap between correct and wrong predictions (all $\Delta H > 0.4$).
-Spearman rank correlation between entropy and error indicator confirms this quantitatively:
-CLIP's $\rho \approx 0$ on all datasets; TDA's $\rho$ ranges from $0.36$ to $0.50$;
-FreeTTA's $\rho$ ranges from $0.33$ to $0.59$ (all $p \ll 0.001$).
-This is the core mechanism that makes downstream use of their confidence scores meaningful.
+Spearman rank correlation between entropy and error indicator (Table~\ref{tab:spearman_rho}) confirms this:
+
+\begin{table}[H]
+\centering
+\caption{Spearman $\rho$ (entropy vs.\ error indicator). Values near 0 = uncalibrated; higher = better calibration.}
+\label{tab:spearman_rho}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Dataset & CLIP $\rho$ & TDA $\rho$ & FreeTTA $\rho$ \\
+\midrule
+Caltech  & $-0.076$ & $+0.360$ & $+0.332$ \\
+DTD      & $+0.261$ & $+0.416$ & $+0.445$ \\
+EuroSAT  & $+0.433$ & $+0.365$ & $+0.593$ \\
+Pets     & $-0.028$ & $+0.419$ & $+0.435$ \\
+ImageNet & $+0.074$ & $+0.499$ & $+0.493$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All adapter $\rho$ values have $p \ll 0.001$.
+CLIP's Spearman $\rho$ is close to zero on Caltech ($-0.076$), Pets ($-0.028$), and ImageNet ($+0.074$)---consistent with its broken calibration (near-uniform entropy, $\Delta H \approx 0$).
+Interestingly, CLIP retains moderate rank-calibration on DTD ($\rho = 0.261$) and EuroSAT ($\rho = 0.433$): despite the near-zero \emph{mean} entropy gap, there is systematic monotonic ordering within the distribution on hard datasets.
+Both adapters substantially improve calibration; however, on EuroSAT, TDA's $\rho = 0.365$ is \emph{lower} than CLIP's $\rho = 0.433$---consistent with TDA's stale, high-pressure cache producing noisier logit corrections that actually hurt rank-ordering.
+FreeTTA on EuroSAT achieves the highest $\rho = 0.593$ of any method on any dataset.
+This is the core mechanism that makes downstream use of adapter confidence scores meaningful.
 Key observations:
 \begin{itemize}
   \item \textbf{FreeTTA has larger $\Delta H$ than TDA on 4 of 5 datasets}
