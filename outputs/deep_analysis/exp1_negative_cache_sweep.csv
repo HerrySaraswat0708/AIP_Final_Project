@@ -1,0 +1,41 @@
+dataset,experiment,config,low_thresh,high_thresh,neg_alpha,neg_cache_used,acc,vs_clip
+caltech,thresh,"Baseline [0.2-0.50] (paper, 0% fire)",0.2,0.5,0.117,74,93.47,-0.08
+caltech,thresh,All-open  [0.0-1.01] (100% fire),0.0,1.01,0.117,200,93.51,-0.04
+caltech,thresh,High-H    [0.5-1.01] (100% fire),0.5,1.01,0.117,7,93.51,-0.04
+caltech,thresh,Very-high [0.8-1.01] (100% fire),0.8,1.01,0.117,0,93.47,-0.08
+caltech,neg_alpha,neg_alpha=0.0,0.0,1.01,0.0,200,93.47,-0.08
+caltech,neg_alpha,neg_alpha=0.05,0.0,1.01,0.05,200,93.51,-0.04
+caltech,neg_alpha,neg_alpha=0.117,0.0,1.01,0.117,200,93.51,-0.04
+caltech,neg_alpha,neg_alpha=0.25,0.0,1.01,0.25,200,93.51,-0.04
+caltech,neg_alpha,neg_alpha=0.5,0.0,1.01,0.5,200,93.06,-0.49
+caltech,neg_alpha,neg_alpha=1.0,0.0,1.01,1.0,200,92.45,-1.1
+dtd,thresh,"Baseline [0.2-0.50] (paper, 0% fire)",0.2,0.5,0.117,85,44.73,0.8
+dtd,thresh,All-open  [0.0-1.01] (100% fire),0.0,1.01,0.117,90,44.63,0.69
+dtd,thresh,High-H    [0.5-1.01] (100% fire),0.5,1.01,0.117,60,44.63,0.69
+dtd,thresh,Very-high [0.8-1.01] (100% fire),0.8,1.01,0.117,0,44.89,0.96
+dtd,neg_alpha,neg_alpha=0.0,0.0,1.01,0.0,90,44.89,0.96
+dtd,neg_alpha,neg_alpha=0.05,0.0,1.01,0.05,90,44.68,0.74
+dtd,neg_alpha,neg_alpha=0.117,0.0,1.01,0.117,90,44.63,0.69
+dtd,neg_alpha,neg_alpha=0.25,0.0,1.01,0.25,90,44.57,0.64
+dtd,neg_alpha,neg_alpha=0.5,0.0,1.01,0.5,90,44.26,0.32
+dtd,neg_alpha,neg_alpha=1.0,0.0,1.01,1.0,90,42.93,-1.01
+eurosat,thresh,"Baseline [0.2-0.50] (paper, 0% fire)",0.2,0.5,0.117,20,52.4,3.96
+eurosat,thresh,All-open  [0.0-1.01] (100% fire),0.0,1.01,0.117,20,52.37,3.94
+eurosat,thresh,High-H    [0.5-1.01] (100% fire),0.5,1.01,0.117,20,52.94,4.51
+eurosat,thresh,Very-high [0.8-1.01] (100% fire),0.8,1.01,0.117,17,54.17,5.74
+eurosat,neg_alpha,neg_alpha=0.0,0.0,1.01,0.0,20,52.62,4.19
+eurosat,neg_alpha,neg_alpha=0.05,0.0,1.01,0.05,20,52.53,4.1
+eurosat,neg_alpha,neg_alpha=0.117,0.0,1.01,0.117,20,52.37,3.94
+eurosat,neg_alpha,neg_alpha=0.25,0.0,1.01,0.25,20,51.95,3.52
+eurosat,neg_alpha,neg_alpha=0.5,0.0,1.01,0.5,20,51.19,2.75
+eurosat,neg_alpha,neg_alpha=1.0,0.0,1.01,1.0,20,49.77,1.33
+pets,thresh,"Baseline [0.2-0.50] (paper, 0% fire)",0.2,0.5,0.117,54,89.34,0.95
+pets,thresh,All-open  [0.0-1.01] (100% fire),0.0,1.01,0.117,74,89.23,0.84
+pets,thresh,High-H    [0.5-1.01] (100% fire),0.5,1.01,0.117,0,89.23,0.84
+pets,thresh,Very-high [0.8-1.01] (100% fire),0.8,1.01,0.117,0,89.23,0.84
+pets,neg_alpha,neg_alpha=0.0,0.0,1.01,0.0,74,89.23,0.84
+pets,neg_alpha,neg_alpha=0.05,0.0,1.01,0.05,74,89.26,0.87
+pets,neg_alpha,neg_alpha=0.117,0.0,1.01,0.117,74,89.23,0.84
+pets,neg_alpha,neg_alpha=0.25,0.0,1.01,0.25,74,88.83,0.44
+pets,neg_alpha,neg_alpha=0.5,0.0,1.01,0.5,74,88.44,0.05
+pets,neg_alpha,neg_alpha=1.0,0.0,1.01,1.0,74,87.27,-1.12

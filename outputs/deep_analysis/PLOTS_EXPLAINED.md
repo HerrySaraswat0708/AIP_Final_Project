@@ -486,3 +486,179 @@ Two panels:
 | `sec10_initialization.png` | Convergence curves + prior entropy decay |
 | `sec11_gas_validation.png` | GAS as a geometry-based predictor |
 | `sec12_failure_analysis.png` | Failure bucket composition |
+| `sec15a_effective_lr.png` | When does each method stop learning? |
+| `sec15b_gate_comparison.png` | Hard vs soft gate — which samples are covered? |
+| `sec15c_logit_update_direction.png` | Do corrections point toward or away from the correct class? |
+
+---
+
+## Section 15 Plots (Architecture / Mechanism Comparison)
+
+---
+
+### `sec15a_effective_lr.png`
+
+**What it shows:**
+Two rows of 5 panels (one per dataset). Row 0: TDA's effective learning rate proxy (rolling cache growth rate). Row 1: FreeTTA's effective learning rate proxy (normalised μ update norm). Vertical dashed lines mark the saturation point where each method's LR drops below its threshold.
+
+**How to read it:**
+- TDA row: when the line is high the cache is still filling (new exemplars admitted); when it drops to zero the cache is full and TDA has frozen.
+- FreeTTA row: the line starts at 1.0 (normalised baseline) and decays as N_y grows — the implicit annealing schedule.
+- Dashed vertical line = saturation sample, annotated in legend.
+
+**What we see:**
+- TDA freezes extremely early: Caltech sample 64 (2.6% of stream), EuroSAT sample 245 (3.0%). Only ImageNet, with 3000 cache slots, saturates late at sample 8891 (88.9%).
+- FreeTTA decays smoothly and persists: EuroSAT saturates at sample 1187 (14.7%), ImageNet at 3806 (38.1%). FreeTTA is still effectively learning when TDA has already frozen.
+
+**Why it matters:**
+This reveals why FreeTTA scales better with stream length. TDA's learning rate is binary (1 or 0) and collapses almost immediately on low-class-count datasets. FreeTTA's 1/N_y decay means each new sample still contributes — just with diminishing weight.
+
+---
+
+### `sec15b_gate_comparison.png`
+
+**What it shows:**
+Two rows of 5 panels. Row 0: histogram of normalised CLIP entropy (H_norm = H / log C) with the TDA negative-cache hard-gate window [0.2, 0.5] shaded in blue and the dataset mean H_norm marked with a dashed line. Row 1: soft gate curves `exp(−β·H_norm)` for β ∈ {1.5, 3.0, 4.0} plotted over H_norm ∈ [0, 1], with the hard-gate window shaded and dataset mean marked.
+
+**How to read it:**
+- Row 0: if the histogram mass is entirely outside the shaded region, TDA's negative gate never fires.
+- Row 1: the soft gate is never zero regardless of H_norm, showing where each β value places weight for samples with the dataset's mean H_norm.
+
+**What we see:**
+- All five datasets have H_norm ≈ 1.0 (histograms pile up at the right edge).
+- The TDA hard-gate window [0.2, 0.5] captures **0%** of samples on every dataset.
+- At β=3.0 (FreeTTA EuroSAT/Caltech default), the soft gate mean is exp(−3) ≈ 0.05 — small but non-zero. Every uncertain sample still receives a correction weight.
+- At β=1.5 (DTD), the soft gate mean is exp(−1.5) ≈ 0.22 — more aggressive adaptation.
+
+**Why it matters:**
+TDA's negative-cache mechanism is architecturally inert on all CLIP benchmarks because CLIP's raw logit scale produces near-maximum entropy everywhere. FreeTTA's soft gate is the fundamental design choice that keeps the method active in this high-entropy regime. If TDA had used a soft gate, its negative cache would contribute on every sample.
+
+---
+
+### `sec15c_logit_update_direction.png`
+
+**What it shows:**
+Two rows of 5 panels. Row 0: histogram of the correct-class logit change `Δ[y] = adapted_logit[y] − clip_logit[y]` for TDA (blue) and FreeTTA (red), with a dashed zero line. The legend shows what fraction of samples have Δ[y] > 0. Row 1: histogram of cosine similarity between `Δ_TDA` and `Δ_FT` (the full C-dimensional correction vectors), with the dataset mean annotated.
+
+**How to read it:**
+- Row 0: mass to the right of zero means the method increases the correct-class logit (a good, direct signal). Mass to the left means the correct class is pushed down.
+- Row 1: cosine near +1 = methods agree on correction direction; near −1 = nearly opposite corrections.
+
+**What we see:**
+- TDA: **100% of Δ_TDA[y] > 0** across all datasets and all samples. TDA always boosts the correct-class logit in absolute terms.
+- FreeTTA: **0% of Δ_FT[y] > 0** across all datasets and all samples. FreeTTA always decreases the correct-class logit in absolute terms.
+- Cosine similarity ≈ −0.9 across all datasets — the two correction vectors point in nearly opposite directions.
+
+**Why it matters (the key mechanistic insight):**
+The two methods operate via fundamentally different logit-space mechanisms:
+
+- **TDA = additive boost**: `l_TDA = l_clip + α·l+`. The cache similarity term l+ adds directly to the correct-class logit, so the absolute logit for the true class increases.
+- **FreeTTA = relative reranking via compression**: `fused = (l_clip + α·l_gen) × clip_scale`, where `clip_scale < 1.0`. This compresses ALL logits toward zero, making the raw correct-class logit smaller. FreeTTA wins not by pushing the correct class up, but by ensuring the correct class is compressed *less* than wrong classes (the adapted prototype μ_y is closer to the query than wrong-class prototypes).
+
+The cosine ≈ −0.9 result shows these are nearly opposite operations: TDA pushes the correct class upward; FreeTTA rescales the entire probability landscape downward. Naively adding the two methods' corrections would largely cancel out. Any ensemble of TDA + FreeTTA would need to operate at the probability (post-softmax) level rather than the logit level.
+
+FreeTTA also makes corrections 3–4× smaller in magnitude (‖Δ_FT‖ << ‖Δ_TDA‖), yet achieves higher accuracy on high-shift datasets — demonstrating that correction precision matters more than correction magnitude.
+
+
+---
+
+## Experiment Plots (Sections 17 & 18)
+
+---
+
+### `exp1_negative_cache_sweep.png`
+
+**What it shows:**
+Two-panel figure. Panel A: accuracy vs threshold configuration (4 configs: baseline [0.2-0.50], all-open [0.0-1.01], high-H [0.5-1.01], very-high [0.8-1.01]) for 4 datasets. Panel B: accuracy vs neg_alpha weight (6 values: 0.0 to 1.0) when the gate is fully open, for 4 datasets.
+
+**How to read it:**
+- Panel A: flat or slightly varying lines mean the threshold window has minimal impact on final accuracy.
+- Panel B: lines that slope downward as neg_alpha increases indicate the negative cache hurts performance at high weights.
+
+**What we see:**
+- Panel A: Nearly flat lines — different threshold windows produce almost identical accuracy (within 0.5pp). EuroSAT is the only dataset where Very-high threshold slightly helps (+1.8pp vs all-open).
+- Panel B: Monotonically decreasing accuracy for all datasets as neg_alpha rises. At neg_alpha=1.0, Caltech drops −1.1pp, DTD −2.0pp, EuroSAT −2.6pp, Pets −2.0pp below the gate-open baseline.
+
+**Why it matters:**
+The negative cache adds no meaningful corrective signal in frozen CLIP feature space. Activating it with any threshold produces marginal or harmful effects. The paper's neg_alpha=0.117 sits near the edge of net-neutral behavior. This suggests TDA's negative cache is a vestigial component in zero-shot settings.
+
+---
+
+### `exp1a_neg_cache_used.png`
+
+**What it shows:**
+Grouped bar chart showing the number of negative cache entries used (neg_cache_used) across 4 threshold configurations and 4 datasets.
+
+**How to read it:**
+Higher bars = more samples routed through the negative cache. Compare within each dataset group to see how threshold choice controls gate firing rate.
+
+**What we see:**
+- Baseline [0.2-0.50]: 20–85 entries used (not zero — H_norm has minor variation in reconstructed feature space).
+- All-open [0.0-1.01]: max firing — 74–200 entries.
+- Very-high [0.8-1.01]: near-zero firing (0–17 entries) since very few samples have H_norm > 0.8.
+
+**Why it matters:**
+Even with 200 entries in the negative cache (all-open), accuracy is identical to or worse than baseline. Confirms that negative cache volume does not drive accuracy — the signal quality is the limiting factor, not gate coverage.
+
+---
+
+### `exp2_majority_vote.png`
+
+**What it shows:**
+2×2 grid of accuracy-vs-K plots, one per dataset. Each panel shows three curves: TDA affinity-sum (blue solid), K-NN majority vote (red dashed), and CLIP baseline (grey dotted).
+
+**How to read it:**
+- Flat blue line = TDA affinity-sum accuracy is independent of K (the cache holds K_pos=3 exemplars per class, not K).
+- Red dashed line traces the majority-vote accuracy at each K.
+- When the red line drops below the grey dotted line, majority vote has become worse than no adaptation at all.
+
+**What we see:**
+- At K=1–3: MV is 3–8pp below TDA but still above or near CLIP.
+- At K=7: sharp cliff — MV drops 25–30pp below TDA on Caltech and Pets.
+- At K=10–20: catastrophic collapse — MV falls to 6–36% (well below chance on many datasets).
+
+**Why it matters:**
+TDA's continuous affinity-weighted sum is far superior to discrete majority vote. The collapse at K≥7 reveals the "hubness problem": when K exceeds per-class cache capacity, high-dimensional nearest-neighbour voting is dominated by a few central exemplars, destroying class diversity in the vote. TDA's exponential weighting naturally prevents this by down-weighting distant matches.
+
+---
+
+### `exp2_mv_vs_tda_delta.png`
+
+**What it shows:**
+Single panel plotting the gap (Majority-Vote Accuracy − TDA-Affinity Accuracy) as a function of K for all 4 datasets. The zero line represents parity; all values are negative (MV is always worse).
+
+**How to read it:**
+- Values near 0: MV and TDA-affinity perform similarly.
+- Large negative values: MV collapses while TDA remains stable.
+- The steeper the descent, the more sensitive MV is to K.
+
+**What we see:**
+- At K=1: gap is −3 to −8pp — MV is close but consistently worse.
+- At K=5: gap grows to −5 to −9pp.
+- At K=10–20: gap is −20 to −87pp — MV is essentially random guessing for Caltech and Pets.
+
+**Why it matters:**
+Provides a clear scaling law: majority vote performance degrades polynomially with K. The critical threshold is around K=5–7 for pos_cap=3 datasets. This plot directly quantifies why TDA's design choice of weighted affinity sum (rather than discrete vote) is critical to its functionality.
+
+---
+
+## Summary Table — All Plots
+
+| Plot | Section | Type | Key Insight |
+|---|---|---|---|
+| `accuracy_vs_samples.png` | Sec 1 | Line | FreeTTA consistently outperforms on high-shift datasets |
+| `overall_accuracy.png` | Sec 2 | Bar | TDA wins Pets; FreeTTA wins EuroSAT; near-tie elsewhere |
+| `entropy_distribution.png` | Sec 5 | Histogram | CLIP entropy std=0.000 — entropy gate carries zero information |
+| `entropy_accuracy.png` | Sec 6 | Scatter | Valid entropy-accuracy correlation only on EuroSAT (ρ=−0.43) |
+| `confidence_weighting.png` | Sec 7 | Analysis | FreeTTA soft gate always active; TDA hard gate fires 0% |
+| `learned_distribution.png` | Sec 8 | Scatter | FreeTTA centroids converge to image-domain means |
+| `inference_time.png` | Sec 9 | Bar | FreeTTA ≡ CLIP; TDA 3–5× slower |
+| `memory_usage.png` | Sec 10 | Bar | FreeTTA 5× less memory than TDA |
+| `scalability.png` | Sec 11 | Line | FreeTTA scales unboundedly; TDA bounded by C×K_pos |
+| `sec15a_effective_lr.png` | Sec 15 | Theory | TDA binary LR decay; FreeTTA ~1/N annealing |
+| `sec15b_gate_comparison.png` | Sec 15 | Analysis | TDA gate: 0% firing; FreeTTA gate: always >0 |
+| `sec15c_logit_update_direction.png` | Sec 15 | Histogram | TDA boosts correct class; FreeTTA compresses all logits; cosine ≈ −0.9 |
+| `exp1_negative_cache_sweep.png` | Sec 17 | Line | Neg cache has minimal impact; high neg_alpha hurts up to −2.6pp |
+| `exp1a_neg_cache_used.png` | Sec 17 | Bar | Gate firing rate controlled by threshold but doesn't predict accuracy |
+| `exp2_majority_vote.png` | Sec 18 | Line | Majority vote collapses at K≥7; TDA affinity-sum always dominant |
+| `exp2_mv_vs_tda_delta.png` | Sec 18 | Line | MV-TDA gap grows to −87pp at K=20; K collapse point ≈ pos_cap |

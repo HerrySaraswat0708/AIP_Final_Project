@@ -1,0 +1,17 @@
+dataset,method,centroid_acc,nn1_acc,gas,overall_acc,clip_acc,acc_gain
+caltech,CLIP_text,93.55,92.82,0.73,93.55,93.55,0.0
+caltech,CLIP_oracle,94.4,92.82,1.58,93.55,93.55,0.0
+caltech,FreeTTA,91.48,92.82,-1.34,93.55,93.55,0.0
+caltech,TDA_logit,95.78,93.27,2.52,92.86,93.55,-0.69
+dtd,CLIP_text,43.94,67.61,-23.67,43.94,43.94,0.0
+dtd,CLIP_oracle,71.33,67.61,3.72,43.94,43.94,0.0
+dtd,FreeTTA,47.77,67.61,-19.84,46.12,43.94,2.18
+dtd,TDA_logit,67.45,66.86,0.59,45.11,43.94,1.17
+eurosat,CLIP_text,48.43,74.52,-26.09,48.43,48.43,0.0
+eurosat,CLIP_oracle,70.93,74.52,-3.59,48.43,48.43,0.0
+eurosat,FreeTTA,58.6,74.52,-15.91,50.28,48.43,1.85
+eurosat,TDA_logit,66.46,72.17,-5.72,55.47,48.43,7.04
+pets,CLIP_text,88.39,94.36,-5.97,88.39,88.39,0.0
+pets,CLIP_oracle,93.95,94.36,-0.41,88.39,88.39,0.0
+pets,FreeTTA,92.94,94.36,-1.42,89.21,88.39,0.82
+pets,TDA_logit,92.45,92.75,-0.3,90.9,88.39,2.51

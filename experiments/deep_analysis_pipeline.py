@@ -1255,6 +1255,251 @@ def sec13_standard_plots(all_ps: dict, sec1: pd.DataFrame, sec3: pd.DataFrame,
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# SECTION 15 – ARCHITECTURE / LOSS / INTERNAL MECHANISM COMPARISON
+# ══════════════════════════════════════════════════════════════════════════════
+
+def sec15_architecture_comparison(all_ps: dict) -> pd.DataFrame:
+    """
+    Three sub-analyses that relate each method's update rule / architecture
+    to its empirical behaviour:
+
+      A. Effective learning-rate decay
+         TDA  proxy: incremental positive-cache growth  (binary: 1 when a new
+                     exemplar is admitted, 0 once the cache is full)
+         FreeTTA proxy: freetta_mu_update_norm normalised by its early-stream
+                     value  (decays as 1/N_y because the running average
+                     denominator grows)
+
+      B. Hard gate (TDA) vs soft gate (FreeTTA) — coverage and regime analysis
+         TDA  hard gate: fires only when 0.2 < H_norm < 0.5  (binary)
+         FreeTTA soft gate: alpha_t = exp(-beta * H_norm)     (always > 0)
+
+      C. Logit update direction — does each method's correction push the
+         correct class upward?
+         Delta_TDA = tda_logits - clip_logits
+         Delta_FT  = freetta_logits - clip_logits
+         We measure: (i) fraction where correct-class component > 0,
+                     (ii) cosine similarity between Delta_TDA and Delta_FT.
+    """
+    print("\n[S15] Architecture / loss / internal mechanism comparison …")
+
+    rows = []
+
+    # ── A. Effective learning-rate proxy ──────────────────────────────────────
+    fig_lr, axes_lr = plt.subplots(2, 5, figsize=(22, 8), sharey="row")
+
+    for col, ds in enumerate(DATASETS):
+        df = all_ps[ds]
+        n  = len(df)
+
+        # TDA: lr proxy = incremental cache growth per step (0 or 1)
+        pos_cache = df["tda_positive_cache_size"].values.astype(float)
+        tda_lr_raw = np.concatenate([[1.0], np.diff(pos_cache)])
+        tda_lr_raw = np.clip(tda_lr_raw, 0, 1)
+
+        # FreeTTA: lr proxy = mu_update_norm normalised to early-stream baseline
+        ft_upd   = df["freetta_mu_update_norm"].values.astype(float)
+        baseline = ft_upd[:max(1, n // 20)].mean()
+        ft_lr_raw = ft_upd / (baseline + 1e-9)
+        ft_lr_raw = np.clip(ft_lr_raw, 0, 2)
+
+        window   = max(50, n // 40)
+        tda_roll = pd.Series(tda_lr_raw).rolling(window, min_periods=1).mean().values
+        ft_roll  = pd.Series(ft_lr_raw ).rolling(window, min_periods=1).mean().values
+
+        # saturation = first sample where rolling lr drops below threshold
+        sat_mask  = tda_roll < 0.05
+        tda_sat   = int(np.argmax(sat_mask)) if sat_mask.any() else n
+        ft_sat_m  = ft_roll < 0.10
+        ft_sat    = int(np.argmax(ft_sat_m)) if ft_sat_m.any() else n
+
+        x = np.arange(n)
+        axes_lr[0, col].plot(x, tda_roll * 100, color=C_TDA, lw=1.0)
+        axes_lr[0, col].axvline(tda_sat, color=C_TDA, ls="--", lw=0.8, alpha=0.7,
+                                label=f"sat@{tda_sat}")
+        axes_lr[0, col].set_title(DS_LABEL[ds])
+        axes_lr[0, col].legend(fontsize=7)
+        if col == 0:
+            axes_lr[0, col].set_ylabel("TDA eff-LR\n(cache growth rate, %)")
+        axes_lr[0, col].grid(alpha=0.2)
+
+        axes_lr[1, col].plot(x, ft_roll, color=C_FT, lw=1.0)
+        axes_lr[1, col].axvline(ft_sat, color=C_FT, ls="--", lw=0.8, alpha=0.7,
+                                label=f"sat@{ft_sat}")
+        axes_lr[1, col].legend(fontsize=7)
+        axes_lr[1, col].set_xlabel("Sample index")
+        if col == 0:
+            axes_lr[1, col].set_ylabel("FreeTTA eff-LR\n(μ update norm, norm.)")
+        axes_lr[1, col].grid(alpha=0.2)
+
+        rows.append(dict(
+            dataset=ds,
+            tda_saturation_sample=tda_sat,
+            tda_saturation_pct=tda_sat / n * 100,
+            ft_saturation_sample=ft_sat,
+            ft_saturation_pct=ft_sat / n * 100,
+        ))
+
+    fig_lr.suptitle(
+        "Section 15A – Effective Learning-Rate Decay\n"
+        "TDA: cache growth rate (binary 0/1)  |  FreeTTA: μ update norm (normalised)",
+        fontsize=12)
+    plt.tight_layout()
+    savefig("sec15a_effective_lr.png")
+
+    # ── B. Hard gate vs soft gate coverage ───────────────────────────────────
+    BETA_VALUES = [1.5, 3.0, 4.0]
+    BETA_COLORS = ["#ff7f0e", "#9467bd", "#e377c2"]
+
+    fig_gate, axes_gate = plt.subplots(2, 5, figsize=(22, 8))
+
+    for col, ds in enumerate(DATASETS):
+        df    = all_ps[ds]
+        C_cls = NUM_CLASSES[ds]
+        H     = df["clip_entropy"].values.astype(float)
+        log_C = math.log(C_cls)
+        H_norm = np.clip(H / log_C, 0.0, 1.0)
+
+        # TDA hard gate window: 0.2 < H_norm < 0.5
+        hard_gate = ((H_norm > 0.2) & (H_norm < 0.5)).astype(float)
+
+        # Row 0: H_norm histogram with hard-gate shaded region
+        ax_h = axes_gate[0, col]
+        ax_h.hist(H_norm, bins=50, color="#aaaaaa", edgecolor="none",
+                  alpha=0.85, density=True)
+        ax_h.axvspan(0.2, 0.5, alpha=0.30, color=C_TDA,
+                     label=f"TDA gate ({hard_gate.mean()*100:.0f}%)")
+        ax_h.axvline(H_norm.mean(), color="k", ls="--", lw=0.9,
+                     label=f"mean={H_norm.mean():.2f}")
+        ax_h.set_title(DS_LABEL[ds])
+        ax_h.set_xlabel("H_norm")
+        if col == 0:
+            ax_h.set_ylabel("Density")
+        ax_h.legend(fontsize=7)
+        ax_h.grid(alpha=0.2)
+
+        # Row 1: soft gate curves vs H_norm  (show where mean H_norm sits)
+        ax_s = axes_gate[1, col]
+        h_rng = np.linspace(0, 1, 200)
+        for β, clr in zip(BETA_VALUES, BETA_COLORS):
+            ax_s.plot(h_rng, np.exp(-β * h_rng), lw=1.5, color=clr,
+                      label=f"soft β={β} (mean={np.exp(-β*H_norm).mean():.2f})")
+        ax_s.axvspan(0.2, 0.5, alpha=0.12, color=C_TDA)
+        ax_s.axvline(H_norm.mean(), color="k", ls="--", lw=0.9)
+        ax_s.set_xlabel("H_norm")
+        ax_s.set_ylim(0, 1.05)
+        if col == 0:
+            ax_s.set_ylabel("Gate weight α_t")
+        ax_s.legend(fontsize=6)
+        ax_s.grid(alpha=0.2)
+
+        idx = next(i for i, r in enumerate(rows) if r["dataset"] == ds)
+        rows[idx]["hard_gate_coverage_pct"] = float(hard_gate.mean() * 100)
+        rows[idx]["mean_H_norm"]            = float(H_norm.mean())
+        for β in BETA_VALUES:
+            rows[idx][f"soft_gate_mean_beta{β}"] = float(np.exp(-β * H_norm).mean())
+
+    fig_gate.suptitle(
+        "Section 15B – Hard Gate (TDA) vs Soft Gate (FreeTTA)\n"
+        "H_norm distribution (shaded = TDA hard-gate window 0.2–0.5)  |"
+        "  soft gate exp(−β·H_norm) at multiple β",
+        fontsize=12)
+    plt.tight_layout()
+    savefig("sec15b_gate_comparison.png")
+
+    # ── C. Logit update direction ─────────────────────────────────────────────
+    fig_dir, axes_dir = plt.subplots(2, 5, figsize=(22, 8))
+
+    for col, ds in enumerate(DATASETS):
+        logits_d = load_logits(ds)
+        if not logits_d:
+            axes_dir[0, col].set_title(f"{DS_LABEL[ds]}\n(no logits)")
+            axes_dir[1, col].set_title("")
+            continue
+
+        clip_log = logits_d["clip_logits"].astype(np.float32)
+        tda_log  = logits_d["tda_logits"].astype(np.float32)
+        ft_log   = logits_d["freetta_logits"].astype(np.float32)
+        labels   = logits_d["labels"].astype(int)
+        N        = len(labels)
+
+        # Correction vectors: Δ = adapted_logits − clip_logits
+        delta_tda = tda_log - clip_log   # shape (N, C)
+        delta_ft  = ft_log  - clip_log   # shape (N, C)
+
+        # Correct-class component: does the correction boost the right class?
+        cc_delta_tda = delta_tda[np.arange(N), labels]   # scalar per sample
+        cc_delta_ft  = delta_ft [np.arange(N), labels]
+
+        tda_helps_pct = float((cc_delta_tda > 0).mean() * 100)
+        ft_helps_pct  = float((cc_delta_ft  > 0).mean() * 100)
+
+        # Cosine similarity between Δ_TDA and Δ_FT: do they agree on direction?
+        dot    = (delta_tda * delta_ft).sum(axis=1)
+        norm_t = np.linalg.norm(delta_tda, axis=1) + 1e-9
+        norm_f = np.linalg.norm(delta_ft,  axis=1) + 1e-9
+        cos_sim = np.clip(dot / (norm_t * norm_f), -1, 1)
+
+        # Row 0: histogram of correct-class logit change
+        ax_top = axes_dir[0, col]
+        xlim   = max(np.abs(cc_delta_tda).max(), np.abs(cc_delta_ft).max())
+        xlim   = min(xlim, 5.0)
+        bins   = np.linspace(-xlim, xlim, 51)
+        ax_top.hist(cc_delta_tda, bins=bins, color=C_TDA, alpha=0.55, density=True,
+                    label=f"TDA ({tda_helps_pct:.0f}% > 0)")
+        ax_top.hist(cc_delta_ft,  bins=bins, color=C_FT,  alpha=0.55, density=True,
+                    label=f"FT  ({ft_helps_pct:.0f}% > 0)")
+        ax_top.axvline(0, color="k", lw=0.9, ls="--")
+        ax_top.set_title(DS_LABEL[ds])
+        ax_top.set_xlabel("Δ correct-class logit")
+        if col == 0:
+            ax_top.set_ylabel("Density")
+        ax_top.legend(fontsize=7)
+        ax_top.grid(alpha=0.2)
+
+        # Row 1: cosine similarity distribution between Δ_TDA and Δ_FT
+        ax_bot = axes_dir[1, col]
+        ax_bot.hist(cos_sim, bins=40, color="#7f7f7f", edgecolor="none",
+                    alpha=0.85, density=True)
+        ax_bot.axvline(cos_sim.mean(), color="k", ls="--", lw=0.9,
+                       label=f"mean={cos_sim.mean():.2f}")
+        ax_bot.set_xlabel("cos(Δ_TDA, Δ_FT)")
+        ax_bot.set_title(f"TDA–FT update agreement")
+        if col == 0:
+            ax_bot.set_ylabel("Density")
+        ax_bot.legend(fontsize=7)
+        ax_bot.grid(alpha=0.2)
+
+        idx = next(i for i, r in enumerate(rows) if r["dataset"] == ds)
+        rows[idx]["tda_helps_pct"]      = tda_helps_pct
+        rows[idx]["ft_helps_pct"]       = ft_helps_pct
+        rows[idx]["mean_cos_agreement"] = float(cos_sim.mean())
+        rows[idx]["mean_mag_tda"]       = float(np.linalg.norm(delta_tda, axis=1).mean())
+        rows[idx]["mean_mag_ft"]        = float(np.linalg.norm(delta_ft,  axis=1).mean())
+
+    fig_dir.suptitle(
+        "Section 15C – Logit Update Direction Analysis\n"
+        "Row 0: Δ correct-class logit (right of 0 = helpful update)\n"
+        "Row 1: Cosine similarity between TDA and FreeTTA correction vectors",
+        fontsize=12)
+    plt.tight_layout()
+    savefig("sec15c_logit_update_direction.png")
+
+    rdf = pd.DataFrame(rows)
+    rdf.to_csv(OUT / "sec15_architecture_comparison.csv", index=False)
+
+    # Print summary table
+    show_cols = ["dataset", "tda_saturation_pct", "ft_saturation_pct",
+                 "hard_gate_coverage_pct", "mean_H_norm",
+                 "tda_helps_pct", "ft_helps_pct", "mean_cos_agreement"]
+    show_cols = [c for c in show_cols if c in rdf.columns]
+    print("\n  Architecture comparison summary:")
+    print(rdf[show_cols].to_string(index=False, float_format="%.1f"))
+
+    return rdf
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # MASTER SUMMARY CSV
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -1297,7 +1542,7 @@ def write_master_summary(all_ps: dict, sec1: pd.DataFrame, sec3: pd.DataFrame,
 
 def main():
     print("=" * 70)
-    print("  Deep Analysis Pipeline – 14-Section TTA Study")
+    print("  Deep Analysis Pipeline – 15-Section TTA Study")
     print("=" * 70)
 
     all_ps = load_all_ps()
@@ -1315,6 +1560,7 @@ def main():
     sec11 = sec11_gas_validation(all_ps)
     sec12 = sec12_failure_analysis(all_ps)
     sec13_standard_plots(all_ps, sec1, sec3, sec4, sec11, sec12)
+    sec15 = sec15_architecture_comparison(all_ps)
     master = write_master_summary(all_ps, sec1, sec3, sec4, sec11)
 
     print(f"\n{'='*70}")
