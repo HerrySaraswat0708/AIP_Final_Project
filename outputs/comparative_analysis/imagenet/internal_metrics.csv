@@ -1,2 +1,0 @@
-dataset,tda_mean_positive_cache_size,tda_mean_negative_cache_size,tda_negative_gate_rate,tda_cache_pressure_ratio,freetta_mean_em_weight,freetta_mean_mu_update_norm,freetta_final_mu_drift,freetta_final_prior_entropy,freetta_final_sigma_trace,geometry_alignment_score,oracle_centroid_acc,oracle_1nn_acc
-imagenet,1685.0134,912.3014,0.0,2.0,0.5325583774225546,0.000473976927581225,1.1276530027389526,3.965259552001953,0.3641141357421875,0.4082999955177307,0.8271999955177307,0.4189

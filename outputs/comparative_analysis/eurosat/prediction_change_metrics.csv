@@ -1,3 +1,0 @@
-dataset,method,samples,unchanged_correct_count,unchanged_wrong_count,beneficial_flip_count,harmful_flip_count,other_changed_wrong_count,unchanged_correct_rate,unchanged_wrong_rate,change_rate,beneficial_flip_precision,harmful_flip_rate_on_clip_correct,net_correction_score,net_correction_rate,avg_entropy_after_beneficial_flip,avg_entropy_after_harmful_flip
-eurosat,tda,8100,3195,1510,1125,728,1542,0.39444444444444443,0.18641975308641975,0.4191358024691358,0.33136966126656847,0.18557226612286515,397,0.049012345679012345,1.4025285748110876,1.190995621239091
-eurosat,freetta,8100,3549,2044,1258,374,875,0.4381481481481482,0.25234567901234567,0.30950617283950616,0.5017949740725968,0.09533520265103237,884,0.1091358024691358,0.5563346015375303,1.398150420045482

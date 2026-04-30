@@ -1,3 +1,0 @@
-dataset,method,samples,unchanged_correct_count,unchanged_wrong_count,beneficial_flip_count,harmful_flip_count,other_changed_wrong_count,unchanged_correct_rate,unchanged_wrong_rate,change_rate,beneficial_flip_precision,harmful_flip_rate_on_clip_correct,net_correction_score,net_correction_rate,avg_entropy_after_beneficial_flip,avg_entropy_after_harmful_flip
-imagenet,tda,10000,6157,3455,115,78,195,0.6157,0.3455,0.0388,0.2963917525773196,0.012510024057738572,37,0.0037,2.075072349672732,2.234925675850648
-imagenet,freetta,10000,6156,3482,116,79,167,0.6156,0.3482,0.0362,0.32044198895027626,0.012670408981555734,37,0.0037,2.0739064797245224,2.0224198110495943
